@@ -1,4 +1,4 @@
-library dup;
+library;
 
 // Base validator class
 export 'src/util/validator_base.dart';
