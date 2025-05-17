@@ -33,7 +33,8 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   V includedIn(List<T> allowedValues, [String? message]) {
     return addValidator((value) {
       if (value != null && !allowedValues.contains(value)) {
-        return message ?? 'You must select one of the allowed values for $label.';
+        return message ??
+            'You must select one of the allowed values for $label.';
       }
       return null;
     });

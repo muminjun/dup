@@ -7,10 +7,10 @@ class UiFormService {
   /// Throws [FormValidationException] if validation fails.
   /// If [abortEarly] is true, stops at the first encountered error.
   Future<void> validate<T>(
-      BaseValidatorSchema schema,
-      Map<String, dynamic> request, {
-        bool abortEarly = false,
-      }) async {
+    BaseValidatorSchema schema,
+    Map<String, dynamic> request, {
+    bool abortEarly = false,
+  }) async {
     final errors = <String, String?>{};
 
     for (final field in schema.schema.keys) {

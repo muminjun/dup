@@ -7,7 +7,7 @@ class FormValidationException implements Exception {
   @override
   String toString() {
     return errors.values.firstWhere(
-          (e) => e != null,
+      (e) => e != null,
       orElse: () => 'A validation error has occurred.',
     )!;
   }

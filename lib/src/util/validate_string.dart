@@ -37,7 +37,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
 
   /// Checks if the string is a valid email address.
   ValidateString email([String? message]) {
-    const emailRegex = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+    const emailRegex =
+        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
     addValidator((value) {
       if (value == null || value.trim().isEmpty) {
         return message ?? 'Please enter an email address.';
@@ -60,7 +61,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
         return message ?? 'Password must be at least 4 characters long.';
       }
       if (!RegExp(r"^[\u0000-\u007F]+$").hasMatch(value.trim())) {
-        return message ?? 'Password must contain only ASCII characters (letters, numbers, special characters).';
+        return message ??
+            'Password must contain only ASCII characters (letters, numbers, special characters).';
       }
       return null;
     });
@@ -71,8 +73,11 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   ValidateString emoji([String? message]) {
     const emojiRegex = r'[\uD800-\uDBFF][\uDC00-\uDFFF]';
     addValidator((value) {
-      if (value != null && value.isNotEmpty && RegExp(emojiRegex).hasMatch(value)) {
-        return message ?? 'The text contains unsupported special characters (emojis).';
+      if (value != null &&
+          value.isNotEmpty &&
+          RegExp(emojiRegex).hasMatch(value)) {
+        return message ??
+            'The text contains unsupported special characters (emojis).';
       }
       return null;
     });
