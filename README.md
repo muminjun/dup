@@ -173,4 +173,4 @@ void main() async {
 ## Links
 
 - [API Reference](https://pub.dev/documentation/dup/latest/)
-- [GitHub Repository](https://github.com/yourusername/dup)
+- [GitHub Repository](https://github.com/muminjun/dup)
