@@ -1,7 +1,8 @@
 name: dup
-description: "A new Flutter package project."
+description: "A powerful, flexible schema-based validation library for Dart and Flutter, inspired by JavaScript's yup."
 version: 0.0.1
 homepage: https://github.com/muminjun/dup
+repository: https://github.com/muminjun/dup
 
 environment:
   sdk: ^3.7.2
