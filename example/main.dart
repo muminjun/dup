@@ -5,22 +5,30 @@ void main() async {
   final BaseValidatorSchema schema = BaseValidatorSchema({
     'email': ValidateString()
         .setLabel('Email')
-        .required('Please enter your email.')
-        .email('Invalid email format.'),
+        .required(messageFactory: (label, _) => 'Please enter your email.')
+        .email(messageFactory: (label, _) => 'Invalid email format.'),
     'password': ValidateString()
         .setLabel('Password')
-        .required('Please enter your password.')
+        .required(messageFactory: (label, _) => 'Please enter your password.')
         .password(
-          'Password must be at least 4 characters and contain only ASCII letters, numbers, or symbols.',
+          messageFactory:
+              (label, _) =>
+                  'Password must be at least 4 characters and contain only ASCII letters, numbers, or symbols.',
         ),
     'age': ValidateNumber()
         .setLabel('Age')
-        .required('Please enter your age.')
-        .min(18, 'You must be at least 18 years old to sign up.'),
+        .required(messageFactory: (label, _) => 'Please enter your age.')
+        .min(
+          18,
+          messageFactory:
+              (label, args) => 'You must be at least 18 years old to sign up.',
+        ),
     'phone': ValidateString()
         .setLabel('Phone Number')
-        .required('Please enter your phone number.')
-        .mobile('Invalid phone number format.'),
+        .required(
+          messageFactory: (label, _) => 'Please enter your phone number.',
+        )
+        .mobile(messageFactory: (label, _) => 'Invalid phone number format.'),
   });
 
   // 2. Example user input

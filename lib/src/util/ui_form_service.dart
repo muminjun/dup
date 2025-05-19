@@ -6,10 +6,11 @@ class UiFormService {
   /// Validates the given [request] against the provided [schema].
   /// Throws [FormValidationException] if validation fails.
   /// If [abortEarly] is true, stops at the first encountered error.
-  Future<void> validate<T>(
+  Future<void> validate(
     BaseValidatorSchema schema,
     Map<String, dynamic> request, {
     bool abortEarly = false,
+    String fallbackMessage = 'Invalid form.',
   }) async {
     final errors = <String, String?>{};
 
@@ -24,9 +25,8 @@ class UiFormService {
       }
     }
 
-    // Throw exception if any validation errors are found
     if (errors.isNotEmpty) {
-      throw FormValidationException(errors);
+      throw FormValidationException(errors, fallbackMessage: fallbackMessage);
     }
   }
 
