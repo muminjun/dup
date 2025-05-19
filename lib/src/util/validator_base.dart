@@ -1,89 +1,132 @@
-/// Abstract base class for validators.
-abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
-  final List<Function(T?)> validators = [];
-  String label = 'Field';
+import 'package:dup/src/util/validate_locale.dart';
+import '../model/message_factory.dart';
 
-  /// Sets the label for error messages.
+/// Base abstract class for building validation rules with chainable methods.
+/// [T] - Type of value being validated
+/// [V] - Validator subclass type for method chaining
+abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
+  /// List of validation functions that return error messages
+  final List<String? Function(T? value)> validators = [];
+
+  /// Field label used in error messages
+  String label = '';
+
+  /// Sets the display name for the field being validated
   V setLabel(String text) {
     label = text;
     return this as V;
   }
 
-  /// Checks if the value is equal to [target].
-  V equalTo(T target, [String? message]) {
-    return addValidator((value) {
-      if (value != null && value != target) {
-        return message ?? '$label does not match.';
-      }
-      return null;
-    });
-  }
-
-  /// Checks if the value is not equal to [target].
-  V notEqualTo(T target, [String? message]) {
-    return addValidator((value) {
-      if (value != null && value == target) {
-        return message ?? '$label must be different from the previous value.';
-      }
-      return null;
-    });
-  }
-
-  /// Checks if the value is included in [allowedValues].
-  V includedIn(List<T> allowedValues, [String? message]) {
-    return addValidator((value) {
-      if (value != null && !allowedValues.contains(value)) {
-        return message ??
-            'You must select one of the allowed values for $label.';
-      }
-      return null;
-    });
-  }
-
-  /// Checks if the value is excluded from [forbiddenValues].
-  V excludedFrom(List<T> forbiddenValues, [String? message]) {
-    return addValidator((value) {
-      if (value != null && forbiddenValues.contains(value)) {
-        return message ?? 'You cannot use a forbidden value for $label.';
-      }
-      return null;
-    });
-  }
-
-  /// Checks if the value satisfies the given [condition].
-  V satisfy(bool Function(T?) condition, [String? message]) {
-    return addValidator((value) {
-      if (!condition(value)) {
-        return message ?? '$label does not satisfy the required condition.';
-      }
-      return null;
-    });
-  }
-
-  /// Adds a custom validator function.
-  V addValidator(Function(T?) validator) {
+  /// Adds a custom validation function to the validator chain
+  V addValidator(String? Function(T? value) validator) {
     validators.add(validator);
     return this as V;
   }
 
-  /// Checks if the value is required (not null or empty).
-  V required([String? message]) {
-    return addValidator((value) {
-      if (value == null || (value is String && value.isEmpty)) {
-        return message ?? '$label is required.';
+  /// Validates that the value matches the target value
+  /// Message resolution order:
+  /// 1. Custom message factory → 2. Global locale → 3. Default message
+  V equalTo(T target, {MessageFactory? messageFactory}) {
+    addValidator((value) {
+      if (value != null && value != target) {
+        return getErrorMessage(messageFactory, 'equal', {
+          'name': label,
+        }, '$label does not match.');
       }
       return null;
     });
+    return this as V;
   }
 
-  /// Runs all validators and returns the first error message, or null if valid.
+  /// Validates that the value does NOT match the target value
+  V notEqualTo(T target, {MessageFactory? messageFactory}) {
+    addValidator((value) {
+      if (value != null && value == target) {
+        return getErrorMessage(messageFactory, 'notEqual', {
+          'name': label,
+        }, '$label is not allowed.');
+      }
+      return null;
+    });
+    return this as V;
+  }
+
+  /// Validates that the value exists in allowedValues list
+  V includedIn(List<T> allowedValues, {MessageFactory? messageFactory}) {
+    addValidator((value) {
+      if (value != null && !allowedValues.contains(value)) {
+        return getErrorMessage(
+          messageFactory,
+          'oneOf',
+          {'name': label, 'options': allowedValues.join(', ')},
+          '$label must be one of: ${allowedValues.join(', ')}.',
+        );
+      }
+      return null;
+    });
+    return this as V;
+  }
+
+  /// Validates that the value does NOT exist in forbiddenValues list
+  V excludedFrom(List<T> forbiddenValues, {MessageFactory? messageFactory}) {
+    addValidator((value) {
+      if (value != null && forbiddenValues.contains(value)) {
+        return getErrorMessage(
+          messageFactory,
+          'notOneOf',
+          {'name': label, 'options': forbiddenValues.join(', ')},
+          '$label must not be one of: ${forbiddenValues.join(', ')}.',
+        );
+      }
+      return null;
+    });
+    return this as V;
+  }
+
+  /// Validates using a custom condition function
+  V satisfy(bool Function(T?) condition, {MessageFactory? messageFactory}) {
+    addValidator((value) {
+      if (!condition(value)) {
+        return getErrorMessage(messageFactory, 'condition', {
+          'name': label,
+        }, '$label does not satisfy the condition.');
+      }
+      return null;
+    });
+    return this as V;
+  }
+
+  /// Validates that the value is not null/empty
+  V required({MessageFactory? messageFactory}) {
+    addValidator((value) {
+      if (value == null || (value is String && value.isEmpty)) {
+        return getErrorMessage(messageFactory, 'required', {
+          'name': label,
+        }, '$label is required.');
+      }
+      return null;
+    });
+    return this as V;
+  }
+
+  /// Executes all validation rules and returns first error message
   String? validate(T? value) {
     for (var validator in validators) {
       final error = validator(value);
-      if (error != null) {
-        return error;
-      }
+      if (error != null) return error;
     }
     return null;
+  }
+
+  /// Unified error message resolution logic
+  String? getErrorMessage(
+    MessageFactory? customFactory,
+    String messageKey,
+    Map<String, dynamic> params,
+    String defaultMessage,
+  ) {
+    return customFactory?.call(label, params) ??
+        ValidatorLocale.current?.mixed[messageKey]?.call(params) ??
+        defaultMessage;
   }
 }
