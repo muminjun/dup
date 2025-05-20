@@ -181,20 +181,18 @@ You can globally override error messages for your entire app by registering a cu
 factory:
 
 ```dart
-ValidatorLocale.setLocale
-(
-ValidatorLocale(
-mixed: {
-'required': (args) => '${args['name']} is required.',
-// ...other global messages
-},
-string: {
-'min': (args) => '${args['name']} must be at least ${args['min']} characters long.',
-// ...other string messages
-},
-// ...number, array, etc.
-)
-,
+ValidatorLocale.setLocale(
+  ValidatorLocale(
+    mixed: {
+      'required': (args) => '${args['name']} is required.',
+      // ...other global messages
+    },
+    string: {
+      'min': (args) => '${args['name']} must be at least ${args['min']} characters long.',
+    / / ...other string messages
+    },
+    // ...number, array, etc.
+  ),
 );
 ```
 
