@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.2] - 2025-05-20
+## [1.0.3] - 2025-05-20
 
 ### Added
 - Improved documentation and README.
