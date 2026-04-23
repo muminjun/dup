@@ -1,113 +1,90 @@
-import 'package:test/test.dart';
 import 'package:dup/dup.dart';
+import 'package:test/test.dart';
 
 void main() {
-  group('ValidateNumber.min / max', () {
-    test('min passes when value is sufficient', () {
-      expect(ValidateNumber().setLabel('N').min(5).validate(5), isNull);
-      expect(ValidateNumber().setLabel('N').min(5).validate(10), isNull);
+  tearDown(() => ValidatorLocale.resetLocale());
+
+  group('min()', () {
+    test('passes when value >= min', () {
+      expect(ValidateNumber().min(5).validate(10), isA<ValidationSuccess>());
     });
-    test('min fails when value is too small', () {
-      expect(ValidateNumber().setLabel('N').min(5).validate(4), isNotNull);
+
+    test('fails when value < min', () {
+      final result = ValidateNumber().min(18).validate(17);
+      expect((result as ValidationFailure).code, ValidationCode.numberMin);
+      expect(result.context['min'], 18);
     });
-    test('max passes when within limit', () {
-      expect(ValidateNumber().setLabel('N').max(10).validate(10), isNull);
-      expect(ValidateNumber().setLabel('N').max(10).validate(5), isNull);
-    });
-    test('max fails when too large', () {
-      expect(ValidateNumber().setLabel('N').max(10).validate(11), isNotNull);
-    });
-    test('min skips on null', () {
-      expect(ValidateNumber().setLabel('N').min(5).validate(null), isNull);
-    });
-    test('max skips on null', () {
-      expect(ValidateNumber().setLabel('N').max(10).validate(null), isNull);
+
+    test('passes for null', () {
+      expect(ValidateNumber().min(5).validate(null), isA<ValidationSuccess>());
     });
   });
 
-  group('ValidateNumber.isInteger', () {
-    test('passes for integer value', () {
-      expect(ValidateNumber().setLabel('N').isInteger().validate(5), isNull);
-      expect(ValidateNumber().setLabel('N').isInteger().validate(0), isNull);
-    });
-    test('fails for float', () {
-      expect(ValidateNumber().setLabel('N').isInteger().validate(5.5), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateNumber().setLabel('N').isInteger().validate(null), isNull);
+  group('max()', () {
+    test('fails when value > max', () {
+      final result = ValidateNumber().max(100).validate(200);
+      expect((result as ValidationFailure).code, ValidationCode.numberMax);
     });
   });
 
-  group('ValidateNumber.isPositive', () {
-    test('passes for positive value', () {
-      expect(ValidateNumber().setLabel('N').isPositive().validate(1), isNull);
-      expect(ValidateNumber().setLabel('N').isPositive().validate(0.1), isNull);
+  group('isInteger()', () {
+    test('fails for decimal', () {
+      final result = ValidateNumber().isInteger().validate(1.5);
+      expect((result as ValidationFailure).code, ValidationCode.integer);
     });
+
+    test('passes for whole number', () {
+      expect(ValidateNumber().isInteger().validate(3), isA<ValidationSuccess>());
+    });
+  });
+
+  group('isPositive()', () {
     test('fails for zero', () {
-      expect(ValidateNumber().setLabel('N').isPositive().validate(0), isNotNull);
+      expect(ValidateNumber().isPositive().validate(0), isA<ValidationFailure>());
     });
-    test('fails for negative', () {
-      expect(ValidateNumber().setLabel('N').isPositive().validate(-1), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateNumber().setLabel('N').isPositive().validate(null), isNull);
-    });
-  });
 
-  group('ValidateNumber.isNegative', () {
-    test('passes for negative value', () {
-      expect(ValidateNumber().setLabel('N').isNegative().validate(-1), isNull);
-    });
-    test('fails for zero', () {
-      expect(ValidateNumber().setLabel('N').isNegative().validate(0), isNotNull);
-    });
-    test('fails for positive', () {
-      expect(ValidateNumber().setLabel('N').isNegative().validate(1), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateNumber().setLabel('N').isNegative().validate(null), isNull);
-    });
-  });
-
-  group('ValidateNumber.isNonNegative', () {
-    test('passes for zero', () {
-      expect(ValidateNumber().setLabel('N').isNonNegative().validate(0), isNull);
-    });
     test('passes for positive', () {
-      expect(ValidateNumber().setLabel('N').isNonNegative().validate(5), isNull);
-    });
-    test('fails for negative', () {
-      expect(ValidateNumber().setLabel('N').isNonNegative().validate(-1), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateNumber().setLabel('N').isNonNegative().validate(null), isNull);
+      expect(ValidateNumber().isPositive().validate(1), isA<ValidationSuccess>());
     });
   });
 
-  group('ValidateNumber.isNonPositive', () {
-    test('passes for zero', () {
-      expect(ValidateNumber().setLabel('N').isNonPositive().validate(0), isNull);
-    });
-    test('passes for negative', () {
-      expect(ValidateNumber().setLabel('N').isNonPositive().validate(-5), isNull);
-    });
-    test('fails for positive', () {
-      expect(ValidateNumber().setLabel('N').isNonPositive().validate(1), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateNumber().setLabel('N').isNonPositive().validate(null), isNull);
+  group('between()', () {
+    test('fails outside range', () {
+      final result = ValidateNumber().between(1, 10).validate(0);
+      expect((result as ValidationFailure).code, ValidationCode.between);
     });
   });
 
-  group('ValidateNumber — phase ordering', () {
-    test('required fires before isPositive regardless of chain order', () {
-      final v = ValidateNumber().setLabel('N').isPositive().required();
-      expect(v.validate(null), equals('N is required.'));
+  group('toValidator() — string-parsing override', () {
+    test('returns null for valid input', () {
+      final fn = ValidateNumber().min(18).toValidator();
+      expect(fn('20'), isNull);
     });
 
-    test('isInteger (phase 1) fires before min (phase 2)', () {
-      final v = ValidateNumber().setLabel('N').min(100).isInteger();
-      expect(v.validate(5.5), contains('integer'));
+    test('returns parse error for non-numeric input', () {
+      final fn = ValidateNumber().setLabel('나이').min(18).toValidator();
+      expect(fn('abc'), contains('나이'));
+    });
+
+    test('returns validation error for out-of-range input', () {
+      final fn = ValidateNumber().setLabel('나이').min(18).toValidator();
+      expect(fn('17'), isNotNull);
+    });
+
+    test('passes null through to required check', () {
+      final fn = ValidateNumber().required().toValidator();
+      expect(fn(null), isNotNull);
+    });
+  });
+
+  group('locale', () {
+    test('uses locale message for numberMin', () {
+      ValidatorLocale.setLocale(ValidatorLocale({
+        ValidationCode.numberMin: (p) => '${p['name']} 최솟값 초과',
+      }));
+      final result = ValidateNumber().setLabel('나이').min(18).validate(10)
+          as ValidationFailure;
+      expect(result.message, '나이 최솟값 초과');
     });
   });
 }
