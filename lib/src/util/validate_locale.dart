@@ -1,29 +1,48 @@
 import '../model/locale_message.dart';
+import '../model/validation_code.dart';
 
 class ValidatorLocale {
   static ValidatorLocale? _current;
 
-  final Map<String, LocaleMessage> mixed;
-  final Map<String, LocaleMessage> number;
-  final Map<String, LocaleMessage> string;
-  final Map<String, LocaleMessage> array;
-  final Map<String, LocaleMessage> boolMessages;
-  final Map<String, LocaleMessage> date;
+  final Map<ValidationCode, LocaleMessage> messages;
 
-  ValidatorLocale({
-    required this.mixed,
-    required this.number,
-    required this.string,
-    required this.array,
-    this.boolMessages = const {},
-    this.date = const {},
-  });
+  const ValidatorLocale(this.messages);
 
   static void setLocale(ValidatorLocale locale) => _current = locale;
   static void resetLocale() => _current = null;
   static ValidatorLocale? get current => _current;
+
+  // ---------------------------------------------------------------------------
+  // Temporary compatibility shims — referenced by validators pending Tasks 4–9.
+  // These always return empty maps so locale resolution falls through to the
+  // hardcoded defaults, keeping existing tests green until each validator is
+  // migrated to the new ValidationCode-keyed API.
+  // ---------------------------------------------------------------------------
+
+  /// @deprecated Use [messages] with [ValidationCode] keys instead.
+  Map<String, LocaleMessage> get mixed => const {};
+
+  /// @deprecated Use [messages] with [ValidationCode] keys instead.
+  Map<String, LocaleMessage> get string => const {};
+
+  /// @deprecated Use [messages] with [ValidationCode] keys instead.
+  Map<String, LocaleMessage> get number => const {};
+
+  /// @deprecated Use [messages] with [ValidationCode] keys instead.
+  Map<String, LocaleMessage> get array => const {};
+
+  /// @deprecated Use [messages] with [ValidationCode] keys instead.
+  Map<String, LocaleMessage> get boolMessages => const {};
+
+  /// @deprecated Use [messages] with [ValidationCode] keys instead.
+  Map<String, LocaleMessage> get date => const {};
 }
 
+// ---------------------------------------------------------------------------
+// ValidatorLocaleKeys — kept temporarily; referenced by validators pending
+// Tasks 4–9. Will be deleted once all validators migrate to ValidationCode.
+// ---------------------------------------------------------------------------
+@Deprecated('Use ValidationCode enum values instead')
 abstract class ValidatorLocaleKeys {
   // mixed
   static const String required = 'required';
@@ -45,6 +64,10 @@ abstract class ValidatorLocaleKeys {
   static const String stringBizno = 'biznoInvalid';
   static const String stringUrl = 'url';
   static const String stringUuid = 'uuid';
+  static const String stringNotBlank = 'notBlank';
+  static const String stringAlpha = 'alpha';
+  static const String stringAlphanumeric = 'alphanumeric';
+  static const String stringNumeric = 'numeric';
 
   // number
   static const String numberMin = 'min';
@@ -54,6 +77,10 @@ abstract class ValidatorLocaleKeys {
   static const String numberNegative = 'negative';
   static const String numberNonNegative = 'nonNegative';
   static const String numberNonPositive = 'nonPositive';
+  static const String numberBetween = 'between';
+  static const String numberEven = 'even';
+  static const String numberOdd = 'odd';
+  static const String numberMultipleOf = 'multipleOf';
 
   // array
   static const String arrayNotEmpty = 'notEmpty';
@@ -66,6 +93,7 @@ abstract class ValidatorLocaleKeys {
   static const String arrayDoesNotContain = 'doesNotContain';
   static const String arrayAllCondition = 'allCondition';
   static const String arrayAnyCondition = 'anyCondition';
+  static const String arrayNoneCondition = 'noneCondition';
   static const String arrayNoDuplicates = 'noDuplicates';
   static const String arrayEachItem = 'eachItem';
 
@@ -79,4 +107,6 @@ abstract class ValidatorLocaleKeys {
   static const String dateBefore = 'before';
   static const String dateAfter = 'after';
   static const String dateBetween = 'between';
+  static const String dateInFuture = 'inFuture';
+  static const String dateInPast = 'inPast';
 }
