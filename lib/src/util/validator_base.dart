@@ -1,59 +1,70 @@
 import 'package:dup/src/util/validate_locale.dart';
 import '../model/message_factory.dart';
 
-/// Base abstract class for building validation rules with chainable methods.
-/// [T] - Type of value being validated
-/// [V] - Validator subclass type for method chaining
-abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
-  /// List of validation functions that return error messages
-  final List<String? Function(T? value)> validators = [];
+class _ValidatorEntry<T> {
+  final int phase;
+  final String? Function(T?) fn;
+  const _ValidatorEntry(this.phase, this.fn);
+}
 
-  /// Field label used in error messages
+abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
+  final List<_ValidatorEntry<T>> _entries = [];
+  final List<Future<String?> Function(T?)> _asyncEntries = [];
+
   String label = '';
 
-  /// Sets the display name for the field being validated
   V setLabel(String text) {
     label = text;
     return this as V;
   }
 
-  /// Adds a custom validation function to the validator chain
-  V addValidator(String? Function(T? value) validator) {
-    validators.add(validator);
+  V addPhaseValidator(int phase, String? Function(T?) fn) {
+    _entries.add(_ValidatorEntry(phase, fn));
     return this as V;
   }
 
-  /// Validates that the value matches the target value
-  /// Message resolution order:
-  /// 1. Custom message factory → 2. Global locale → 3. Default message
+  V addValidator(String? Function(T?) fn) => addPhaseValidator(3, fn);
+
+  V addAsyncValidator(Future<String?> Function(T?) fn) {
+    _asyncEntries.add(fn);
+    return this as V;
+  }
+
+  V required({MessageFactory? messageFactory}) {
+    return addPhaseValidator(0, (value) {
+      if (value == null || (value is String && value.isEmpty)) {
+        return getErrorMessage(
+          messageFactory, 'required', {'name': label}, '$label is required.',
+        );
+      }
+      return null;
+    });
+  }
+
   V equalTo(T target, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && value != target) {
-        return getErrorMessage(messageFactory, 'equal', {
-          'name': label,
-        }, '$label does not match.');
+        return getErrorMessage(
+          messageFactory, 'equal', {'name': label}, '$label does not match.',
+        );
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value does NOT match the target value
   V notEqualTo(T target, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && value == target) {
-        return getErrorMessage(messageFactory, 'notEqual', {
-          'name': label,
-        }, '$label is not allowed.');
+        return getErrorMessage(
+          messageFactory, 'notEqual', {'name': label}, '$label is not allowed.',
+        );
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value exists in allowedValues list
   V includedIn(List<T> allowedValues, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && !allowedValues.contains(value)) {
         return getErrorMessage(
           messageFactory,
@@ -64,12 +75,10 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value does NOT exist in forbiddenValues list
   V excludedFrom(List<T> forbiddenValues, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && forbiddenValues.contains(value)) {
         return getErrorMessage(
           messageFactory,
@@ -80,45 +89,40 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates using a custom condition function
   V satisfy(bool Function(T?) condition, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
+      if (value == null) return null;
       if (!condition(value)) {
-        return getErrorMessage(messageFactory, 'condition', {
-          'name': label,
-        }, '$label does not satisfy the condition.');
+        return getErrorMessage(
+          messageFactory, 'condition', {'name': label}, '$label does not satisfy the condition.',
+        );
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value is not null/empty
-  V required({MessageFactory? messageFactory}) {
-    addValidator((value) {
-      if (value == null || (value is String && value.isEmpty)) {
-        return getErrorMessage(messageFactory, 'required', {
-          'name': label,
-        }, '$label is required.');
-      }
-      return null;
-    });
-    return this as V;
-  }
-
-  /// Executes all validation rules and returns first error message
   String? validate(T? value) {
-    for (var validator in validators) {
-      final error = validator(value);
+    final sorted = List<_ValidatorEntry<T>>.from(_entries)
+      ..sort((a, b) => a.phase.compareTo(b.phase));
+    for (final entry in sorted) {
+      final error = entry.fn(value);
       if (error != null) return error;
     }
     return null;
   }
 
-  /// Unified error message resolution logic
+  Future<String?> validateAsync(T? value) async {
+    final syncError = validate(value);
+    if (syncError != null) return syncError;
+    for (final fn in _asyncEntries) {
+      final error = await fn(value);
+      if (error != null) return error;
+    }
+    return null;
+  }
+
   String? getErrorMessage(
     MessageFactory? customFactory,
     String messageKey,
