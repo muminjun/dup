@@ -70,6 +70,17 @@ void main() {
       expect(ValidateString().setLabel('X').satisfy((_) => false).validate(null), isNull);
     });
 
+    test('satisfy fails when condition returns false', () {
+      expect(
+        ValidateString().setLabel('Code').satisfy((v) => v == 'ok').validate('bad'),
+        equals('Code does not satisfy the condition.'),
+      );
+    });
+
+    test('satisfy passes when condition returns true', () {
+      expect(ValidateString().setLabel('Code').satisfy((v) => v == 'ok').validate('ok'), isNull);
+    });
+
     test('equalTo skips on null', () {
       expect(ValidateString().setLabel('X').equalTo('hello').validate(null), isNull);
     });
