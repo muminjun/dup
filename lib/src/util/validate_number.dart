@@ -119,14 +119,16 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   /// Parses a [String?] input to [num] then validates.
   /// Compatible with Flutter's TextFormField.validator.
   /// Returns a parse error if input is non-null, non-empty, and not a valid number.
+  // Return type is dynamic (not String?) because String? Function(String?) is not
+  // a subtype of the base class's String? Function(num?) — Dart disallows that override.
   @override
   String? Function(dynamic) toValidator({String? parseErrorMessage}) {
     return (dynamic input) {
-      if (input == null || input.isEmpty) {
+      if (input == null || (input is String && input.isEmpty)) {
         final result = validate(null);
         return result is ValidationFailure ? result.message : null;
       }
-      final parsed = num.tryParse(input as String);
+      final parsed = num.tryParse(input.toString());
       if (parsed == null) {
         return parseErrorMessage ?? '$label is not a valid number.';
       }
