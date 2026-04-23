@@ -12,12 +12,12 @@ class UiFormService {
     bool abortEarly = false,
     String fallbackMessage = 'Invalid form.',
   }) async {
-    final errors = <String, String?>{};
+    final errors = <String, String>{};
 
     for (final field in schema.schema.keys) {
-      final BaseValidator validator = schema.schema[field]!;
+      final validator = schema.schema[field]!;
       final value = request[field];
-      final String? error = validator.validate(value);
+      final String? error = await validator.validateAsync(value);
 
       if (error != null) {
         errors[field] = error;

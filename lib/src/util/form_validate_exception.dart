@@ -1,6 +1,5 @@
-/// Exception thrown when form validation fails.
 class FormValidationException implements Exception {
-  final Map<String, String?> errors;
+  final Map<String, String> errors;
   final String fallbackMessage;
 
   FormValidationException(
@@ -11,8 +10,8 @@ class FormValidationException implements Exception {
   @override
   String toString() {
     return errors.values.firstWhere(
-      (e) => e != null && e.isNotEmpty,
+      (e) => e.isNotEmpty,
       orElse: () => fallbackMessage,
-    )!;
+    );
   }
 }
