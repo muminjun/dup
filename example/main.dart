@@ -46,9 +46,7 @@ void main() async {
   } on FormValidationException catch (e) {
     print('Form validation failed:');
     e.errors.forEach((field, error) {
-      if (error != null) {
-        print('- $field: $error');
-      }
+      print('- $field: $error');
     });
   }
 }
