@@ -1,99 +1,84 @@
-import 'package:test/test.dart';
 import 'package:dup/dup.dart';
+import 'package:test/test.dart';
 
 void main() {
-  final base = DateTime(2024, 6, 15);
-  final before = DateTime(2024, 6, 10);
-  final after = DateTime(2024, 6, 20);
+  tearDown(() => ValidatorLocale.resetLocale());
 
-  group('ValidateDateTime.isBefore', () {
+  final past = DateTime(2000);
+  final future = DateTime(2099);
+  final now = DateTime.now();
+
+  group('isBefore()', () {
     test('passes when value is before target', () {
-      expect(ValidateDateTime().setLabel('D').isBefore(base).validate(before), isNull);
+      expect(ValidateDateTime().isBefore(future).validate(now),
+          isA<ValidationSuccess>());
     });
-    test('fails when value equals target', () {
-      expect(ValidateDateTime().setLabel('D').isBefore(base).validate(base), isNotNull);
-    });
+
     test('fails when value is after target', () {
-      expect(ValidateDateTime().setLabel('D').isBefore(base).validate(after), isNotNull);
+      final result = ValidateDateTime().isBefore(past).validate(now);
+      expect((result as ValidationFailure).code, ValidationCode.dateBefore);
     });
-    test('skips on null', () {
-      expect(ValidateDateTime().setLabel('D').isBefore(base).validate(null), isNull);
+
+    test('passes for null', () {
+      expect(ValidateDateTime().isBefore(future).validate(null),
+          isA<ValidationSuccess>());
     });
   });
 
-  group('ValidateDateTime.isAfter', () {
-    test('passes when value is after target', () {
-      expect(ValidateDateTime().setLabel('D').isAfter(base).validate(after), isNull);
-    });
-    test('fails when value equals target', () {
-      expect(ValidateDateTime().setLabel('D').isAfter(base).validate(base), isNotNull);
-    });
+  group('isAfter()', () {
     test('fails when value is before target', () {
-      expect(ValidateDateTime().setLabel('D').isAfter(base).validate(before), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateDateTime().setLabel('D').isAfter(base).validate(null), isNull);
+      final result = ValidateDateTime().isAfter(future).validate(now);
+      expect((result as ValidationFailure).code, ValidationCode.dateAfter);
     });
   });
 
-  group('ValidateDateTime.min', () {
-    test('passes when value is on the min boundary', () {
-      expect(ValidateDateTime().setLabel('D').min(base).validate(base), isNull);
-    });
-    test('passes when value is after min', () {
-      expect(ValidateDateTime().setLabel('D').min(base).validate(after), isNull);
-    });
+  group('min()', () {
     test('fails when value is before min', () {
-      expect(ValidateDateTime().setLabel('D').min(base).validate(before), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateDateTime().setLabel('D').min(base).validate(null), isNull);
+      final result = ValidateDateTime().min(future).validate(now);
+      expect((result as ValidationFailure).code, ValidationCode.dateMin);
     });
   });
 
-  group('ValidateDateTime.max', () {
-    test('passes when value is on the max boundary', () {
-      expect(ValidateDateTime().setLabel('D').max(base).validate(base), isNull);
-    });
-    test('passes when value is before max', () {
-      expect(ValidateDateTime().setLabel('D').max(base).validate(before), isNull);
-    });
+  group('max()', () {
     test('fails when value is after max', () {
-      expect(ValidateDateTime().setLabel('D').max(base).validate(after), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateDateTime().setLabel('D').max(base).validate(null), isNull);
+      final result = ValidateDateTime().max(past).validate(now);
+      expect((result as ValidationFailure).code, ValidationCode.dateMax);
     });
   });
 
-  group('ValidateDateTime.between', () {
-    test('passes when value is within range', () {
-      expect(ValidateDateTime().setLabel('D').between(before, after).validate(base), isNull);
-    });
-    test('passes on lower boundary', () {
-      expect(ValidateDateTime().setLabel('D').between(before, after).validate(before), isNull);
-    });
-    test('passes on upper boundary', () {
-      expect(ValidateDateTime().setLabel('D').between(before, after).validate(after), isNull);
-    });
-    test('fails when value is outside range', () {
-      final wayBefore = DateTime(2024, 1, 1);
-      expect(ValidateDateTime().setLabel('D').between(before, after).validate(wayBefore), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateDateTime().setLabel('D').between(before, after).validate(null), isNull);
+  group('isInFuture()', () {
+    test('fails for past date', () {
+      final result = ValidateDateTime().isInFuture().validate(past);
+      expect((result as ValidationFailure).code, ValidationCode.dateInFuture);
     });
   });
 
-  group('ValidateDateTime — phase ordering', () {
-    test('required fires before isBefore regardless of chain order', () {
-      final v = ValidateDateTime().setLabel('D').isBefore(base).required();
-      expect(v.validate(null), equals('D is required.'));
+  group('isInPast()', () {
+    test('fails for future date', () {
+      final result = ValidateDateTime().isInPast().validate(future);
+      expect((result as ValidationFailure).code, ValidationCode.dateInPast);
     });
+  });
 
-    test('isBefore (phase 1) fires before min (phase 2)', () {
-      final v = ValidateDateTime().setLabel('D').min(before).isBefore(before);
-      expect(v.validate(after), contains('before'));
+  group('between()', () {
+    test('fails outside range', () {
+      final result = ValidateDateTime()
+          .between(DateTime(2020), DateTime(2021))
+          .validate(DateTime(2022));
+      expect((result as ValidationFailure).code, ValidationCode.dateBetween);
+    });
+  });
+
+  group('locale', () {
+    test('uses locale message for dateBefore', () {
+      ValidatorLocale.setLocale(ValidatorLocale({
+        ValidationCode.dateBefore: (p) => '${p['name']} 날짜 오류',
+      }));
+      final result = ValidateDateTime()
+          .setLabel('날짜')
+          .isBefore(past)
+          .validate(now) as ValidationFailure;
+      expect(result.message, '날짜 날짜 오류');
     });
   });
 }

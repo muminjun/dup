@@ -1,19 +1,14 @@
-import 'package:dup/src/util/validate_locale.dart';
-import 'package:dup/src/util/validator_base.dart';
 import '../model/message_factory.dart';
+import '../model/validation_code.dart';
+import 'validator_base.dart';
 
 class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
   ValidateDateTime isBefore(DateTime target, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (!value.isBefore(target)) {
-        if (messageFactory != null) {
-          return messageFactory(label, {'target': target});
-        }
-        final global = ValidatorLocale.current?.date['before']
-            ?.call({'name': label, 'target': target});
-        if (global != null) return global;
-        return '$label must be before $target.';
+        return getFailure(messageFactory, ValidationCode.dateBefore,
+            {'name': label, 'target': target}, '$label must be before $target.');
       }
       return null;
     });
@@ -23,13 +18,8 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (!value.isAfter(target)) {
-        if (messageFactory != null) {
-          return messageFactory(label, {'target': target});
-        }
-        final global = ValidatorLocale.current?.date['after']
-            ?.call({'name': label, 'target': target});
-        if (global != null) return global;
-        return '$label must be after $target.';
+        return getFailure(messageFactory, ValidationCode.dateAfter,
+            {'name': label, 'target': target}, '$label must be after $target.');
       }
       return null;
     });
@@ -39,11 +29,8 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (value.isBefore(min)) {
-        if (messageFactory != null) return messageFactory(label, {'min': min});
-        final global = ValidatorLocale.current?.date['min']
-            ?.call({'name': label, 'min': min});
-        if (global != null) return global;
-        return '$label must be on or after $min.';
+        return getFailure(messageFactory, ValidationCode.dateMin,
+            {'name': label, 'min': min}, '$label must be on or after $min.');
       }
       return null;
     });
@@ -53,31 +40,43 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (value.isAfter(max)) {
-        if (messageFactory != null) return messageFactory(label, {'max': max});
-        final global = ValidatorLocale.current?.date['max']
-            ?.call({'name': label, 'max': max});
-        if (global != null) return global;
-        return '$label must be on or before $max.';
+        return getFailure(messageFactory, ValidationCode.dateMax,
+            {'name': label, 'max': max}, '$label must be on or before $max.');
       }
       return null;
     });
   }
 
-  ValidateDateTime between(
-    DateTime min,
-    DateTime max, {
-    MessageFactory? messageFactory,
-  }) {
+  ValidateDateTime between(DateTime min, DateTime max,
+      {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (value.isBefore(min) || value.isAfter(max)) {
-        if (messageFactory != null) {
-          return messageFactory(label, {'min': min, 'max': max});
-        }
-        final global = ValidatorLocale.current?.date['between']
-            ?.call({'name': label, 'min': min, 'max': max});
-        if (global != null) return global;
-        return '$label must be between $min and $max.';
+        return getFailure(messageFactory, ValidationCode.dateBetween,
+            {'name': label, 'min': min, 'max': max},
+            '$label must be between $min and $max.');
+      }
+      return null;
+    });
+  }
+
+  ValidateDateTime isInFuture({MessageFactory? messageFactory}) {
+    return addPhaseValidator(2, (value) {
+      if (value == null) return null;
+      if (!value.isAfter(DateTime.now())) {
+        return getFailure(messageFactory, ValidationCode.dateInFuture,
+            {'name': label}, '$label must be in the future.');
+      }
+      return null;
+    });
+  }
+
+  ValidateDateTime isInPast({MessageFactory? messageFactory}) {
+    return addPhaseValidator(2, (value) {
+      if (value == null) return null;
+      if (!value.isBefore(DateTime.now())) {
+        return getFailure(messageFactory, ValidationCode.dateInPast,
+            {'name': label}, '$label must be in the past.');
       }
       return null;
     });
