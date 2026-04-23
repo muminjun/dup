@@ -1,17 +1,14 @@
-import 'package:dup/src/util/validate_locale.dart';
-import 'package:dup/src/util/validator_base.dart';
 import '../model/message_factory.dart';
+import '../model/validation_code.dart';
+import 'validator_base.dart';
 
 class ValidateBool extends BaseValidator<bool, ValidateBool> {
   ValidateBool isTrue({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value != true) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.boolMessages['isTrue']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label must be true.';
+        return getFailure(messageFactory, ValidationCode.boolTrue,
+            {'name': label}, '$label must be true.');
       }
       return null;
     });
@@ -21,11 +18,8 @@ class ValidateBool extends BaseValidator<bool, ValidateBool> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value != false) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.boolMessages['isFalse']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label must be false.';
+        return getFailure(messageFactory, ValidationCode.boolFalse,
+            {'name': label}, '$label must be false.');
       }
       return null;
     });

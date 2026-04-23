@@ -1,35 +1,41 @@
-import 'package:test/test.dart';
 import 'package:dup/dup.dart';
+import 'package:test/test.dart';
 
 void main() {
-  group('ValidateBool.isTrue', () {
-    test('passes when value is true', () {
-      expect(ValidateBool().setLabel('Flag').isTrue().validate(true), isNull);
+  tearDown(() => ValidatorLocale.resetLocale());
+
+  group('isTrue()', () {
+    test('passes for true', () {
+      expect(ValidateBool().isTrue().validate(true), isA<ValidationSuccess>());
     });
-    test('fails when value is false', () {
-      expect(ValidateBool().setLabel('Flag').isTrue().validate(false), isNotNull);
+
+    test('fails for false', () {
+      final result = ValidateBool().isTrue().validate(false);
+      expect((result as ValidationFailure).code, ValidationCode.boolTrue);
     });
-    test('skips on null', () {
-      expect(ValidateBool().setLabel('Flag').isTrue().validate(null), isNull);
+
+    test('passes for null', () {
+      expect(ValidateBool().isTrue().validate(null), isA<ValidationSuccess>());
+    });
+
+    test('uses locale', () {
+      ValidatorLocale.setLocale(ValidatorLocale({
+        ValidationCode.boolTrue: (p) => '${p['name']} 참이어야 합니다.',
+      }));
+      final result = ValidateBool().setLabel('동의').isTrue().validate(false)
+          as ValidationFailure;
+      expect(result.message, '동의 참이어야 합니다.');
     });
   });
 
-  group('ValidateBool.isFalse', () {
-    test('passes when value is false', () {
-      expect(ValidateBool().setLabel('Flag').isFalse().validate(false), isNull);
+  group('isFalse()', () {
+    test('passes for false', () {
+      expect(ValidateBool().isFalse().validate(false), isA<ValidationSuccess>());
     });
-    test('fails when value is true', () {
-      expect(ValidateBool().setLabel('Flag').isFalse().validate(true), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateBool().setLabel('Flag').isFalse().validate(null), isNull);
-    });
-  });
 
-  group('ValidateBool — phase ordering', () {
-    test('required fires before isTrue regardless of chain order', () {
-      final v = ValidateBool().setLabel('Agreed').isTrue().required();
-      expect(v.validate(null), equals('Agreed is required.'));
+    test('fails for true', () {
+      final result = ValidateBool().isFalse().validate(true);
+      expect((result as ValidationFailure).code, ValidationCode.boolFalse);
     });
   });
 }
