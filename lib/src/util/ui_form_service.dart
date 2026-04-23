@@ -1,4 +1,3 @@
-import 'package:dup/src/util/validator_base.dart';
 import '../model/base_validator_schema.dart';
 import 'form_validate_exception.dart';
 
@@ -34,6 +33,12 @@ class UiFormService {
   bool hasError(String path, FormValidationException? error) {
     if (error == null) return false;
     return error.errors.containsKey(path);
+  }
+
+  /// Returns the error message for [path], or null if there is none.
+  String? getError(String path, FormValidationException? error) {
+    if (error == null) return null;
+    return error.errors[path];
   }
 }
 
