@@ -1,15 +1,19 @@
 library;
 
-// Base validator class
+// Base validator
 export 'src/util/validator_base.dart';
 
-// Validators for each type
+// Validators
 export 'src/util/validate_string.dart';
 export 'src/util/validate_number.dart';
 export 'src/util/validate_list.dart';
+export 'src/util/validate_bool.dart';
+export 'src/util/validate_date_time.dart';
+
+// Locale
 export 'src/util/validate_locale.dart';
 
-// Schema and exception classes
+// Schema and exceptions
 export 'src/model/base_validator_schema.dart';
 export 'src/util/form_validate_exception.dart';
 
