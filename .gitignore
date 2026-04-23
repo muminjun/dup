@@ -31,3 +31,4 @@ doc/
 .flutter-plugins-dependencies
 build/
 .packages
+coverage/
