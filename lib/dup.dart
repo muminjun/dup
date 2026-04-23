@@ -1,5 +1,8 @@
 library;
 
+export 'src/model/validation_code.dart';
+export 'src/model/validation_result.dart';
+
 // Base validator
 export 'src/util/validator_base.dart';
 
