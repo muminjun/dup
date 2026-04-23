@@ -2,20 +2,19 @@ import '../model/message_factory.dart';
 import '../model/validation_code.dart';
 import 'validator_base.dart';
 
-/// 불리언([bool]) 전용 검증기.
+/// Validator for [bool] values.
 ///
-/// null은 자동으로 통과(null-skip)한다.
-/// null도 막으려면 [required]를 체이닝한다.
+/// Both methods null-skip (null passes). Add [required] to also reject null.
 ///
 /// ```dart
 /// ValidateBool()
-///   .setLabel('이용약관 동의')
+///   .setLabel('Terms accepted')
 ///   .isTrue()
 ///   .required()
-///   .validate(agreed);
+///   .validate(accepted);
 /// ```
 class ValidateBool extends BaseValidator<bool, ValidateBool> {
-  /// phase 1: 값이 true가 아니면 실패한다. null은 통과(null-skip).
+  /// Phase 1: fails when value is not true. Null passes (null-skip).
   ValidateBool isTrue({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
@@ -28,7 +27,7 @@ class ValidateBool extends BaseValidator<bool, ValidateBool> {
     });
   }
 
-  /// phase 1: 값이 false가 아니면 실패한다. null은 통과(null-skip).
+  /// Phase 1: fails when value is not false. Null passes (null-skip).
   ValidateBool isFalse({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;

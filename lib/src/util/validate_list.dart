@@ -3,25 +3,25 @@ import '../model/validation_code.dart';
 import '../model/validation_result.dart';
 import 'validator_base.dart';
 
-/// 리스트([List<T>]) 전용 검증기.
+/// Validator for [List<T>] values.
 ///
-/// 모든 검증 메서드는 값이 null이면 자동으로 통과(null-skip)한다.
-/// 단, [isNotEmpty]는 null도 실패로 처리한다 (null = "비어 있음"으로 간주).
+/// All methods null-skip (return null / pass when value is null), except
+/// [isNotEmpty] which treats null as empty and fails.
 ///
-/// [eachItem]으로 리스트 내 개별 아이템을 검증할 수 있다.
+/// Use [eachItem] to validate individual list elements:
 ///
 /// ```dart
 /// ValidateList<String>()
-///   .setLabel('태그')
+///   .setLabel('Tags')
 ///   .minLength(1)
 ///   .maxLength(5)
 ///   .eachItem((tag) => tag.length > 20
-///       ? ValidationFailure(code: ValidationCode.custom, message: '태그는 20자 이하')
+///       ? const ValidationFailure(code: ValidationCode.custom, message: 'Tag too long')
 ///       : null)
 ///   .validate(tags);
 /// ```
 class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
-  /// phase 1: 리스트가 null이거나 비어 있으면 실패한다.
+  /// Phase 1: fails when the list is null or empty.
   ValidateList<T> isNotEmpty({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value != null && value.isEmpty) {
@@ -33,7 +33,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 1: 리스트에 아이템이 있으면 실패한다 (빈 리스트만 허용).
+  /// Phase 1: fails when the list contains any items (only an empty list passes).
   ValidateList<T> isEmpty({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value != null && value.isNotEmpty) {
@@ -45,7 +45,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 아이템 수가 [min] 미만이면 실패한다.
+  /// Phase 2: fails when the item count is less than [min].
   ValidateList<T> minLength(int min, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
@@ -61,7 +61,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 아이템 수가 [max] 초과면 실패한다.
+  /// Phase 2: fails when the item count exceeds [max].
   ValidateList<T> maxLength(int max, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && value.length > max) {
@@ -76,7 +76,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 아이템 수가 [min] ~ [max] 범위를 벗어나면 실패한다.
+  /// Phase 2: fails when the item count is outside the inclusive range [[min], [max]].
   ValidateList<T> lengthBetween(
     int min,
     int max, {
@@ -96,7 +96,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 아이템 수가 정확히 [length]가 아니면 실패한다.
+  /// Phase 2: fails when the item count is not exactly [length].
   ValidateList<T> hasLength(int length, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
@@ -112,7 +112,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 리스트에 [item]이 없으면 실패한다. null이면 실패.
+  /// Phase 2: fails when [item] is not present in the list. Null fails.
   ValidateList<T> contains(T item, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && !value.contains(item)) {
@@ -125,7 +125,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 리스트에 [item]이 있으면 실패한다.
+  /// Phase 2: fails when [item] is present in the list.
   ValidateList<T> doesNotContain(T item, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && value.contains(item)) {
@@ -140,7 +140,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 모든 아이템이 [predicate]를 만족하지 않으면 실패한다.
+  /// Phase 2: fails when any item does not satisfy [predicate].
   ValidateList<T> all(
     bool Function(T) predicate, {
     MessageFactory? messageFactory,
@@ -158,7 +158,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: [predicate]를 만족하는 아이템이 하나도 없으면 실패한다.
+  /// Phase 2: fails when no items satisfy [predicate].
   ValidateList<T> any(
     bool Function(T) predicate, {
     MessageFactory? messageFactory,
@@ -177,7 +177,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: [predicate]를 만족하는 아이템이 하나라도 있으면 실패한다.
+  /// Phase 2: fails when any item satisfies [predicate].
   ValidateList<T> none(
     bool Function(T) predicate, {
     MessageFactory? messageFactory,
@@ -196,7 +196,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 리스트에 중복 아이템이 있으면 실패한다.
+  /// Phase 2: fails when the list contains duplicate items.
   ValidateList<T> hasNoDuplicates({MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && value.toSet().length != value.length) {
@@ -211,10 +211,10 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// phase 2: 각 아이템을 [itemValidator]로 검증하고, 첫 번째 실패 아이템에서 중단한다.
+  /// Phase 2: validates each item with [itemValidator], stopping at the first failure.
   ///
-  /// [itemValidator]는 [ValidationFailure]를 반환하거나 통과 시 null을 반환해야 한다.
-  /// 실패 시 [ValidationFailure.context]의 `index`에 실패한 아이템의 인덱스가 포함된다.
+  /// [itemValidator] must return [ValidationFailure] on failure or null to pass.
+  /// The resulting failure includes `context['index']` with the failing item's index.
   ValidateList<T> eachItem(
     ValidationFailure? Function(T) itemValidator, {
     MessageFactory? messageFactory,

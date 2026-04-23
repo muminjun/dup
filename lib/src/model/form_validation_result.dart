@@ -1,9 +1,11 @@
 import 'validation_result.dart';
 
-/// 폼(스키마) 전체 검증 결과를 나타내는 sealed 클래스.
+/// Sealed result type for a full schema (form) validation.
 ///
-/// [DupSchema.validate] / [DupSchema.validateSync]의 반환 타입.
-/// 성공이면 [FormValidationSuccess], 하나 이상의 필드가 실패하면 [FormValidationFailure].
+/// Returned by [DupSchema.validate] and [DupSchema.validateSync].
+/// Either [FormValidationSuccess] (all fields passed) or
+/// [FormValidationFailure] (one or more fields failed). Sealed so switch
+/// exhaustiveness is enforced:
 ///
 /// ```dart
 /// final result = await schema.validate(data);
@@ -16,34 +18,34 @@ sealed class FormValidationResult {
   const FormValidationResult();
 }
 
-/// 모든 필드가 검증을 통과했음을 나타낸다.
+/// Indicates that all fields passed validation.
 class FormValidationSuccess extends FormValidationResult {
   const FormValidationSuccess();
 }
 
-/// 하나 이상의 필드가 검증에 실패했음을 나타낸다.
+/// Indicates that one or more fields failed validation.
 ///
-/// [errors]는 필드명 → [ValidationFailure] 맵이다.
-/// call() 연산자로 특정 필드의 에러를 조회할 수 있다.
+/// [errors] maps each failing field name to its [ValidationFailure].
+/// Use the call operator to look up a field's error conveniently.
 class FormValidationFailure extends FormValidationResult {
-  /// 필드별 실패 정보. 키는 스키마에서 사용한 필드명.
+  /// Map of field name → [ValidationFailure]. Keys match the schema field names.
   final Map<String, ValidationFailure> errors;
 
   const FormValidationFailure(this.errors);
 
-  /// 특정 필드의 [ValidationFailure]를 반환한다. 해당 필드가 없으면 null.
+  /// Returns the [ValidationFailure] for [field], or null if the field passed.
   ///
   /// ```dart
   /// final emailError = failure('email'); // ValidationFailure?
   /// ```
   ValidationFailure? call(String field) => errors[field];
 
-  /// 특정 필드에 에러가 있는지 확인한다.
+  /// Returns true if [field] has a validation error.
   bool hasError(String field) => errors.containsKey(field);
 
-  /// 에러가 있는 모든 필드 이름 목록.
+  /// All field names that have errors.
   List<String> get fields => errors.keys.toList();
 
-  /// 에러가 있는 첫 번째 필드 이름. 에러가 없으면 null (정상적으로는 발생 안 함).
+  /// The first field name that has an error, or null if [errors] is empty.
   String? get firstField => errors.keys.firstOrNull;
 }

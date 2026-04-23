@@ -2,20 +2,20 @@ import '../model/message_factory.dart';
 import '../model/validation_code.dart';
 import 'validator_base.dart';
 
-/// 날짜/시간([DateTime]) 전용 검증기.
+/// Validator for [DateTime] values.
 ///
-/// 모든 검증 메서드는 값이 null이면 자동으로 통과(null-skip)한다.
+/// All methods null-skip: they return null (pass) when the value is null.
 ///
 /// ```dart
 /// ValidateDateTime()
-///   .setLabel('생년월일')
+///   .setLabel('Date of birth')
 ///   .min(DateTime(1900))
 ///   .isInPast()
 ///   .required()
 ///   .validate(birthDate);
 /// ```
 class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
-  /// phase 1: 값이 [target] 이전이 아니면 실패한다 (즉, [target] 이후이거나 같으면 실패).
+  /// Phase 1: fails when value is not strictly before [target].
   ValidateDateTime isBefore(DateTime target, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
@@ -31,7 +31,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     });
   }
 
-  /// phase 1: 값이 [target] 이후가 아니면 실패한다 (즉, [target] 이전이거나 같으면 실패).
+  /// Phase 1: fails when value is not strictly after [target].
   ValidateDateTime isAfter(DateTime target, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
@@ -45,7 +45,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     });
   }
 
-  /// phase 2: 값이 [min] 이전이면 실패한다 (최소 날짜 이후여야 함).
+  /// Phase 2: fails when value is before [min] (i.e. value must be on or after [min]).
   ValidateDateTime min(DateTime min, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
@@ -61,7 +61,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     });
   }
 
-  /// phase 2: 값이 [max] 이후이면 실패한다 (최대 날짜 이전이어야 함).
+  /// Phase 2: fails when value is after [max] (i.e. value must be on or before [max]).
   ValidateDateTime max(DateTime max, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
@@ -77,7 +77,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     });
   }
 
-  /// phase 2: 값이 [min] ~ [max] 범위를 벗어나면 실패한다 (경계값 포함).
+  /// Phase 2: fails when value is outside the inclusive range [[min], [max]].
   ValidateDateTime between(
     DateTime min,
     DateTime max, {
@@ -97,7 +97,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     });
   }
 
-  /// phase 2: 값이 현재 시각 이전이거나 같으면 실패한다 (미래 날짜만 허용).
+  /// Phase 2: fails when value is not strictly after [DateTime.now].
   ValidateDateTime isInFuture({MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
@@ -113,7 +113,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     });
   }
 
-  /// phase 2: 값이 현재 시각 이후이거나 같으면 실패한다 (과거 날짜만 허용).
+  /// Phase 2: fails when value is not strictly before [DateTime.now].
   ValidateDateTime isInPast({MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;

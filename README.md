@@ -2,15 +2,17 @@
 
 A schema-based validation library for Dart, inspired by [yup](https://github.com/jquense/yup) and [zod](https://zod.dev).
 
-Pure Dart — no Flutter dependency. Works in Flutter, server, and CLI environments.
+Pure Dart. Works in Flutter, server, and CLI environments.
 
 ## Features
 
-- **Fluent, chainable API** — validators compose naturally
-- **Phase-ordered execution** — `required` always fires first, regardless of chain order
-- **Async validator support** — `addAsyncValidator()` + `validateAsync()`
-- **Three-level error messages** — per-call override → global locale → hardcoded default
-- **Full null contract** — every validator skips silently on `null` unless `.required()` is set
+- Fluent, chainable validators
+- Structured results with sealed `ValidationResult` — switch exhaustiveness enforced
+- Schema validation with `DupSchema` (replaces the old `useUiForm` + `BaseValidatorSchema`)
+- Phase-ordered execution: `required` always fires before format and range checks
+- Async validator support via `addAsyncValidator` and `validateAsync`
+- Three-level message resolution: per-call override → global locale → hardcoded default
+- Null-skip semantics for all non-required validators
 
 ## Installation
 
@@ -19,22 +21,67 @@ dependencies:
   dup: ^2.0.0
 ```
 
-## Quick start
+## Quick Start
 
 ```dart
 import 'package:dup/dup.dart';
 
-final schema = BaseValidatorSchema({
-  'email': ValidateString().setLabel('Email').email().required(),
-  'age':   ValidateNumber().setLabel('Age').min(0).required(),
+final schema = DupSchema({
+  'email': ValidateString().email().required(),
+  'age':   ValidateNumber().min(18).required(),
 });
 
-try {
-  await useUiForm.validate(schema, {'email': 'user@example.com', 'age': 25});
-  print('All good!');
-} on FormValidationException catch (e) {
-  // e.errors is Map<String, String>
-  e.errors.forEach((field, msg) => print('$field: $msg'));
+final result = await schema.validate({'email': 'user@example.com', 'age': 25});
+
+switch (result) {
+  FormValidationSuccess() => print('All good!'),
+  FormValidationFailure(:final errors) =>
+      errors.forEach((field, f) => print('$field: ${f.message}')),
+}
+```
+
+## DupSchema
+
+```dart
+final schema = DupSchema(
+  {
+    'email':           ValidateString().email().required(),
+    'password':        ValidateString().min(8).required(),
+    'passwordConfirm': ValidateString().required(),
+  },
+  // Override the label used in error messages (defaults to the key name)
+  labels: {'passwordConfirm': 'Password confirmation'},
+).crossValidate((data) {
+  if (data['password'] != data['passwordConfirm']) {
+    return {
+      'passwordConfirm': const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'Passwords do not match.',
+      ),
+    };
+  }
+  return null; // pass
+});
+
+// Async (supports async validators)
+final result = await schema.validate(formData);
+
+// Sync (asserts in debug mode when async validators are present)
+final result = schema.validateSync(formData);
+
+// Single-field validation (e.g. on-change feedback)
+final fieldResult = await schema.validateField('email', value);
+```
+
+### Reading errors
+
+```dart
+if (result is FormValidationFailure) {
+  result.hasError('email');          // bool
+  result('email')?.message;         // String? — the error message
+  result('email')?.code;            // ValidationCode
+  result.fields;                    // List<String> — all failing fields
+  result.firstField;                // String? — first failing field
 }
 ```
 
@@ -44,182 +91,192 @@ try {
 
 | Method | Description |
 |---|---|
-| `required()` | Field must be present and non-empty |
-| `min(n)` | At least `n` characters (trims whitespace) |
-| `max(n)` | At most `n` characters (trims whitespace) |
-| `matches(RegExp)` | Value must match the regex |
+| `required()` | Fails for null or empty string |
+| `notBlank()` | Fails for whitespace-only string |
+| `min(n)` | At least `n` characters (after trim) |
+| `max(n)` | At most `n` characters (after trim) |
+| `matches(RegExp)` | Must match the regex |
 | `email()` | Must be a valid email address |
-| `password({minLength})` | Minimum length check (default 4), accepts any characters |
-| `emoji()` | Fails if the value contains an emoji |
-| `url()` | Must be a valid http/https URL |
-| `uuid()` | Must be a valid UUID (any case) |
-| `mobile({customRegex})` | Korean mobile format by default; supply `customRegex` to override |
-| `phone({customRegex})` | Korean landline format by default; supply `customRegex` to override |
-| `bizno({customRegex})` | Korean BRN format by default; supply `customRegex` to override |
-
-```dart
-// Korean default
-ValidateString().setLabel('Phone').mobile().validate('010-1234-5678'); // null
-
-// Custom regex for international numbers
-ValidateString().setLabel('Phone')
-  .mobile(customRegex: RegExp(r'^\+1\d{10}$'))
-  .validate('+11234567890'); // null
-```
+| `password({minLength})` | Minimum length check (default 4) |
+| `emoji()` | Fails when value contains emoji |
+| `alpha()` | Letters only (a–z, A–Z) |
+| `alphanumeric()` | Letters and digits only |
+| `numeric()` | Digits only (0–9) |
+| `url()` | Must be a valid HTTP/HTTPS URL |
+| `uuid()` | Must be a valid UUID v4 |
+| `mobile({customRegex})` | Mobile number format (default: Korean) |
+| `phone({customRegex})` | Landline format (default: Korean) |
+| `bizno({customRegex})` | Business registration number (default: Korean) |
 
 ### ValidateNumber
 
 | Method | Description |
 |---|---|
-| `required()` | Field must be present |
-| `min(n)` | Value must be ≥ n |
-| `max(n)` | Value must be ≤ n |
-| `isInteger()` | Value must be a whole number |
-| `isPositive()` | Value must be > 0 |
-| `isNegative()` | Value must be < 0 |
-| `isNonNegative()` | Value must be ≥ 0 |
-| `isNonPositive()` | Value must be ≤ 0 |
+| `required()` | Fails for null |
+| `min(n)` | Value ≥ n |
+| `max(n)` | Value ≤ n |
+| `isInteger()` | No fractional part |
+| `isPositive()` | Value > 0 |
+| `isNegative()` | Value < 0 |
+| `isNonNegative()` | Value ≥ 0 |
+| `isNonPositive()` | Value ≤ 0 |
+| `between(min, max)` | Inclusive range check |
+| `isEven()` | Even number |
+| `isOdd()` | Odd number |
+| `isMultipleOf(n)` | Multiple of n |
+
+`ValidateNumber.toValidator()` parses a string input before validating —
+compatible with Flutter's `TextFormField.validator`:
+
+```dart
+TextFormField(
+  validator: ValidateNumber().setLabel('Age').min(18).toValidator(),
+)
+```
 
 ### ValidateList\<T\>
 
 | Method | Description |
 |---|---|
-| `required()` | Field must be present |
-| `isNotEmpty()` | List must have at least one item |
-| `isEmpty()` | List must be empty |
+| `required()` | Fails for null |
+| `isNotEmpty()` | At least one item |
+| `isEmpty()` | Must be empty |
 | `minLength(n)` | At least `n` items |
 | `maxLength(n)` | At most `n` items |
 | `lengthBetween(min, max)` | Item count in range |
 | `hasLength(n)` | Exactly `n` items |
-| `contains(item)` | List must contain the item |
-| `doesNotContain(item)` | List must not contain the item |
-| `all(predicate)` | Every item must satisfy the predicate |
-| `any(predicate)` | At least one item must satisfy the predicate |
+| `contains(item)` | Must contain item |
+| `doesNotContain(item)` | Must not contain item |
+| `all(predicate)` | Every item satisfies predicate |
+| `any(predicate)` | At least one item satisfies predicate |
+| `none(predicate)` | No items satisfy predicate |
 | `hasNoDuplicates()` | No duplicate items |
-| `eachItem(validator)` | Run a per-item validator; reports the first failing index |
+| `eachItem(fn)` | Per-item validator; reports first failing index |
 
 ### ValidateBool
 
 | Method | Description |
 |---|---|
-| `required()` | Field must be present |
-| `isTrue()` | Value must be `true` |
-| `isFalse()` | Value must be `false` |
+| `required()` | Fails for null |
+| `isTrue()` | Must be `true` |
+| `isFalse()` | Must be `false` |
 
 ```dart
-// Useful for "agree to terms" checkboxes
+// "Agree to terms" checkbox
 ValidateBool().setLabel('Terms').isTrue().required().validate(false);
-// → 'Terms must be true.'
+// → ValidationFailure(code: boolTrue, message: 'Terms must be true.')
 ```
 
 ### ValidateDateTime
 
 | Method | Description |
 |---|---|
-| `required()` | Field must be present |
-| `isBefore(target)` | Value must be strictly before `target` |
-| `isAfter(target)` | Value must be strictly after `target` |
-| `min(date)` | Value must be on or after `date` |
-| `max(date)` | Value must be on or before `date` |
-| `between(min, max)` | Value must be within the inclusive range |
+| `required()` | Fails for null |
+| `isBefore(target)` | Strictly before target |
+| `isAfter(target)` | Strictly after target |
+| `min(date)` | On or after date |
+| `max(date)` | On or before date |
+| `between(min, max)` | Inclusive range |
+| `isInFuture()` | Must be after now |
+| `isInPast()` | Must be before now |
 
-## Phase ordering
+## Phase Ordering
 
-Validators always execute in phase order, regardless of how the chain is written:
+Validators always run in phase order regardless of chain order:
 
 | Phase | What runs |
 |---|---|
-| 0 | `required` |
+| 0 | `required`, `notBlank` |
 | 1 | Format checks (`email`, `isInteger`, `isBefore`, …) |
 | 2 | Constraint checks (`min`, `max`, `between`, …) |
-| 3 | Custom validators (`addValidator`, `satisfy`, `equalTo`, …) |
-| 4 | Async validators (`addAsyncValidator`) |
+| 3 | Custom (`addValidator`, `satisfy`, `equalTo`, …) |
+| 4 | Async (`addAsyncValidator`) |
 
 ```dart
-// Both of these behave identically — required always fires first
-ValidateString().setLabel('Email').email().required();
-ValidateString().setLabel('Email').required().email();
+// These two chains behave identically — required always fires first
+ValidateString().email().required();
+ValidateString().required().email();
 ```
 
-## Async validators
+## Async Validators
 
 ```dart
 final v = ValidateString().setLabel('Username').required()
   ..addAsyncValidator((value) async {
     final taken = await db.usernameExists(value!);
-    return taken ? 'Username is already taken.' : null;
+    if (taken) {
+      return const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'Username is already taken.',
+      );
+    }
+    return null; // pass
   });
 
-final error = await v.validateAsync('alice'); // runs DB check
+final result = await v.validateAsync('alice');
 ```
 
-When using `UiFormService`, `validate()` is already async and runs async validators automatically:
+## Custom Validators
 
 ```dart
-await useUiForm.validate(schema, request);
+ValidateString()
+  .setLabel('Code')
+  .addValidator((v) {
+    if (v != null && !v.startsWith('APP-')) {
+      return const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'Code must start with APP-.',
+      );
+    }
+    return null;
+  });
 ```
 
-## Custom validators
+## Error Messages
+
+Messages are resolved in this order for each failing check:
+
+1. **`messageFactory`** — argument on the specific method call
+2. **`ValidatorLocale.current`** — global locale map, keyed by `ValidationCode`
+3. **Hardcoded default** — English fallback inside the validator
+
+### Per-call override
 
 ```dart
-ValidateString().setLabel('Code')
-  .satisfy((v) => v != null && v.startsWith('APP-'),
-    messageFactory: (label, _) => '$label must start with APP-');
-```
-
-## Error helpers
-
-```dart
-FormValidationException? error;
-try {
-  await useUiForm.validate(schema, request);
-} on FormValidationException catch (e) {
-  error = e;
-}
-
-useUiForm.hasError('email', error); // bool
-useUiForm.getError('email', error); // String? — the message, or null
-```
-
-## Custom error messages
-
-### Per-call (highest priority)
-
-```dart
-ValidateString().setLabel('Email')
-  .email(messageFactory: (label, _) => 'Please enter a valid email for $label');
+ValidateString()
+  .setLabel('Email')
+  .email(messageFactory: (label, _) => 'Please enter a valid $label');
 ```
 
 ### Global locale
 
 ```dart
-ValidatorLocale.setLocale(ValidatorLocale(
-  mixed: {
-    'required': (params) => '${params['name']}을 입력해 주세요.',
-  },
-  string: {
-    'emailInvalid': (params) => '${params['name']} 형식이 올바르지 않습니다.',
-  },
-  number: {},
-  array: {},
-));
+ValidatorLocale.setLocale(ValidatorLocale({
+  ValidationCode.required:     (p) => '${p['name']} is required.',
+  ValidationCode.emailInvalid: (p) => '${p['name']} is not a valid email.',
+  ValidationCode.stringMin:    (p) => '${p['name']} must be at least ${p['min']} characters.',
+}));
 ```
 
-## Schema validation
+Reset in tests to avoid state leakage:
 
 ```dart
-final schema = BaseValidatorSchema({
-  'username': ValidateString().setLabel('Username').min(3).max(20).required(),
-  'email':    ValidateString().setLabel('Email').email().required(),
-  'age':      ValidateNumber().setLabel('Age').min(18).required(),
-  'tags':     ValidateList<String>().setLabel('Tags').isNotEmpty(),
-  'agreed':   ValidateBool().setLabel('Terms').isTrue().required(),
-});
+tearDown(() => ValidatorLocale.resetLocale());
+```
 
-try {
-  await useUiForm.validate(schema, formData, abortEarly: false);
-} on FormValidationException catch (e) {
-  print(e.errors); // Map<String, String> of all field errors
+## ValidationResult
+
+Every validator returns a sealed `ValidationResult`:
+
+```dart
+final result = ValidateString().email().validate(input);
+
+switch (result) {
+  ValidationSuccess() => // passed
+  ValidationFailure(:final code, :final message, :final context) =>
+      // code   — ValidationCode enum value
+      // message — resolved error string
+      // context — map of parameters used to build the message
 }
 ```
 
