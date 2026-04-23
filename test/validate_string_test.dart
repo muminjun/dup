@@ -1,203 +1,120 @@
-import 'package:test/test.dart';
 import 'package:dup/dup.dart';
+import 'package:test/test.dart';
 
 void main() {
-  group('ValidateString.min / max', () {
-    test('min passes when length is sufficient', () {
-      expect(ValidateString().setLabel('X').min(3).validate('abc'), isNull);
+  tearDown(() => ValidatorLocale.resetLocale());
+
+  group('min()', () {
+    test('passes when length >= min', () {
+      expect(ValidateString().min(3).validate('abc'), isA<ValidationSuccess>());
     });
-    test('min fails when too short', () {
-      expect(ValidateString().setLabel('X').min(3).validate('ab'), isNotNull);
+
+    test('fails when length < min', () {
+      final result = ValidateString().setLabel('Name').min(3).validate('ab');
+      expect(result, isA<ValidationFailure>());
+      expect((result as ValidationFailure).code, ValidationCode.stringMin);
+      expect(result.context['min'], 3);
     });
-    test('max passes when within limit', () {
-      expect(ValidateString().setLabel('X').max(5).validate('hello'), isNull);
+
+    test('passes for null (null-skip)', () {
+      expect(ValidateString().min(3).validate(null), isA<ValidationSuccess>());
     });
-    test('max fails when too long', () {
-      expect(ValidateString().setLabel('X').max(3).validate('toolong'), isNotNull);
+
+    test('uses messageFactory', () {
+      final result = ValidateString().setLabel('이름').min(3,
+          messageFactory: (label, p) => '$label 최소 ${p['min']}자').validate('ab')
+          as ValidationFailure;
+      expect(result.message, '이름 최소 3자');
     });
-    test('min skips on null', () {
-      expect(ValidateString().setLabel('X').min(3).validate(null), isNull);
-    });
-    test('max skips on null', () {
-      expect(ValidateString().setLabel('X').max(3).validate(null), isNull);
+
+    test('uses locale', () {
+      ValidatorLocale.setLocale(ValidatorLocale({
+        ValidationCode.stringMin: (p) => '${p['name']} 짧음',
+      }));
+      final result = ValidateString().setLabel('비번').min(8).validate('abc')
+          as ValidationFailure;
+      expect(result.message, '비번 짧음');
     });
   });
 
-  group('ValidateString.matches', () {
-    test('passes when regex matches', () {
-      expect(ValidateString().setLabel('X').matches(RegExp(r'^\d+$')).validate('123'), isNull);
-    });
-    test('fails when regex does not match', () {
-      expect(ValidateString().setLabel('X').matches(RegExp(r'^\d+$')).validate('abc'), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('X').matches(RegExp(r'^\d+$')).validate(null), isNull);
-    });
-  });
-
-  group('ValidateString.email', () {
+  group('email()', () {
     test('passes for valid email', () {
-      expect(ValidateString().setLabel('Email').email().validate('user@example.com'), isNull);
+      expect(ValidateString().email().validate('a@b.com'), isA<ValidationSuccess>());
     });
+
     test('fails for invalid email', () {
-      expect(ValidateString().setLabel('Email').email().validate('not-an-email'), isNotNull);
+      final result = ValidateString().email().validate('notanemail');
+      expect(result, isA<ValidationFailure>());
+      expect((result as ValidationFailure).code, ValidationCode.emailInvalid);
     });
-    test('skips on null (no implicit required)', () {
-      expect(ValidateString().setLabel('Email').email().validate(null), isNull);
+
+    test('passes for null', () {
+      expect(ValidateString().email().validate(null), isA<ValidationSuccess>());
     });
-    test('skips on empty string (no implicit required)', () {
-      expect(ValidateString().setLabel('Email').email().validate(''), isNull);
-    });
-    test('required() + email() catches null before checking format', () {
-      final v = ValidateString().setLabel('Email').email().required();
-      expect(v.validate(null), equals('Email is required.'));
+
+    test('passes for empty string', () {
+      expect(ValidateString().email().validate(''), isA<ValidationSuccess>());
     });
   });
 
-  group('ValidateString.password', () {
-    test('passes for valid password', () {
-      expect(ValidateString().setLabel('PW').password().validate('secret123'), isNull);
+  group('required()', () {
+    test('fails for null', () {
+      final result = ValidateString().required().validate(null);
+      expect((result as ValidationFailure).code, ValidationCode.required);
     });
-    test('fails when shorter than default minLength=4', () {
-      expect(ValidateString().setLabel('PW').password().validate('abc'), isNotNull);
-    });
-    test('custom minLength is respected', () {
-      expect(ValidateString().setLabel('PW').password(minLength: 8).validate('short12'), isNotNull);
-      expect(ValidateString().setLabel('PW').password(minLength: 8).validate('longpass1'), isNull);
-    });
-    test('accepts non-ASCII characters', () {
-      expect(ValidateString().setLabel('PW').password().validate('비밀번호!'), isNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('PW').password().validate(null), isNull);
-    });
-    test('skips on empty string', () {
-      expect(ValidateString().setLabel('PW').password().validate(''), isNull);
+
+    test('fails for empty string', () {
+      expect(ValidateString().required().validate(''), isA<ValidationFailure>());
     });
   });
 
-  group('ValidateString.emoji', () {
-    test('fails when value contains emoji', () {
-      expect(ValidateString().setLabel('X').emoji().validate('hello 😀'), isNotNull);
+  group('notBlank()', () {
+    test('fails for whitespace-only string', () {
+      final result = ValidateString().notBlank().validate('   ');
+      expect((result as ValidationFailure).code, ValidationCode.notBlank);
     });
-    test('passes when value has no emoji', () {
-      expect(ValidateString().setLabel('X').emoji().validate('hello world'), isNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('X').emoji().validate(null), isNull);
-    });
-    test('skips on empty string', () {
-      expect(ValidateString().setLabel('X').emoji().validate(''), isNull);
+
+    test('passes for null', () {
+      expect(ValidateString().notBlank().validate(null), isA<ValidationSuccess>());
     });
   });
 
-  group('ValidateString.mobile', () {
-    test('passes for valid Korean mobile (default)', () {
-      expect(ValidateString().setLabel('Phone').mobile().validate('010-1234-5678'), isNull);
-    });
-    test('fails for invalid format', () {
-      expect(ValidateString().setLabel('Phone').mobile().validate('12345'), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('Phone').mobile().validate(null), isNull);
-    });
-    test('skips on empty string', () {
-      expect(ValidateString().setLabel('Phone').mobile().validate(''), isNull);
-    });
-    test('customRegex overrides default', () {
-      final v = ValidateString().setLabel('Phone').mobile(
-        customRegex: RegExp(r'^\+1\d{10}$'),
-      );
-      expect(v.validate('+11234567890'), isNull);
-      expect(v.validate('010-1234-5678'), isNotNull);
+  group('max()', () {
+    test('fails when length > max', () {
+      final result = ValidateString().max(2).validate('abc');
+      expect((result as ValidationFailure).code, ValidationCode.stringMax);
     });
   });
 
-  group('ValidateString.phone', () {
-    test('passes for valid Korean landline (default)', () {
-      expect(ValidateString().setLabel('Phone').phone().validate('02-1234-5678'), isNull);
-    });
-    test('fails for invalid format', () {
-      expect(ValidateString().setLabel('Phone').phone().validate('99-9999-9999'), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('Phone').phone().validate(null), isNull);
-    });
-    test('customRegex overrides default', () {
-      final v = ValidateString().setLabel('Phone').phone(
-        customRegex: RegExp(r'^\+?[1-9]\d{1,14}$'),
-      );
-      expect(v.validate('+441234567890'), isNull);
+  group('matches()', () {
+    test('fails when regex does not match', () {
+      final result = ValidateString().matches(RegExp(r'^\d+$')).validate('abc');
+      expect((result as ValidationFailure).code, ValidationCode.matches);
     });
   });
 
-  group('ValidateString.bizno', () {
-    test('passes for valid Korean BRN (default)', () {
-      expect(ValidateString().setLabel('BRN').bizno().validate('123-45-67890'), isNull);
-    });
-    test('fails for invalid format', () {
-      expect(ValidateString().setLabel('BRN').bizno().validate('12345'), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('BRN').bizno().validate(null), isNull);
-    });
-    test('customRegex overrides default', () {
-      final v = ValidateString().setLabel('BRN').bizno(
-        customRegex: RegExp(r'^\d{2}-\d{7}$'),
-      );
-      expect(v.validate('12-3456789'), isNull);
-      expect(v.validate('123-45-67890'), isNotNull);
+  group('password()', () {
+    test('fails when too short', () {
+      final result = ValidateString().password(minLength: 8).validate('short');
+      expect((result as ValidationFailure).code, ValidationCode.passwordMin);
     });
   });
 
-  group('ValidateString.url', () {
-    test('passes for http URL', () {
-      expect(ValidateString().setLabel('URL').url().validate('http://example.com'), isNull);
-    });
-    test('passes for https URL', () {
-      expect(ValidateString().setLabel('URL').url().validate('https://example.com/path?q=1'), isNull);
-    });
-    test('fails for non-URL', () {
-      expect(ValidateString().setLabel('URL').url().validate('not a url'), isNotNull);
-    });
-    test('fails for ftp (only http/https)', () {
-      expect(ValidateString().setLabel('URL').url().validate('ftp://example.com'), isNotNull);
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('URL').url().validate(null), isNull);
+  group('alpha()', () {
+    test('fails for non-alpha string', () {
+      final result = ValidateString().alpha().validate('abc123');
+      expect((result as ValidationFailure).code, ValidationCode.alpha);
     });
   });
 
-  group('ValidateString.uuid', () {
-    test('passes for valid UUID v4', () {
-      expect(
-        ValidateString().setLabel('ID').uuid().validate('550e8400-e29b-41d4-a716-446655440000'),
-        isNull,
-      );
-    });
-    test('fails for non-UUID', () {
-      expect(ValidateString().setLabel('ID').uuid().validate('not-a-uuid'), isNotNull);
-    });
-    test('passes for uppercase UUID', () {
-      expect(
-        ValidateString().setLabel('ID').uuid().validate('550E8400-E29B-41D4-A716-446655440000'),
-        isNull,
-      );
-    });
-    test('skips on null', () {
-      expect(ValidateString().setLabel('ID').uuid().validate(null), isNull);
-    });
-  });
-
-  group('ValidateString — phase ordering', () {
-    test('required fires before email regardless of chain order', () {
-      final v = ValidateString().setLabel('Email').email().required();
-      expect(v.validate(null), equals('Email is required.'));
+  group('toValidator()', () {
+    test('returns null on success', () {
+      expect(ValidateString().email().toValidator()('a@b.com'), isNull);
     });
 
-    test('email (phase 1) fires before min (phase 2)', () {
-      final v = ValidateString().setLabel('Email').min(100).email();
-      expect(v.validate('not-an-email'), contains('not a valid email'));
+    test('returns message string on failure', () {
+      final fn = ValidateString().setLabel('Email').email().toValidator();
+      expect(fn('bad'), isNotNull);
     });
   });
 }

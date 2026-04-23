@@ -1,16 +1,13 @@
-import 'package:dup/src/util/validate_locale.dart';
-import 'package:dup/src/util/validator_base.dart';
 import '../model/message_factory.dart';
+import '../model/validation_code.dart';
+import 'validator_base.dart';
 
 class ValidateString extends BaseValidator<String, ValidateString> {
   ValidateString min(int min, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && value.trim().length < min) {
-        if (messageFactory != null) return messageFactory(label, {'min': min});
-        final global = ValidatorLocale.current?.string['min']
-            ?.call({'name': label, 'min': min});
-        if (global != null) return global;
-        return '$label must be at least $min characters.';
+        return getFailure(messageFactory, ValidationCode.stringMin,
+            {'name': label, 'min': min}, '$label must be at least $min characters.');
       }
       return null;
     });
@@ -19,11 +16,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   ValidateString max(int max, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && value.trim().length > max) {
-        if (messageFactory != null) return messageFactory(label, {'max': max});
-        final global = ValidatorLocale.current?.string['max']
-            ?.call({'name': label, 'max': max});
-        if (global != null) return global;
-        return '$label must be at most $max characters.';
+        return getFailure(messageFactory, ValidationCode.stringMax,
+            {'name': label, 'max': max}, '$label must be at most $max characters.');
       }
       return null;
     });
@@ -32,11 +26,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   ValidateString matches(RegExp regex, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value != null && !regex.hasMatch(value.trim())) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['matches']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label does not match the required format.';
+        return getFailure(messageFactory, ValidationCode.matches,
+            {'name': label}, '$label does not match the required format.');
       }
       return null;
     });
@@ -50,11 +41,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.trim().isEmpty) return null;
       if (!RegExp(emailRegex).hasMatch(value.trim())) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['emailInvalid']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label is not a valid email address.';
+        return getFailure(messageFactory, ValidationCode.emailInvalid,
+            {'name': label}, '$label is not a valid email address.');
       }
       return null;
     });
@@ -64,28 +52,63 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.trim().isEmpty) return null;
       if (value.trim().length < minLength) {
-        if (messageFactory != null) {
-          return messageFactory(label, {'minLength': minLength});
-        }
-        final global = ValidatorLocale.current?.string['passwordMin']
-            ?.call({'name': label, 'minLength': minLength});
-        if (global != null) return global;
-        return '$label must be at least $minLength characters.';
+        return getFailure(messageFactory, ValidationCode.passwordMin,
+            {'name': label, 'minLength': minLength},
+            '$label must be at least $minLength characters.');
       }
       return null;
     });
   }
 
   ValidateString emoji({MessageFactory? messageFactory}) {
+    final emojiRegex = RegExp(r'\p{Emoji_Presentation}', unicode: true);
     return addPhaseValidator(1, (value) {
-      if (value != null && value.isNotEmpty) {
-        if (RegExp(r'\p{Emoji}', unicode: true).hasMatch(value)) {
-          if (messageFactory != null) return messageFactory(label, {});
-          final global = ValidatorLocale.current?.string['emoji']
-              ?.call({'name': label});
-          if (global != null) return global;
-          return '$label cannot contain emoji.';
-        }
+      if (value != null && value.isNotEmpty && emojiRegex.hasMatch(value)) {
+        return getFailure(messageFactory, ValidationCode.emoji,
+            {'name': label}, '$label cannot contain emoji.');
+      }
+      return null;
+    });
+  }
+
+  ValidateString notBlank({MessageFactory? messageFactory}) {
+    return addPhaseValidator(0, (value) {
+      if (value != null && value.trim().isEmpty) {
+        return getFailure(messageFactory, ValidationCode.notBlank,
+            {'name': label}, '$label cannot be blank.');
+      }
+      return null;
+    });
+  }
+
+  ValidateString alpha({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!RegExp(r'^[a-zA-Z]+$').hasMatch(value.trim())) {
+        return getFailure(messageFactory, ValidationCode.alpha,
+            {'name': label}, '$label must contain only letters.');
+      }
+      return null;
+    });
+  }
+
+  ValidateString alphanumeric({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
+        return getFailure(messageFactory, ValidationCode.alphanumeric,
+            {'name': label}, '$label must contain only letters and numbers.');
+      }
+      return null;
+    });
+  }
+
+  ValidateString numeric({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
+        return getFailure(messageFactory, ValidationCode.numeric,
+            {'name': label}, '$label must contain only digits.');
       }
       return null;
     });
@@ -96,11 +119,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['mobileInvalid']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label is not a valid mobile number.';
+        return getFailure(messageFactory, ValidationCode.mobileInvalid,
+            {'name': label}, '$label is not a valid mobile number.');
       }
       return null;
     });
@@ -111,11 +131,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['phoneInvalid']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label is not a valid phone number.';
+        return getFailure(messageFactory, ValidationCode.phoneInvalid,
+            {'name': label}, '$label is not a valid phone number.');
       }
       return null;
     });
@@ -126,11 +143,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['biznoInvalid']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label is not a valid business registration number.';
+        return getFailure(messageFactory, ValidationCode.biznoInvalid,
+            {'name': label}, '$label is not a valid business registration number.');
       }
       return null;
     });
@@ -141,11 +155,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['url']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label is not a valid URL.';
+        return getFailure(messageFactory, ValidationCode.url,
+            {'name': label}, '$label is not a valid URL.');
       }
       return null;
     });
@@ -159,11 +170,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        if (messageFactory != null) return messageFactory(label, {});
-        final global = ValidatorLocale.current?.string['uuid']
-            ?.call({'name': label});
-        if (global != null) return global;
-        return '$label is not a valid UUID.';
+        return getFailure(messageFactory, ValidationCode.uuid,
+            {'name': label}, '$label is not a valid UUID.');
       }
       return null;
     });
