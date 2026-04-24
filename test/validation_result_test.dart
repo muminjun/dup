@@ -52,7 +52,10 @@ void main() {
     });
 
     test('is a ValidationResult', () {
-      const f = ValidationFailure(code: ValidationCode.required, message: 'req');
+      const f = ValidationFailure(
+        code: ValidationCode.required,
+        message: 'req',
+      );
       expect(f, isA<ValidationResult>());
     });
   });

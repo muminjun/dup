@@ -1,5 +1,50 @@
 # Changelog
-=======
+
+## [2.0.0] - 2026-04-24
+
+### Breaking Changes
+
+- **`BaseValidatorSchema` removed** — replaced by `DupSchema`, which unifies schema
+  definition and validation into a single class (no more `useUiForm` global service).
+- **`useUiForm` removed** — call `schema.validate(data)` directly.
+- **`FormValidationException` removed** — validation no longer throws; `schema.validate()`
+  returns `FormValidationResult` (either `FormValidationSuccess` or `FormValidationFailure`).
+- **`addValidator` callback return type changed** from `String?` to `ValidationFailure?`.
+- **`ValidatorLocale` constructor redesigned** — takes a single
+  `Map<ValidationCode, MessageFactory>` instead of `mixed:`, `number:`, `string:`, `array:`
+  named parameters with plain-string keys.
+- **`ValidateNumber.moreThan()` / `lessThan()` removed** — use `min()` / `max()` or
+  `satisfy()` for strict comparisons.
+
+See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
+
+### Added
+
+- `DupSchema` — replaces `BaseValidatorSchema` + `useUiForm` pair; supports
+  `validate()` (async), `validateSync()`, `validateField()`, and `crossValidate()`.
+- `FormValidationResult` sealed class (`FormValidationSuccess`, `FormValidationFailure`)
+  returned from `DupSchema.validate()` and `DupSchema.validateSync()`.
+- `FormValidationFailure` — call operator, `hasError()`, `fields`, `firstField`.
+- `ValidationCode` enum — type-safe key for every built-in rule; stored in
+  `ValidationFailure.code` and used as locale map keys.
+- `ValidationResult` sealed class (`ValidationSuccess`, `ValidationFailure`) returned
+  from every single-field `validate()` / `validateAsync()` call.
+- `ValidateBool` — new validator type with `isTrue()` and `isFalse()`.
+- `ValidateDateTime` — new validator type with `isBefore()`, `isAfter()`, `min()`,
+  `max()`, `between()`, `isInFuture()`, `isInPast()`.
+- `ValidateNumber.toValidator({parseErrorMessage})` — strips non-numeric characters
+  (`"1,000"`, `"17세"`) before validating; directly usable as `TextFormField.validator`.
+- `ValidateList` additions: `hasLength()`, `all()`, `any()`, `none()`,
+  `hasNoDuplicates()`, `eachItem()`.
+- `ValidateNumber` additions: `isPositive()`, `isNegative()`, `isNonNegative()`,
+  `isNonPositive()`, `isEven()`, `isOdd()`, `isMultipleOf()`, `between()`.
+- `DupSchema.crossValidate()` — cross-field validation called only when all
+  individual fields pass.
+- Phase-based execution (0 = required, 1 = format, 2 = constraint, 3 = custom,
+  4 = async) — chain order never affects which rule fires first.
+
+---
+
 ## [1.0.4] - 2025-06-19
 
 ### Added

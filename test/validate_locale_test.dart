@@ -39,9 +39,7 @@ void main() {
     });
 
     test('unspecified code returns null (falls through to default)', () {
-      final locale = ValidatorLocale({
-        ValidationCode.required: (_) => '필수',
-      });
+      final locale = ValidatorLocale({ValidationCode.required: (_) => '필수'});
       expect(locale.messages[ValidationCode.emailInvalid], isNull);
     });
   });
