@@ -65,22 +65,31 @@ All validators skip silently when the value is `null`, **except** phase 0 (`requ
 2. `ValidatorLocale.current` singleton (set via `ValidatorLocale.setLocale()`)
 3. Hardcoded English default in the validator body
 
-Use `ValidatorLocaleKeys` constants (defined in `validate_locale.dart`) when referencing locale keys — never raw strings.
+Locale maps are keyed by `ValidationCode` enum values (defined in `validation_code.dart`).
 
 ### Validation flow
 
-1. Caller builds a `BaseValidatorSchema` (`Map<String, BaseValidator>` wrapper).
-2. Calls `await useUiForm.validate(schema, request)` — the global `UiFormService` instance.
-3. `UiFormService` iterates fields, calls `validator.validateAsync(value)` on each, collects errors.
-4. If any errors exist, throws `FormValidationException(Map<String, String>)`.
-5. Use `useUiForm.hasError(field, ex)` / `useUiForm.getError(field, ex)` to inspect errors.
+1. Caller builds a `DupSchema` (`Map<String, BaseValidator>` with optional `labels` and `crossValidate`).
+2. Calls `await schema.validate(data)` — returns a `FormValidationResult` sealed class.
+3. `DupSchema` iterates all fields, calls `validator.validateAsync(value)` on each, collects all errors.
+4. If any fields failed, returns `FormValidationFailure(Map<String, ValidationFailure>)`.
+5. If all fields passed and a `crossValidate` function is set, it runs and may return additional errors.
+6. On success, returns `FormValidationSuccess()`.
+
+Pattern-match on the result:
+```dart
+switch (result) {
+  case FormValidationSuccess(): // proceed
+  case FormValidationFailure(): print(result('fieldName')?.message);
+}
+```
 
 ### Adding a new validator type
 
 1. Create `lib/src/util/validate_<type>.dart` extending `BaseValidator<T, ValidateX>`.
 2. Register all methods with `addPhaseValidator(phase, fn)` at the appropriate phase.
 3. Follow the null-skip pattern: `if (value == null) return null;` at the top of each phase-1+ validator.
-4. Add locale keys to `ValidatorLocaleKeys` in `validate_locale.dart` and a new map field to `ValidatorLocale` if it's a new category.
+4. Add new `ValidationCode` values to `validation_code.dart` and locale entries to `ValidatorLocale` if needed.
 5. Export the new class from `lib/dup.dart`.
 
 ### Test isolation

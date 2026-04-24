@@ -1187,73 +1187,73 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 이메일
+  // real user input — email patterns
   // ---------------------------------------------------------------------------
-  group('실제 유저 이메일 입력 패턴', () {
-    test('대문자 이메일도 유효하다', () {
+  group('real user email input patterns', () {
+    test('uppercase email is valid', () {
       expect(
         ValidateString().email().validate('USER@EXAMPLE.COM'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('@앞에 공백이 있으면 실패', () {
+    test('space before @ — fails', () {
       expect(
         ValidateString().email().validate('user @example.com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('@뒤에 공백이 있으면 실패', () {
+    test('space after @ — fails', () {
       expect(
         ValidateString().email().validate('user@ example.com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('도메인에 점이 연속이면 실패', () {
+    test('consecutive dots in domain — fails', () {
       expect(
         ValidateString().email().validate('user@example..com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('@없이 도메인만 입력하면 실패', () {
+    test('domain only without @ — fails', () {
       expect(
         ValidateString().email().validate('example.com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('숫자+문자 혼합 이메일은 유효하다', () {
+    test('alphanumeric mixed email is valid', () {
       expect(
         ValidateString().email().validate('hong123@naver.com'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('점이 포함된 이름도 유효하다', () {
+    test('dot in local part is valid', () {
       expect(
         ValidateString().email().validate('hong.gildong@company.co.kr'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('플러스 태그 이메일도 유효하다 (gmail 등)', () {
+    test('plus-tag email is valid (gmail style)', () {
       expect(
         ValidateString().email().validate('hong+work@gmail.com'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('TLD 없이 도메인만 입력하면 실패 (흔한 실수)', () {
+    test('domain without TLD — fails (common mistake)', () {
       expect(
         ValidateString().email().validate('user@localhost'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('앞뒤 공백은 trim되어 유효하다', () {
+    test('leading/trailing spaces are trimmed — valid', () {
       expect(
         ValidateString().email().validate('  hong@naver.com  '),
         isA<ValidationSuccess>(),
@@ -1262,73 +1262,73 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 휴대폰 번호
+  // real user input — mobile number patterns
   // ---------------------------------------------------------------------------
-  group('실제 유저 휴대폰 입력 패턴', () {
-    test('010-1234-5678 정상 형식', () {
+  group('real user mobile input patterns', () {
+    test('010-1234-5678 — valid format', () {
       expect(
         ValidateString().mobile().validate('010-1234-5678'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('공백으로 구분하면 실패 (010 1234 5678)', () {
+    test('space-separated (010 1234 5678) — fails', () {
       expect(
         ValidateString().mobile().validate('010 1234 5678'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('하이픈 없이 붙여쓰면 실패 (01012345678)', () {
+    test('no hyphens (01012345678) — fails', () {
       expect(
         ValidateString().mobile().validate('01012345678'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('마지막 자리 하나 더 입력하면 실패 (010-1234-56789)', () {
+    test('extra digit (010-1234-56789) — fails', () {
       expect(
         ValidateString().mobile().validate('010-1234-56789'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('중간 자리 짧으면 실패 (010-12-5678)', () {
+    test('short middle segment (010-12-5678) — fails', () {
       expect(
         ValidateString().mobile().validate('010-12-5678'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('국제 번호 형식은 기본 정규식 불일치 (+82-10-1234-5678)', () {
+    test('international format (+82-10-1234-5678) — fails (not in default regex)', () {
       expect(
         ValidateString().mobile().validate('+82-10-1234-5678'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('괄호 사용하면 실패 (010)1234-5678', () {
+    test('parenthesis format (010)1234-5678 — fails', () {
       expect(
         ValidateString().mobile().validate('010)1234-5678'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('011 구형 번호도 유효하다 (011-123-4567)', () {
+    test('legacy 011 number (011-123-4567) — valid', () {
       expect(
         ValidateString().mobile().validate('011-123-4567'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('빈 문자열은 통과 (필수 아닐 때)', () {
+    test('empty string — passes (not required)', () {
       expect(
         ValidateString().mobile().validate(''),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('null도 통과 (필수 아닐 때)', () {
+    test('null — passes (not required)', () {
       expect(
         ValidateString().mobile().validate(null),
         isA<ValidationSuccess>(),
@@ -1337,67 +1337,66 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 비밀번호
+  // real user input — password patterns
   // ---------------------------------------------------------------------------
-  group('실제 유저 비밀번호 입력 패턴', () {
-    test('1234 — 너무 짧음 (기본 최소 4자)', () {
-      // 기본 minLength=4이므로 1234는 통과
+  group('real user password input patterns', () {
+    test('1234 — passes (default minLength is 4)', () {
       expect(
         ValidateString().password().validate('1234'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('123 — 기본 minLength=4 미만이면 실패', () {
+    test('123 — fails (below default minLength of 4)', () {
       expect(
         ValidateString().password().validate('123'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('minLength:8 설정 시 password123 통과', () {
+    test('password123 with minLength:8 — passes', () {
       expect(
         ValidateString().password(minLength: 8).validate('password123'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('minLength:8 설정 시 qwerty 실패 (6자)', () {
+    test('qwerty (6 chars) with minLength:8 — fails', () {
       expect(
         ValidateString().password(minLength: 8).validate('qwerty'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('정확히 8자인 경우 통과 (경계값)', () {
+    test('exactly 8 chars — passes (boundary)', () {
       expect(
         ValidateString().password(minLength: 8).validate('abcdefgh'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('7자인 경우 실패 (경계값 - 1)', () {
+    test('7 chars — fails (boundary - 1)', () {
       expect(
         ValidateString().password(minLength: 8).validate('abcdefg'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('공백만 있는 비밀번호는 통과 (blank skip)', () {
+    test('whitespace-only — passes (blank skip)', () {
       expect(
         ValidateString().password(minLength: 8).validate('        '),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('특수문자 포함 비밀번호 통과', () {
+    test('password with special chars — passes', () {
       expect(
         ValidateString().password(minLength: 8).validate('P@ssw0rd!'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('한글 포함 비밀번호 통과 (길이만 검사)', () {
+    test('password with Korean characters — passes (length-only check)', () {
       expect(
         ValidateString().password(minLength: 4).validate('비밀번호1234'),
         isA<ValidationSuccess>(),
@@ -1406,66 +1405,66 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — URL
+  // real user input — URL patterns
   // ---------------------------------------------------------------------------
-  group('실제 유저 URL 입력 패턴', () {
-    test('https://naver.com 정상 통과', () {
+  group('real user URL input patterns', () {
+    test('https URL — passes', () {
       expect(
         ValidateString().url().validate('https://naver.com'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('http://naver.com 정상 통과', () {
+    test('http URL — passes', () {
       expect(
         ValidateString().url().validate('http://naver.com'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('프로토콜 없이 www.naver.com 입력하면 실패', () {
+    test('www without protocol — fails', () {
       expect(
         ValidateString().url().validate('www.naver.com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('도메인만 naver.com 입력하면 실패', () {
+    test('domain only without protocol — fails', () {
       expect(
         ValidateString().url().validate('naver.com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('http:// 만 입력하면 실패', () {
+    test('http:// with no host — fails', () {
       expect(
         ValidateString().url().validate('http://'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('https:// 만 입력하면 실패', () {
+    test('https:// with no host — fails', () {
       expect(
         ValidateString().url().validate('https://'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('ftp:// 프로토콜은 실패', () {
+    test('ftp:// protocol — fails', () {
       expect(
         ValidateString().url().validate('ftp://files.example.com'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('쿼리스트링 포함 URL 통과', () {
+    test('URL with query string — passes', () {
       expect(
         ValidateString().url().validate('https://search.naver.com/search.naver?query=dart'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('포트 번호 포함 URL 통과', () {
+    test('URL with port number — passes', () {
       expect(
         ValidateString().url().validate('http://localhost:8080'),
         isA<ValidationSuccess>(),
@@ -1474,38 +1473,38 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 사업자등록번호
+  // real user input — business registration number patterns
   // ---------------------------------------------------------------------------
-  group('실제 유저 사업자등록번호 입력 패턴', () {
-    test('123-45-67890 정상 형식 통과', () {
+  group('real user business number input patterns', () {
+    test('123-45-67890 — valid format', () {
       expect(
         ValidateString().bizno().validate('123-45-67890'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('하이픈 없이 1234567890 입력하면 실패', () {
+    test('1234567890 without hyphens — fails', () {
       expect(
         ValidateString().bizno().validate('1234567890'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('공백으로 123 45 67890 입력하면 실패', () {
+    test('123 45 67890 space-separated — fails', () {
       expect(
         ValidateString().bizno().validate('123 45 67890'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('자릿수 부족하면 실패 (123-45-6789)', () {
+    test('insufficient digits (123-45-6789) — fails', () {
       expect(
         ValidateString().bizno().validate('123-45-6789'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('점으로 123.45.67890 입력하면 실패', () {
+    test('123.45.67890 dot-separated — fails', () {
       expect(
         ValidateString().bizno().validate('123.45.67890'),
         isA<ValidationFailure>(),
@@ -1514,31 +1513,31 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 유선전화
+  // real user input — landline phone patterns
   // ---------------------------------------------------------------------------
-  group('실제 유저 유선전화 입력 패턴', () {
-    test('02-1234-5678 서울 번호 통과', () {
+  group('real user landline input patterns', () {
+    test('02-1234-5678 (Seoul) — passes', () {
       expect(
         ValidateString().phone().validate('02-1234-5678'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('031-123-4567 경기 번호 통과', () {
+    test('031-123-4567 (Gyeonggi) — passes', () {
       expect(
         ValidateString().phone().validate('031-123-4567'),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('휴대폰 번호 010-1234-5678 유선전화 검증 실패', () {
+    test('mobile 010-1234-5678 as landline — fails', () {
       expect(
         ValidateString().phone().validate('010-1234-5678'),
         isA<ValidationFailure>(),
       );
     });
 
-    test('자릿수 틀리면 실패 (02-12-5678)', () {
+    test('wrong digit count (02-12-5678) — fails', () {
       expect(
         ValidateString().phone().validate('02-12-5678'),
         isA<ValidationFailure>(),

@@ -49,6 +49,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// is preserved.
   V addPhaseValidator(int phase, ValidationFailure? Function(T?) fn) {
     _entries.add(_ValidatorEntry(phase, fn));
+    _entries.sort((a, b) => a.phase.compareTo(b.phase));
     return this as V;
   }
 
@@ -150,9 +151,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Stops at the first [ValidationFailure] and returns it immediately.
   /// Returns [ValidationSuccess] if all pass.
   ValidationResult validate(T? value) {
-    final sorted = List<_ValidatorEntry<T>>.from(_entries)
-      ..sort((a, b) => a.phase.compareTo(b.phase));
-    for (final entry in sorted) {
+    for (final entry in _entries) {
       final failure = entry.fn(value);
       if (failure != null) return failure;
     }

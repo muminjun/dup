@@ -138,64 +138,64 @@ void main() {
   // ---------------------------------------------------------------------------
   // 실제 유저 입력 패턴 — 이용약관 동의
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 이용약관 동의', () {
+  group('real user input — terms of service agreement', () {
     final termsValidator = ValidateBool().setLabel('이용약관').required().isTrue();
 
-    test('동의(true) — 통과', () {
+    test('agreed (true) — passes', () {
       expect(termsValidator.validate(true), isA<ValidationSuccess>());
     });
 
-    test('미동의(false) — 실패', () {
+    test('not agreed (false) — fails', () {
       final result = termsValidator.validate(false) as ValidationFailure;
       expect(result.code, ValidationCode.boolTrue);
     });
 
-    test('체크 안 함(null) — required 실패', () {
+    test('unchecked (null) — required fails', () {
       final result = termsValidator.validate(null) as ValidationFailure;
       expect(result.code, ValidationCode.required);
     });
 
-    test('에러 메시지에 필드명 포함', () {
+    test('error message contains field label', () {
       final result = termsValidator.validate(false) as ValidationFailure;
       expect(result.message, contains('이용약관'));
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 선택 동의 항목 (광고 수신 등)
+  // real user input — optional consent (e.g. marketing emails)
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 선택 동의 항목 (광고 수신)', () {
+  group('real user input — optional consent (marketing)', () {
     final optionalValidator = ValidateBool().setLabel('광고 수신 동의').isTrue();
 
-    test('동의(true) — 통과', () {
+    test('agreed (true) — passes', () {
       expect(optionalValidator.validate(true), isA<ValidationSuccess>());
     });
 
-    test('미동의(false) — 실패 (선택이지만 true여야 하는 경우)', () {
+    test('not agreed (false) — fails (optional but must be true when set)', () {
       expect(optionalValidator.validate(false), isA<ValidationFailure>());
     });
 
-    test('null — 통과 (선택이므로 null-skip)', () {
+    test('null — passes (null-skip for optional field)', () {
       expect(optionalValidator.validate(null), isA<ValidationSuccess>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 잠금 해제 여부 (isFalse 시나리오)
+  // real user input — account lock check (isFalse scenario)
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 계정 잠금 여부 확인', () {
+  group('real user input — account lock status', () {
     final lockValidator = ValidateBool().setLabel('계정 잠금').isFalse();
 
-    test('잠금 해제(false) — 통과', () {
+    test('unlocked (false) — passes', () {
       expect(lockValidator.validate(false), isA<ValidationSuccess>());
     });
 
-    test('잠금 상태(true) — 실패', () {
+    test('locked (true) — fails', () {
       final result = lockValidator.validate(true) as ValidationFailure;
       expect(result.code, ValidationCode.boolFalse);
     });
 
-    test('null — 통과 (null-skip)', () {
+    test('null — passes (null-skip)', () {
       expect(lockValidator.validate(null), isA<ValidationSuccess>());
     });
   });

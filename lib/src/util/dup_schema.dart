@@ -82,8 +82,9 @@ class DupSchema {
   /// Validates all fields asynchronously and returns a [FormValidationResult].
   ///
   /// Each field's [BaseValidator.validateAsync] is awaited in schema-key order.
-  /// If any field fails, [FormValidationFailure] is returned immediately and
-  /// [crossValidate] is skipped.
+  /// All fields are validated before returning; [FormValidationFailure] contains
+  /// errors for every field that failed. [crossValidate] is only called when
+  /// all individual fields pass.
   Future<FormValidationResult> validate(Map<String, dynamic> data) async {
     final errors = <String, ValidationFailure>{};
     for (final field in _schema.keys) {

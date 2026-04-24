@@ -489,55 +489,55 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 생년월일
+  // real user input — date of birth
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 생년월일', () {
+  group('real user input — date of birth', () {
     final today = DateTime.now();
     final birthdayValidator = ValidateDateTime()
         .setLabel('생년월일')
         .min(DateTime(1900))
         .isInPast();
 
-    test('1990년생 통과', () {
+    test('born in 1990 — passes', () {
       expect(
         birthdayValidator.validate(DateTime(1990, 5, 15)),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('미래 날짜로 생년월일 입력하면 실패 (아직 태어나지 않음)', () {
+    test('future date as birthday — fails (not yet born)', () {
       final future = today.add(const Duration(days: 365));
       expect(birthdayValidator.validate(future), isA<ValidationFailure>());
     });
 
-    test('내일 날짜를 생년월일로 입력 — 실패', () {
+    test('tomorrow as birthday — fails', () {
       final tomorrow = DateTime.now().add(const Duration(days: 1));
       expect(birthdayValidator.validate(tomorrow), isA<ValidationFailure>());
     });
 
-    test('1899년생은 min(1900) 미만이므로 실패', () {
+    test('born in 1899 — fails (below min(1900))', () {
       expect(
         birthdayValidator.validate(DateTime(1899, 12, 31)),
         isA<ValidationFailure>(),
       );
     });
 
-    test('1900-01-01 정확히 min 경계값 통과', () {
+    test('1900-01-01 — passes (exactly at min boundary)', () {
       expect(
         birthdayValidator.validate(DateTime(1900)),
         isA<ValidationSuccess>(),
       );
     });
 
-    test('null이면 통과 (선택 입력일 때)', () {
+    test('null — passes (optional field)', () {
       expect(birthdayValidator.validate(null), isA<ValidationSuccess>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 성인 인증 (만 19세 이상)
+  // real user input — adult age verification (19+)
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 성인 인증', () {
+  group('real user input — adult age verification', () {
     final adultCutoff = DateTime(
       DateTime.now().year - 19,
       DateTime.now().month,
@@ -548,71 +548,69 @@ void main() {
         .setLabel('생년월일')
         .max(adultCutoff);
 
-    test('만 20세 생년월일 통과', () {
+    test('born 20 years ago — passes', () {
       final born20 = DateTime(DateTime.now().year - 20, 1, 1);
       expect(adultValidator.validate(born20), isA<ValidationSuccess>());
     });
 
-    test('만 18세 생년월일 실패', () {
+    test('born 18 years ago — fails', () {
       final born18 = DateTime(DateTime.now().year - 18, 1, 1);
       expect(adultValidator.validate(born18), isA<ValidationFailure>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 예약 날짜
+  // real user input — reservation date
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 예약 날짜', () {
+  group('real user input — reservation date', () {
     final reservationValidator = ValidateDateTime()
         .setLabel('예약 날짜')
         .isInFuture()
         .max(DateTime.now().add(const Duration(days: 365)));
 
-    test('내일 예약 통과', () {
+    test('tomorrow — passes', () {
       final tomorrow = DateTime.now().add(const Duration(days: 1));
       expect(reservationValidator.validate(tomorrow), isA<ValidationSuccess>());
     });
 
-    test('다음주 예약 통과', () {
+    test('next week — passes', () {
       final nextWeek = DateTime.now().add(const Duration(days: 7));
       expect(reservationValidator.validate(nextWeek), isA<ValidationSuccess>());
     });
 
-    test('과거 날짜로 예약 실패', () {
+    test('yesterday — fails', () {
       final yesterday = DateTime.now().subtract(const Duration(days: 1));
       expect(reservationValidator.validate(yesterday), isA<ValidationFailure>());
     });
 
-    test('1년 초과 예약 실패 (너무 먼 미래)', () {
+    test('400 days ahead — fails (beyond 1-year max)', () {
       final tooFar = DateTime.now().add(const Duration(days: 400));
       expect(reservationValidator.validate(tooFar), isA<ValidationFailure>());
     });
 
-    test('null 입력 통과 (날짜 선택 안 했을 때)', () {
+    test('null — passes (date not yet selected)', () {
       expect(reservationValidator.validate(null), isA<ValidationSuccess>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 이벤트 기간 (시작~종료)
+  // real user input — event period (start ~ end)
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 이벤트 기간 유효성', () {
-    test('종료일이 시작일보다 이후면 통과', () {
+  group('real user input — event period validity', () {
+    test('end date after start date — passes', () {
       final start = DateTime(2025, 1, 1);
       final end = DateTime(2025, 12, 31);
-      // 시작일 validator: isAfter(최소 기준)
-      // 종료일 validator: isAfter(시작일)
       final endValidator = ValidateDateTime().setLabel('종료일').isAfter(start);
       expect(endValidator.validate(end), isA<ValidationSuccess>());
     });
 
-    test('종료일이 시작일과 같으면 실패 (strictly after)', () {
+    test('end date same as start date — fails (strictly after)', () {
       final start = DateTime(2025, 6, 1);
       final endValidator = ValidateDateTime().setLabel('종료일').isAfter(start);
       expect(endValidator.validate(start), isA<ValidationFailure>());
     });
 
-    test('종료일이 시작일보다 이전이면 실패', () {
+    test('end date before start date — fails', () {
       final start = DateTime(2025, 6, 1);
       final beforeStart = DateTime(2025, 5, 31);
       final endValidator = ValidateDateTime().setLabel('종료일').isAfter(start);

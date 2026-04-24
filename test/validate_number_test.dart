@@ -715,185 +715,185 @@ void main() {
   // ---------------------------------------------------------------------------
   // 실제 유저 입력 패턴 — 나이(age) 필드
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 나이(age)', () {
+  group('real user input — age field', () {
     final ageValidator = ValidateNumber().setLabel('나이').min(0).max(150).isInteger();
 
-    test('정상 나이 25 통과', () {
+    test('age 25 — passes', () {
       expect(ageValidator.validate(25), isA<ValidationSuccess>());
     });
 
-    test('만 18세 통과', () {
+    test('age 18 — passes', () {
       expect(ageValidator.validate(18), isA<ValidationSuccess>());
     });
 
-    test('0세(신생아) 통과', () {
+    test('age 0 (newborn) — passes', () {
       expect(ageValidator.validate(0), isA<ValidationSuccess>());
     });
 
-    test('음수 나이 실패 (-1)', () {
+    test('age -1 — fails', () {
       expect(ageValidator.validate(-1), isA<ValidationFailure>());
     });
 
-    test('소수점 나이 실패 (17.5세)', () {
+    test('age 17.5 (fractional) — fails', () {
       expect(ageValidator.validate(17.5), isA<ValidationFailure>());
     });
 
-    test('비현실적 나이 실패 (200세)', () {
+    test('age 200 (unrealistic) — fails', () {
       expect(ageValidator.validate(200), isA<ValidationFailure>());
     });
 
-    test('null 입력 — required 없으면 통과', () {
+    test('null — passes when not required', () {
       expect(ageValidator.validate(null), isA<ValidationSuccess>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 가격(price) 필드
+  // real user input — price field
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 가격(price)', () {
+  group('real user input — price field', () {
     final priceValidator = ValidateNumber().setLabel('가격').min(0);
 
-    test('정상 가격 10000원 통과', () {
+    test('10000 — passes', () {
       expect(priceValidator.validate(10000), isA<ValidationSuccess>());
     });
 
-    test('0원 통과 (무료)', () {
+    test('0 (free) — passes', () {
       expect(priceValidator.validate(0), isA<ValidationSuccess>());
     });
 
-    test('음수 가격 실패 (-1000)', () {
+    test('-1000 (negative) — fails', () {
       expect(priceValidator.validate(-1000), isA<ValidationFailure>());
     });
 
-    test('소수점 가격 통과 (1.99)', () {
+    test('1.99 (decimal price) — passes', () {
       expect(priceValidator.validate(1.99), isA<ValidationSuccess>());
     });
 
-    test('매우 큰 금액 통과 (99999999)', () {
+    test('99999999 (large amount) — passes', () {
       expect(priceValidator.validate(99999999), isA<ValidationSuccess>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 수량(quantity) 필드
+  // real user input — quantity field
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 수량(quantity)', () {
+  group('real user input — quantity field', () {
     final qtyValidator =
         ValidateNumber().setLabel('수량').isInteger().isPositive().max(999);
 
-    test('수량 1 통과', () {
+    test('quantity 1 — passes', () {
       expect(qtyValidator.validate(1), isA<ValidationSuccess>());
     });
 
-    test('수량 999 통과 (상한 경계)', () {
+    test('quantity 999 — passes (upper boundary)', () {
       expect(qtyValidator.validate(999), isA<ValidationSuccess>());
     });
 
-    test('수량 0 실패 (양수 아님)', () {
+    test('quantity 0 — fails (not positive)', () {
       expect(qtyValidator.validate(0), isA<ValidationFailure>());
     });
 
-    test('수량 -1 실패 (음수)', () {
+    test('quantity -1 — fails (negative)', () {
       expect(qtyValidator.validate(-1), isA<ValidationFailure>());
     });
 
-    test('수량 1000 실패 (상한 초과)', () {
+    test('quantity 1000 — fails (exceeds max)', () {
       expect(qtyValidator.validate(1000), isA<ValidationFailure>());
     });
 
-    test('소수 수량 실패 (1.5)', () {
+    test('quantity 1.5 (fractional) — fails', () {
       expect(qtyValidator.validate(1.5), isA<ValidationFailure>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 별점(rating) 필드
+  // real user input — rating field
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 별점(rating)', () {
+  group('real user input — rating field', () {
     final ratingValidator =
         ValidateNumber().setLabel('별점').between(1, 5).isInteger();
 
-    test('별점 5점 통과', () {
+    test('rating 5 — passes', () {
       expect(ratingValidator.validate(5), isA<ValidationSuccess>());
     });
 
-    test('별점 1점 통과 (하한 경계)', () {
+    test('rating 1 — passes (lower boundary)', () {
       expect(ratingValidator.validate(1), isA<ValidationSuccess>());
     });
 
-    test('별점 3점 통과 (중간)', () {
+    test('rating 3 — passes (mid-range)', () {
       expect(ratingValidator.validate(3), isA<ValidationSuccess>());
     });
 
-    test('별점 0점 실패 (범위 밖)', () {
+    test('rating 0 — fails (out of range)', () {
       expect(ratingValidator.validate(0), isA<ValidationFailure>());
     });
 
-    test('별점 6점 실패 (상한 초과)', () {
+    test('rating 6 — fails (exceeds max)', () {
       expect(ratingValidator.validate(6), isA<ValidationFailure>());
     });
 
-    test('별점 2.5점 실패 (정수 아님)', () {
+    test('rating 2.5 — fails (not integer)', () {
       expect(ratingValidator.validate(2.5), isA<ValidationFailure>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 퍼센트(percentage) 필드
+  // real user input — percentage (discount rate) field
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 할인율(%)', () {
+  group('real user input — discount rate field', () {
     final discountValidator = ValidateNumber().setLabel('할인율').between(0, 100);
 
-    test('50% 할인 통과', () {
+    test('50% discount — passes', () {
       expect(discountValidator.validate(50), isA<ValidationSuccess>());
     });
 
-    test('0% (무할인) 통과', () {
+    test('0% (no discount) — passes', () {
       expect(discountValidator.validate(0), isA<ValidationSuccess>());
     });
 
-    test('100% 통과 (완전 무료)', () {
+    test('100% (fully free) — passes', () {
       expect(discountValidator.validate(100), isA<ValidationSuccess>());
     });
 
-    test('-1% 실패', () {
+    test('-1% — fails', () {
       expect(discountValidator.validate(-1), isA<ValidationFailure>());
     });
 
-    test('101% 실패', () {
+    test('101% — fails', () {
       expect(discountValidator.validate(101), isA<ValidationFailure>());
     });
 
-    test('소수점 할인율 99.9% 통과', () {
+    test('99.9% (decimal) — passes', () {
       expect(discountValidator.validate(99.9), isA<ValidationSuccess>());
     });
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — toValidator (TextFormField)
+  // real user input — string parsing via toValidator() (TextFormField)
   // ---------------------------------------------------------------------------
-  group('실제 유저 입력 — 문자열 파싱 (TextFormField)', () {
-    test('"25" 문자열로 나이 입력 — 통과', () {
+  group('real user input — string parsing (TextFormField)', () {
+    test('"25" string input — passes', () {
       final fn = ValidateNumber().setLabel('나이').min(0).max(150).toValidator();
       expect(fn('25'), isNull);
     });
 
-    test('"abc" 문자열 입력 — 숫자 파싱 오류', () {
+    test('"abc" string input — parse error', () {
       final fn = ValidateNumber().setLabel('나이').min(0).max(150).toValidator();
       expect(fn('abc'), isNotNull);
     });
 
-    test('"" 빈 문자열 + required — 오류', () {
+    test('"" empty string + required — error', () {
       final fn = ValidateNumber().setLabel('나이').required().toValidator();
       expect(fn(''), isNotNull);
     });
 
-    test('"1,000" 콤마 포함 — 파싱 오류 (지원 안 함)', () {
+    test('"1,000" with comma — parse error (not supported)', () {
       final fn = ValidateNumber().setLabel('금액').min(0).toValidator();
       expect(fn('1,000'), isNotNull);
     });
 
-    test('"17세" 단위 포함 — 파싱 오류', () {
+    test('"17세" with unit suffix — parse error', () {
       final fn = ValidateNumber().setLabel('나이').min(18).toValidator();
       expect(fn('17세'), isNotNull);
     });

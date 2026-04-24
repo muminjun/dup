@@ -5,8 +5,8 @@ import 'validator_base.dart';
 
 /// Validator for [List<T>] values.
 ///
-/// All methods null-skip (return null / pass when value is null), except
-/// [isNotEmpty] which treats null as empty and fails.
+/// All methods null-skip (return null / pass when value is null).
+/// Combine [isNotEmpty] with [required] if null should also be rejected.
 ///
 /// Use [eachItem] to validate individual list elements:
 ///
@@ -21,7 +21,8 @@ import 'validator_base.dart';
 ///   .validate(tags);
 /// ```
 class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
-  /// Phase 1: fails when the list is null or empty.
+  /// Phase 1: fails when the list is empty. Null passes (null-skip).
+  /// Combine with [required] to also reject null.
   ValidateList<T> isNotEmpty({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value != null && value.isEmpty) {
