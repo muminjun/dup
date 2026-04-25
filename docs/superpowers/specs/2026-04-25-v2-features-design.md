@@ -38,6 +38,7 @@ DupSchema({
 - When a condition matches, the `then` validators replace (not merge with) the base validators for those fields.
 - Multiple `when()` blocks are evaluated independently; all matching blocks apply. If two blocks target the same field, the last matching block wins.
 - If `pick()`/`omit()` removes the `field:` target of a `when()` rule, the entire rule is dropped from the derived schema.
+- `DupSchema.hasAsyncValidators` must inspect all `when().then` branch validators in addition to base validators, so `validateSync()` asserts correctly even when async validators appear only in conditional branches.
 - Works with both `validate()` and `validateSync()`.
 
 ### 1-2. `pick()` / `omit()`
@@ -61,6 +62,7 @@ final profileSchema = userSchema.omit(['password']);
 - `omit(fields)` — removes the named fields; ignores unknown names.
 - `crossValidate` is not carried over (depends on fields that may no longer exist).
 - `when()` rules are dropped when their `field:` target is removed. Rules whose `then:` targets are removed are also dropped.
+- Validators are cloned (`clone()`) before being passed to the derived schema's constructor, so `setLabel()` called by the new schema does not mutate the original validator instances.
 
 ### 1-3. `partial()`
 
@@ -84,8 +86,8 @@ await patchSchema.validate({'name': null});     // ✓ — required removed, nul
 **Behavior:**
 - `partial()` strips validators tagged as presence checks. Only `required` carries this tag. `notBlank` (phase 1) is unaffected.
 - Implementation: `addPhaseValidator` gains an optional `isPresence: bool` flag (default `false`). `required` passes `isPresence: true`. `partial()` filters out only those entries.
-- `partial()` must not mutate the original schema or its validators. Each concrete `BaseValidator` subclass (`ValidateString`, `ValidateNumber`, etc.) overrides an abstract `V clone()` method declared on `BaseValidator<T, V>`. `clone()` returns a new instance with all phase entries copied, including the `label`. `withoutPresenceValidators()` calls `clone()` then removes entries tagged `isPresence: true` from the copy. The original validator is untouched.
-- `when()` + `partial()` interaction: `required()` in a `then:` validator is also stripped when `partial()` is applied to the parent schema.
+- `partial()` must not mutate the original schema or its validators. Each concrete `BaseValidator` subclass (`ValidateString`, `ValidateNumber`, `ValidateObject`, etc.) overrides an abstract `V clone()` method declared on `BaseValidator<T, V>`. `clone()` copies all phase entries (sync and async), the label, and any constructor-level state (e.g. `ValidateObject.clone()` must also copy the inner schema reference). `withoutPresenceValidators()` calls `clone()` then removes only entries tagged `isPresence: true`. The original validator is untouched.
+- `when()` + `partial()` interaction: `required()` in a `then:` validator is also stripped when `partial()` is applied to the parent schema. `then` validators follow the same `withoutPresenceValidators()` path.
 - Useful for PATCH endpoints where only changed fields are submitted.
 
 ---
@@ -116,7 +118,7 @@ ValidateMap<num>()
 
 **Type parameter:** `valueValidator` is declared as `valueValidator(covariant BaseValidator<V, dynamic> validator)`. Using `covariant` relaxes Dart's type checking at the call site while keeping the type parameter `V` on `ValidateMap<V>` for documentation clarity. Use `ValidateMap<num>` with `ValidateNumber` (which validates `num`, not `int`).
 
-**Async propagation:** `ValidateMap.hasAsyncValidators` returns `true` if the `keyValidator` or `valueValidator` has async validators registered. The parent `DupSchema` checks `hasAsyncValidators` on all field validators including `ValidateMap`, so `validateSync()` will assert correctly if an async value validator is present.
+**Async propagation:** `ValidateMap.hasAsyncValidators` overrides the base to return `super.hasAsyncValidators || (keyValidator?.hasAsyncValidators ?? false) || (valueValidator?.hasAsyncValidators ?? false)`. `super.hasAsyncValidators` covers async validators registered directly on the map itself; the other terms cover key/value validators. The parent `DupSchema` checks `hasAsyncValidators` on all field validators including `ValidateMap`, so `validateSync()` will assert correctly.
 
 **Error reporting:** Key/value errors use `NestedValidationFailure` (same mechanism as `ValidateObject`). `DupSchema.validate()` and `DupSchema.validateSync()` both flatten these into the parent `FormValidationFailure`:
 
@@ -165,17 +167,19 @@ class NestedValidationFailure extends ValidationFailure {
 }
 ```
 
-**Internal flattening path:** `ValidateObject` and `ValidateMap` implement the internal `_NestedValidator` interface:
+**Internal flattening path:** `ValidateObject` and `ValidateMap` implement the internal `NestedValidator` interface. Because Dart `_`-prefixed names are library-private (file-scoped), this interface must use a non-private name and live in a shared internal file (e.g. `lib/src/internal/nested_validator.dart`) that is imported by `validate_object.dart`, `validate_map.dart`, and `dup_schema.dart`, but **not** exported from `lib/dup.dart`.
 
 ```dart
-// Internal — not exported from dup.dart
-abstract interface class _NestedValidator {
+// lib/src/internal/nested_validator.dart — not exported
+abstract interface class NestedValidator {
   Future<NestedValidationFailure?> validateNested(dynamic value);
   NestedValidationFailure? validateNestedSync(dynamic value);
 }
 ```
 
-`DupSchema.validate()` / `validateSync()` check `if (validator is _NestedValidator)` and call `validateNested` / `validateNestedSync` instead of the public `validateAsync` / `validate`. This keeps `NestedValidationFailure` off the public API entirely.
+`DupSchema.validate()` / `validateSync()` check `if (validator is NestedValidator)` and call `validateNested` / `validateNestedSync` instead of the public `validateAsync` / `validate`. This keeps `NestedValidationFailure` off the public API entirely.
+
+`ValidateObject.hasAsyncValidators` overrides to return `super.hasAsyncValidators || _innerSchema.hasAsyncValidators`, covering both async validators on the object itself and those in the nested schema.
 
 **Direct call path:** When `ValidateObject.validate(value)` or `ValidateObject.validateAsync(value)` is called directly (e.g. via `DupSchema.validateField()`), `ValidateObject` returns a single `ValidationFailure` with `ValidationCode.nestedFailed` and a message listing the first failing sub-field. The caller never sees `NestedValidationFailure`.
 
