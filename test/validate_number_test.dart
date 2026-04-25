@@ -508,6 +508,14 @@ void main() {
       expect(ValidateNumber().isEven().validate(-3), isA<ValidationFailure>());
     });
 
+    test('fails for non-integer (e.g. 2.5)', () {
+      expect(ValidateNumber().isEven().validate(2.5), isA<ValidationFailure>());
+    });
+
+    test('fails for non-integer (e.g. 3.5)', () {
+      expect(ValidateNumber().isEven().validate(3.5), isA<ValidationFailure>());
+    });
+
     test('passes for null (null-skip)', () {
       expect(ValidateNumber().isEven().validate(null), isA<ValidationSuccess>());
     });
@@ -555,6 +563,14 @@ void main() {
 
     test('fails for even negative number', () {
       expect(ValidateNumber().isOdd().validate(-4), isA<ValidationFailure>());
+    });
+
+    test('fails for non-integer (e.g. 2.5)', () {
+      expect(ValidateNumber().isOdd().validate(2.5), isA<ValidationFailure>());
+    });
+
+    test('fails for non-integer (e.g. 3.5)', () {
+      expect(ValidateNumber().isOdd().validate(3.5), isA<ValidationFailure>());
     });
 
     test('passes for null (null-skip)', () {

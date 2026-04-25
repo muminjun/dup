@@ -105,10 +105,10 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
     });
   }
 
-  /// Phase 2: fails when value is odd.
+  /// Phase 2: fails when value is odd or not an integer.
   ValidateNumber isEven({MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
-      if (value != null && value % 2 != 0) {
+      if (value != null && (value % 1 != 0 || value % 2 != 0)) {
         return getFailure(messageFactory, ValidationCode.even,
             {'name': label}, '$label must be an even number.');
       }
@@ -116,10 +116,10 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
     });
   }
 
-  /// Phase 2: fails when value is even.
+  /// Phase 2: fails when value is even or not an integer.
   ValidateNumber isOdd({MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
-      if (value != null && value % 2 == 0) {
+      if (value != null && (value % 1 != 0 || value % 2 == 0)) {
         return getFailure(messageFactory, ValidationCode.odd,
             {'name': label}, '$label must be an odd number.');
       }

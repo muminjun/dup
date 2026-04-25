@@ -111,10 +111,10 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     });
   }
 
-  /// Phase 0: fails when the value consists entirely of whitespace.
+  /// Phase 1: fails when the value consists entirely of whitespace.
   /// Null passes (null-skip). Combine with [required] to also reject null.
   ValidateString notBlank({MessageFactory? messageFactory}) {
-    return addPhaseValidator(0, (value) {
+    return addPhaseValidator(1, (value) {
       if (value != null && value.trim().isEmpty) {
         return getFailure(messageFactory, ValidationCode.notBlank, {
           'name': label,

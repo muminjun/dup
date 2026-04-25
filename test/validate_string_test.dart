@@ -1573,6 +1573,18 @@ void main() {
       expect(result.code, ValidationCode.notBlank);
     });
 
+    test('notBlank().required(): required fires first for null input', () {
+      final v = ValidateString().setLabel('X').notBlank().required();
+      final result = v.validate(null) as ValidationFailure;
+      expect(result.code, ValidationCode.required);
+    });
+
+    test('required().notBlank(): required fires first for null input regardless of chain order', () {
+      final v = ValidateString().setLabel('X').required().notBlank();
+      final result = v.validate(null) as ValidationFailure;
+      expect(result.code, ValidationCode.required);
+    });
+
     test('min + max: passes when within range', () {
       expect(
         ValidateString().min(2).max(5).validate('abc'),
