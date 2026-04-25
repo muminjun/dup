@@ -62,7 +62,7 @@ final profileSchema = userSchema.omit(['password']);
 - `omit(fields)` — removes the named fields; ignores unknown names.
 - `crossValidate` is not carried over (depends on fields that may no longer exist).
 - `when()` rules are dropped when their `field:` target is removed. Rules whose `then:` targets are removed are also dropped.
-- Validators are cloned (`clone()`) before being passed to the derived schema's constructor, so `setLabel()` called by the new schema does not mutate the original validator instances.
+- Validator instances are reused (not cloned) in the derived schema. To prevent the new schema's constructor from overwriting custom labels with field names, `pick()`/`omit()` capture the current label from each validator (`validator.label`) and pass it as the `labels` map when constructing the derived schema. This preserves custom labels without mutating shared instances.
 
 ### 1-3. `partial()`
 
@@ -84,10 +84,9 @@ await patchSchema.validate({'name': null});     // ✓ — required removed, nul
 ```
 
 **Behavior:**
-- `partial()` strips validators tagged as presence checks. Only `required` carries this tag. `notBlank` (phase 1) is unaffected.
-- Implementation: `addPhaseValidator` gains an optional `isPresence: bool` flag (default `false`). `required` passes `isPresence: true`. `partial()` filters out only those entries.
-- `partial()` must not mutate the original schema or its validators. Each concrete `BaseValidator` subclass (`ValidateString`, `ValidateNumber`, `ValidateObject`, etc.) overrides an abstract `V clone()` method declared on `BaseValidator<T, V>`. `clone()` copies all phase entries (sync and async), the label, and any constructor-level state (e.g. `ValidateObject.clone()` must also copy the inner schema reference). `withoutPresenceValidators()` calls `clone()` then removes only entries tagged `isPresence: true`. The original validator is untouched.
-- `when()` + `partial()` interaction: `required()` in a `then:` validator is also stripped when `partial()` is applied to the parent schema. `then` validators follow the same `withoutPresenceValidators()` path.
+- `partial()` strips validators tagged as presence checks at validation time. Only `required` carries this tag. `notBlank` (phase 1) is unaffected.
+- Implementation: `addPhaseValidator` gains an optional `isPresence: bool` flag (default `false`). `required` passes `isPresence: true`. No cloning is needed. `partial()` returns a new `DupSchema` with `_isPartial = true` and the **same validator instances**. During `validate()`/`validateSync()`, when `_isPartial` is `true`, phase entries tagged `isPresence: true` are skipped. This avoids the closure-rebinding problem: Dart closures capture the original instance's `this`, so copying entries to a new instance would cause `setLabel()` on the clone to have no effect on the captured label inside the closures.
+- `when()` + `partial()` interaction: `required()` in a `then:` validator is also skipped when the parent schema is in partial mode, because the `isPresence` check happens at validation time, not at schema construction time.
 - Useful for PATCH endpoints where only changed fields are submitted.
 
 ---
@@ -167,17 +166,36 @@ class NestedValidationFailure extends ValidationFailure {
 }
 ```
 
-**Internal flattening path:** `ValidateObject` and `ValidateMap` implement the internal `NestedValidator` interface. Because Dart `_`-prefixed names are library-private (file-scoped), this interface must use a non-private name and live in a shared internal file (e.g. `lib/src/internal/nested_validator.dart`) that is imported by `validate_object.dart`, `validate_map.dart`, and `dup_schema.dart`, but **not** exported from `lib/dup.dart`.
+**Internal flattening path:** `ValidateObject` and `ValidateMap` implement the internal `NestedValidator` interface defined in `lib/src/internal/nested_validator.dart` (imported by `validate_object.dart`, `validate_map.dart`, and `dup_schema.dart`, but **not** exported from `lib/dup.dart`). The interface returns a sealed result type so `DupSchema` can distinguish a normal field failure from inner-schema failures:
 
 ```dart
 // lib/src/internal/nested_validator.dart — not exported
+sealed class NestedValidationResult {}
+
+/// A normal validator in the chain (e.g. required()) failed.
+class NestedNormalFailure extends NestedValidationResult {
+  final ValidationFailure failure;
+  NestedNormalFailure(this.failure);
+}
+
+/// The inner schema/map validation failed; errors should be flattened.
+class NestedInnerFailure extends NestedValidationResult {
+  final Map<String, ValidationFailure> errors;
+  NestedInnerFailure(this.errors);
+}
+
 abstract interface class NestedValidator {
-  Future<NestedValidationFailure?> validateNested(dynamic value);
-  NestedValidationFailure? validateNestedSync(dynamic value);
+  Future<NestedValidationResult?> validateNested(dynamic value);
+  NestedValidationResult? validateNestedSync(dynamic value);
 }
 ```
 
-`DupSchema.validate()` / `validateSync()` check `if (validator is NestedValidator)` and call `validateNested` / `validateNestedSync` instead of the public `validateAsync` / `validate`. This keeps `NestedValidationFailure` off the public API entirely.
+`validateNested()` runs the normal phase chain first (phases 0–3 + async). If a phase validator fails (e.g. `required()` rejects null), it returns `NestedNormalFailure(failure)`. Only if the normal chain passes does it run the inner schema and potentially return `NestedInnerFailure(errors)`. Returning `null` means everything passed.
+
+`DupSchema.validate()` / `validateSync()` check `if (validator is NestedValidator)` and call `validateNested` / `validateNestedSync`:
+- `NestedNormalFailure` → `errors[field] = failure` (normal field error)
+- `NestedInnerFailure` → flatten: `errors['$field.subField'] = subFailure`
+- `null` → field passes
 
 `ValidateObject.hasAsyncValidators` overrides to return `super.hasAsyncValidators || _innerSchema.hasAsyncValidators`, covering both async validators on the object itself and those in the nested schema.
 
