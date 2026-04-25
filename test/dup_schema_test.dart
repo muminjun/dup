@@ -154,4 +154,48 @@ void main() {
       expect(schema.hasAsyncValidators, isTrue);
     });
   });
+
+  group('DupSchema.partial()', () {
+    late DupSchema schema;
+
+    setUp(() {
+      schema = DupSchema({
+        'name':  ValidateString().required().notBlank(),
+        'email': ValidateString().required().email(),
+      });
+    });
+
+    test('null passes for all fields', () async {
+      final result = await schema.partial().validate({'name': null, 'email': null});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('absent fields pass (treated as null)', () async {
+      final result = await schema.partial().validate({});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('format errors still fire', () async {
+      final result = await schema.partial().validate({'email': 'bad'});
+      expect(result, isA<FormValidationFailure>());
+      expect((result as FormValidationFailure)('email')!.code, ValidationCode.emailInvalid);
+    });
+
+    test('notBlank still fires for submitted blank value', () async {
+      final result = await schema.partial().validate({'name': '   '});
+      expect(result, isA<FormValidationFailure>());
+      expect((result as FormValidationFailure)('name')!.code, ValidationCode.notBlank);
+    });
+
+    test('original schema is unaffected', () async {
+      schema.partial();
+      final result = await schema.validate({'name': null, 'email': null});
+      expect(result, isA<FormValidationFailure>());
+    });
+
+    test('partial().validateSync() works', () {
+      final result = schema.partial().validateSync({'name': null});
+      expect(result, isA<FormValidationSuccess>());
+    });
+  });
 }

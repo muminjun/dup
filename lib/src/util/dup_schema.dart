@@ -2,6 +2,17 @@ import '../model/form_validation_result.dart';
 import '../model/validation_result.dart';
 import 'validator_base.dart';
 
+class _WhenRule {
+  final String field;
+  final bool Function(dynamic) condition;
+  final Map<String, BaseValidator> then;
+  const _WhenRule({
+    required this.field,
+    required this.condition,
+    required this.then,
+  });
+}
+
 /// Schema-level validator that groups multiple field validators and runs
 /// them together as a form.
 ///
@@ -49,6 +60,9 @@ class DupSchema {
   Map<String, ValidationFailure>? Function(Map<String, dynamic>)?
       _crossValidator;
 
+  bool _isPartial = false;
+  final List<_WhenRule> _whenRules = [];
+
   /// [schema]: field name → validator map.
   /// [labels]: optional overrides for the label assigned to each validator.
   ///           Fields absent from this map use their key name as the label.
@@ -79,6 +93,20 @@ class DupSchema {
     return this;
   }
 
+  /// Returns a new [DupSchema] where [required] presence checks are skipped
+  /// at validation time. All other validators (format, constraint, custom) remain
+  /// active. Validator instances are shared — no cloning occurs.
+  DupSchema partial() {
+    final currentLabels = {
+      for (final e in _schema.entries)
+        e.key: e.value.label.isNotEmpty ? e.value.label : e.key,
+    };
+    return DupSchema(_schema, labels: currentLabels)
+      .._isPartial = true
+      .._whenRules.addAll(_whenRules)
+      .._crossValidator = _crossValidator;
+  }
+
   /// Validates all fields asynchronously and returns a [FormValidationResult].
   ///
   /// Each field's [BaseValidator.validateAsync] is awaited in schema-key order.
@@ -88,7 +116,10 @@ class DupSchema {
   Future<FormValidationResult> validate(Map<String, dynamic> data) async {
     final errors = <String, ValidationFailure>{};
     for (final field in _schema.keys) {
-      final result = await _schema[field]!.validateAsync(data[field]);
+      final result = await _schema[field]!.validateAsync(
+        data[field],
+        skipPresence: _isPartial,
+      );
       if (result is ValidationFailure) {
         errors[field] = result;
       }
@@ -115,7 +146,10 @@ class DupSchema {
     );
     final errors = <String, ValidationFailure>{};
     for (final field in _schema.keys) {
-      final result = _schema[field]!.validate(data[field]);
+      final result = _schema[field]!.validate(
+        data[field],
+        skipPresence: _isPartial,
+      );
       if (result is ValidationFailure) {
         errors[field] = result;
       }
