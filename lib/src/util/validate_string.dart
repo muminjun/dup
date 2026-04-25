@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../model/message_factory.dart';
 import '../model/validation_code.dart';
 import 'validator_base.dart';
@@ -249,6 +251,192 @@ class ValidateString extends BaseValidator<String, ValidateString> {
         return getFailure(messageFactory, ValidationCode.uuid, {
           'name': label,
         }, '$label is not a valid UUID.');
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the trimmed value does not start with [prefix].
+  ValidateString startsWith(String prefix, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value != null && !value.trim().startsWith(prefix)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.startsWith,
+          {'name': label, 'prefix': prefix},
+          '$label must start with "$prefix".',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the trimmed value does not end with [suffix].
+  ValidateString endsWith(String suffix, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value != null && !value.trim().endsWith(suffix)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.endsWith,
+          {'name': label, 'suffix': suffix},
+          '$label must end with "$suffix".',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the value does not contain [substring].
+  /// Does NOT trim — trimming would change substring match semantics.
+  ValidateString contains(String substring, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value != null && !value.contains(substring)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.stringContains,
+          {'name': label, 'substring': substring},
+          '$label must contain "$substring".',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the trimmed value is not a valid IPv4 or IPv6 address.
+  ValidateString ipAddress({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      final trimmed = value.trim();
+      final isValid = _isValidIpv4(trimmed) || _isValidIpv6(trimmed);
+      if (!isValid) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.ipAddress,
+          {'name': label},
+          '$label is not a valid IP address.',
+        );
+      }
+      return null;
+    });
+  }
+
+  bool _isValidIpv4(String s) {
+    final parts = s.split('.');
+    if (parts.length != 4) return false;
+    return parts.every((p) {
+      final n = int.tryParse(p);
+      return n != null && n >= 0 && n <= 255;
+    });
+  }
+
+  bool _isValidIpv6(String s) {
+    try {
+      final uri = Uri.tryParse('http://[$s]');
+      return uri != null && uri.host == s;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Phase 1: fails when value is not a valid hex color (#RGB or #RRGGBB).
+  ValidateString hexColor({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!regex.hasMatch(value.trim())) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.hexColor,
+          {'name': label},
+          '$label is not a valid hex color.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when value is not valid Base64.
+  ValidateString base64({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^[A-Za-z0-9+/]*={0,2}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      final trimmed = value.trim();
+      if (!regex.hasMatch(trimmed) || trimmed.length % 4 != 0) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.base64,
+          {'name': label},
+          '$label is not valid Base64.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when value is not parseable JSON.
+  /// Passes for any valid JSON value including "null", "42", "true".
+  ValidateString json({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      try {
+        jsonDecode(value.trim());
+        return null;
+      } catch (_) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.json,
+          {'name': label},
+          '$label is not valid JSON.',
+        );
+      }
+    });
+  }
+
+  /// Phase 1: fails when value is not a valid credit card number (Luhn algorithm).
+  /// Strips spaces and dashes before checking.
+  ValidateString creditCard({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      final digits = value.replaceAll(RegExp(r'[\s\-]'), '');
+      if (!RegExp(r'^\d+$').hasMatch(digits) || !_luhnCheck(digits)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.creditCard,
+          {'name': label},
+          '$label is not a valid credit card number.',
+        );
+      }
+      return null;
+    });
+  }
+
+  bool _luhnCheck(String digits) {
+    int sum = 0;
+    bool alternate = false;
+    for (int i = digits.length - 1; i >= 0; i--) {
+      int n = int.parse(digits[i]);
+      if (alternate) {
+        n *= 2;
+        if (n > 9) n -= 9;
+      }
+      sum += n;
+      alternate = !alternate;
+    }
+    return sum % 10 == 0;
+  }
+
+  /// Phase 1: fails when value is not a valid Korean 5-digit postal code.
+  ValidateString koPostalCode({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^\d{5}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!regex.hasMatch(value.trim())) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.koPostalCode,
+          {'name': label},
+          '$label is not a valid postal code.',
+        );
       }
       return null;
     });

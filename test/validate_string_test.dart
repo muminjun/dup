@@ -1611,4 +1611,130 @@ void main() {
       expect(v.validate('ab'), isA<ValidationFailure>());
     });
   });
+
+  group('startsWith()', () {
+    test('passes when trimmed value starts with prefix', () {
+      expect(ValidateString().startsWith('https://').validate('https://example.com'), isA<ValidationSuccess>());
+    });
+    test('passes when trimmed after leading space starts with prefix', () {
+      expect(ValidateString().startsWith('https://').validate('  https://example.com'), isA<ValidationSuccess>());
+    });
+    test('fails when value does not start with prefix', () {
+      final r = ValidateString().startsWith('https://').validate('http://example.com');
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.startsWith);
+    });
+    test('null passes', () {
+      expect(ValidateString().startsWith('x').validate(null), isA<ValidationSuccess>());
+    });
+  });
+
+  group('endsWith()', () {
+    test('passes when trimmed value ends with suffix', () {
+      expect(ValidateString().endsWith('.pdf').validate('report.pdf'), isA<ValidationSuccess>());
+    });
+    test('fails when value does not end with suffix', () {
+      expect(ValidateString().endsWith('.pdf').validate('report.doc'), isA<ValidationFailure>());
+    });
+  });
+
+  group('contains()', () {
+    test('passes when value contains substring', () {
+      expect(ValidateString().contains('@').validate('a@b.com'), isA<ValidationSuccess>());
+    });
+    test('fails when substring absent', () {
+      final r = ValidateString().contains('@').validate('notanemail');
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.stringContains);
+    });
+    test('does not trim before checking', () {
+      expect(ValidateString().contains(' word').validate('a word'), isA<ValidationSuccess>());
+    });
+  });
+
+  group('ipAddress()', () {
+    test('passes valid IPv4', () {
+      expect(ValidateString().ipAddress().validate('192.168.1.1'), isA<ValidationSuccess>());
+    });
+    test('passes valid IPv6', () {
+      expect(ValidateString().ipAddress().validate('::1'), isA<ValidationSuccess>());
+    });
+    test('fails invalid IP', () {
+      final r = ValidateString().ipAddress().validate('999.999.999.999');
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.ipAddress);
+    });
+  });
+
+  group('hexColor()', () {
+    test('passes #RGB', () {
+      expect(ValidateString().hexColor().validate('#FFF'), isA<ValidationSuccess>());
+    });
+    test('passes #RRGGBB', () {
+      expect(ValidateString().hexColor().validate('#FF5733'), isA<ValidationSuccess>());
+    });
+    test('fails without hash', () {
+      expect(ValidateString().hexColor().validate('FF5733'), isA<ValidationFailure>());
+    });
+    test('fails invalid length', () {
+      expect(ValidateString().hexColor().validate('#FF573'), isA<ValidationFailure>());
+    });
+  });
+
+  group('base64()', () {
+    test('passes valid Base64', () {
+      expect(ValidateString().base64().validate('SGVsbG8='), isA<ValidationSuccess>());
+    });
+    test('fails invalid Base64', () {
+      expect(ValidateString().base64().validate('not base64!!!'), isA<ValidationFailure>());
+    });
+  });
+
+  group('json()', () {
+    test('passes valid JSON object', () {
+      expect(ValidateString().json().validate('{"key":"value"}'), isA<ValidationSuccess>());
+    });
+    test('passes valid JSON array', () {
+      expect(ValidateString().json().validate('[1,2,3]'), isA<ValidationSuccess>());
+    });
+    test('passes primitive JSON ("null", "42", "true")', () {
+      expect(ValidateString().json().validate('null'), isA<ValidationSuccess>());
+      expect(ValidateString().json().validate('42'), isA<ValidationSuccess>());
+      expect(ValidateString().json().validate('true'), isA<ValidationSuccess>());
+    });
+    test('fails invalid JSON', () {
+      final r = ValidateString().json().validate('{bad json}');
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.json);
+    });
+  });
+
+  group('creditCard()', () {
+    test('passes valid Visa number (Luhn valid)', () {
+      expect(ValidateString().creditCard().validate('4532015112830366'), isA<ValidationSuccess>());
+    });
+    test('fails invalid Luhn number', () {
+      expect(ValidateString().creditCard().validate('1234567890123456'), isA<ValidationFailure>());
+    });
+    test('strips spaces before checking', () {
+      expect(ValidateString().creditCard().validate('4532 0151 1283 0366'), isA<ValidationSuccess>());
+    });
+  });
+
+  group('koPostalCode()', () {
+    test('passes 5-digit Korean postal code', () {
+      expect(ValidateString().koPostalCode().validate('06000'), isA<ValidationSuccess>());
+    });
+    test('fails 4-digit code', () {
+      expect(ValidateString().koPostalCode().validate('0600'), isA<ValidationFailure>());
+    });
+    test('fails 6-digit code', () {
+      expect(ValidateString().koPostalCode().validate('060000'), isA<ValidationFailure>());
+    });
+    test('fails non-digit characters', () {
+      final r = ValidateString().koPostalCode().validate('0600A');
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.koPostalCode);
+    });
+  });
 }
