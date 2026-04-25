@@ -949,4 +949,44 @@ void main() {
       );
     });
   });
+
+  group('isPrecision()', () {
+    test('passes when precision within limit', () {
+      expect(ValidateNumber().isPrecision(2).validate(1.23), isA<ValidationSuccess>());
+    });
+    test('passes integer', () {
+      expect(ValidateNumber().isPrecision(2).validate(5), isA<ValidationSuccess>());
+    });
+    test('fails when too many decimal places', () {
+      final r = ValidateNumber().isPrecision(2).validate(1.234);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.numberPrecision);
+    });
+    test('null passes', () {
+      expect(ValidateNumber().isPrecision(2).validate(null), isA<ValidationSuccess>());
+    });
+  });
+
+  group('isPort()', () {
+    test('passes port 0', () {
+      expect(ValidateNumber().isPort().validate(0), isA<ValidationSuccess>());
+    });
+    test('passes port 65535', () {
+      expect(ValidateNumber().isPort().validate(65535), isA<ValidationSuccess>());
+    });
+    test('fails negative', () {
+      expect(ValidateNumber().isPort().validate(-1), isA<ValidationFailure>());
+    });
+    test('fails above 65535', () {
+      expect(ValidateNumber().isPort().validate(65536), isA<ValidationFailure>());
+    });
+    test('fails float (e.g. 80.5)', () {
+      final r = ValidateNumber().isPort().validate(80.5);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.isPort);
+    });
+    test('null passes', () {
+      expect(ValidateNumber().isPort().validate(null), isA<ValidationSuccess>());
+    });
+  });
 }

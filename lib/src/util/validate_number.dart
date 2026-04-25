@@ -164,4 +164,39 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
       return result is ValidationFailure ? result.message : null;
     };
   }
+
+  /// Phase 1: fails when the value has more than [digits] decimal places.
+  ValidateNumber isPrecision(int digits, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null) return null;
+      final str = value.toString();
+      final dotIndex = str.indexOf('.');
+      if (dotIndex != -1 && str.length - dotIndex - 1 > digits) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.numberPrecision,
+          {'name': label, 'digits': digits},
+          '$label must have at most $digits decimal places.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when value is not an integer in range 0–65535.
+  /// Non-integer values (e.g. 80.5) also fail.
+  ValidateNumber isPort({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null) return null;
+      if (value != value.truncate() || value < 0 || value > 65535) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.isPort,
+          {'name': label},
+          '$label must be a valid port number (0–65535).',
+        );
+      }
+      return null;
+    });
+  }
 }
