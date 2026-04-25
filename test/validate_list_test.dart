@@ -1082,4 +1082,25 @@ void main() {
       expect(eachItemCalled, isFalse);
     });
   });
+
+  group('containsAll()', () {
+    test('passes when all required items present', () {
+      expect(
+        ValidateList<int>().containsAll([1, 2, 3]).validate([1, 2, 3, 4]),
+        isA<ValidationSuccess>(),
+      );
+    });
+    test('fails when one required item missing', () {
+      final r = ValidateList<int>().setLabel('Roles').containsAll([1, 2, 3]).validate([1, 2]);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.listContainsAll);
+      expect(r.context['missing'], contains(3));
+    });
+    test('null passes', () {
+      expect(ValidateList<int>().containsAll([1]).validate(null), isA<ValidationSuccess>());
+    });
+    test('empty required list always passes', () {
+      expect(ValidateList<int>().containsAll([]).validate([]), isA<ValidationSuccess>());
+    });
+  });
 }

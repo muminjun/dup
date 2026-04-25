@@ -246,4 +246,21 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
       return null;
     });
   }
+
+  /// Phase 2: fails when the list does not contain every item in [items].
+  ValidateList<T> containsAll(List<T> items, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(2, (value) {
+      if (value == null) return null;
+      final missing = items.where((item) => !value.contains(item)).toList();
+      if (missing.isNotEmpty) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.listContainsAll,
+          {'name': label, 'missing': missing},
+          '$label must contain all required items. Missing: ${missing.join(', ')}.',
+        );
+      }
+      return null;
+    });
+  }
 }
