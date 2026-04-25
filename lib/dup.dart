@@ -21,6 +21,9 @@ export 'src/util/validate_locale.dart';
 // Schema
 export 'src/util/dup_schema.dart';
 
+// Nested validators
+export 'src/util/validate_object.dart';
+
 // Helpers (still needed for MessageFactory typedef)
 export 'src/model/locale_message.dart';
 export 'src/model/message_factory.dart';

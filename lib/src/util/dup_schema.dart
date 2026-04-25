@@ -1,3 +1,4 @@
+import '../internal/nested_validator.dart';
 import '../model/form_validation_result.dart';
 import '../model/validation_result.dart';
 import 'validator_base.dart';
@@ -109,6 +110,20 @@ class DupSchema {
     return this;
   }
 
+  void _applyNestedResult(
+    String field,
+    NestedValidationResult? result,
+    Map<String, ValidationFailure> errors,
+  ) {
+    if (result is NestedNormalFailure) {
+      errors[field] = result.failure;
+    } else if (result is NestedInnerFailure) {
+      for (final e in result.errors.entries) {
+        errors['$field${result.separator}${e.key}'] = e.value;
+      }
+    }
+  }
+
   Map<String, BaseValidator> _buildEffective(Map<String, dynamic> data) {
     final effective = Map<String, BaseValidator>.from(_schema);
     for (final rule in _whenRules) {
@@ -182,12 +197,19 @@ class DupSchema {
     final effective = _buildEffective(data);
     final errors = <String, ValidationFailure>{};
     for (final field in effective.keys) {
-      final result = await effective[field]!.validateAsync(
-        data[field],
-        skipPresence: _isPartial,
-      );
-      if (result is ValidationFailure) {
-        errors[field] = result;
+      final validator = effective[field]!;
+      if (validator is NestedValidator) {
+        final result = await (validator as NestedValidator).validateNested(
+          data[field],
+          skipPresence: _isPartial,
+        );
+        _applyNestedResult(field, result, errors);
+      } else {
+        final result = await validator.validateAsync(
+          data[field],
+          skipPresence: _isPartial,
+        );
+        if (result is ValidationFailure) errors[field] = result;
       }
     }
     if (errors.isNotEmpty) return FormValidationFailure(errors);
@@ -213,12 +235,19 @@ class DupSchema {
     final effective = _buildEffective(data);
     final errors = <String, ValidationFailure>{};
     for (final field in effective.keys) {
-      final result = effective[field]!.validate(
-        data[field],
-        skipPresence: _isPartial,
-      );
-      if (result is ValidationFailure) {
-        errors[field] = result;
+      final validator = effective[field]!;
+      if (validator is NestedValidator) {
+        final result = (validator as NestedValidator).validateNestedSync(
+          data[field],
+          skipPresence: _isPartial,
+        );
+        _applyNestedResult(field, result, errors);
+      } else {
+        final result = validator.validate(
+          data[field],
+          skipPresence: _isPartial,
+        );
+        if (result is ValidationFailure) errors[field] = result;
       }
     }
     if (errors.isNotEmpty) return FormValidationFailure(errors);
