@@ -63,21 +63,21 @@ final profileSchema = userSchema.omit(['password']);
 
 ### 1-3. `partial()`
 
-Returns a new `DupSchema` where all `required` (phase 0) validators are removed. Format and constraint validators remain active.
+Returns a new `DupSchema` where `required` presence checks are removed from every field. All other validators remain active.
 
 ```dart
 final patchSchema = userSchema.partial();
 
-await patchSchema.validate({'name': 'John'});   // ✓ — only name sent
-await patchSchema.validate({'email': 'bad'});   // ✗ — email format still checked
+await patchSchema.validate({'name': 'John'});        // ✓ — only name sent
+await patchSchema.validate({'email': 'bad'});        // ✗ — email format still checked
+await patchSchema.validate({'name': '   '});         // ✗ — notBlank still active
 ```
 
 **Behavior:**
-- Strips only `required` (phase-0 presence check) from every field. `notBlank` is moved to phase 1 (see below) so it is NOT removed by `partial()`.
-- All phase 1–4 validators remain, including `notBlank` — a submitted `{ 'name': '   ' }` still fails.
+- `partial()` strips validators tagged as presence checks. Only `required` carries this tag. `notBlank` does NOT — it is a value-quality check, not a presence check.
+- Implementation: `addPhaseValidator` gains an optional `isPresence: bool` flag (default `false`). `required` passes `isPresence: true`. `partial()` filters out only those entries.
+- `notBlank` stays at phase 0 and its execution order is unchanged. No phase migration needed.
 - Useful for PATCH endpoints where only changed fields are submitted.
-
-> **Note on `notBlank` phase change:** `notBlank` is reclassified from phase 0 to phase 1 in this release. It is a value-quality check (trimmed string must not be empty), not a presence check — phase 1 is the correct home. This is a behavior change: previously `notBlank` ran before format validators; now it runs alongside them. In practice this has no observable effect since they are independent checks.
 
 ---
 
@@ -88,7 +88,7 @@ await patchSchema.validate({'email': 'bad'});   // ✗ — email format still ch
 Validates a `Map<String, V>` value. Keys are always `String` (covers JSON objects and the vast majority of real-world maps). Values can have their own validator.
 
 ```dart
-ValidateMap<int>()
+ValidateMap<num>()
   .required()
   .minSize(1)
   .maxSize(10)
@@ -105,9 +105,14 @@ ValidateMap<int>()
 | `keyValidator(ValidateString)` | 1 | Applied to every key (`String` only) |
 | `valueValidator(ValidateNumber \| ValidateString \| ValidateList \| ValidateBool \| ValidateDateTime)` | 1 | Applied to every value |
 
-`valueValidator` accepts any concrete `BaseValidator<V, dynamic>` subclass. The type parameter `V` on `ValidateMap<V>` constrains which validator type is valid at the call site.
+`valueValidator` accepts any concrete `BaseValidator<V, dynamic>` subclass. The type parameter `V` on `ValidateMap<V>` constrains which validator type is valid at the call site. Use `ValidateMap<num>` with `ValidateNumber` (which validates `num`, not `int`).
 
-**Error reporting:** Key/value errors are reported as `"field[key]"` (e.g. `"metadata[score]"`).
+**Error reporting:** Key/value errors use `NestedValidationFailure` (same mechanism as `ValidateObject`). `DupSchema.validate()` and `DupSchema.validateSync()` both flatten these into the parent `FormValidationFailure` using bracket notation:
+
+```dart
+result('metadata[score]')?.message   // "score must be at most 100"
+result('metadata[rank]')?.message    // "rank must be at least 0"
+```
 
 ### 2-2. `ValidateObject`
 
@@ -127,7 +132,7 @@ final orderSchema = DupSchema({
 });
 ```
 
-**Error reporting:** `ValidateObject` introduces `NestedValidationFailure extends ValidationFailure`, which carries the inner `DupSchema`'s error map. `DupSchema.validate()` detects this type and flattens entries with dot notation into the parent `FormValidationFailure`:
+**Error reporting:** `ValidateObject` returns a `NestedValidationFailure extends ValidationFailure`, which carries the inner `DupSchema`'s error map. Both `DupSchema.validate()` and `DupSchema.validateSync()` detect this type and flatten entries with dot notation into the parent `FormValidationFailure`:
 
 ```dart
 result('shippingAddress.street')?.message  // "street is required"
@@ -140,12 +145,12 @@ The `NestedValidationFailure` type is internal — callers always interact with 
 
 ## 3. New Validator Methods
 
-### ValidateString — 11 new methods
+### ValidateString — 9 new methods
+
+> `oneOf` / `notOneOf` are already available as `includedIn(List<T>)` / `excludedFrom(List<T>)` on `BaseValidator` and work with `ValidateString` as-is. They are not re-added.
 
 | Method | Phase | Description |
 |---|---|---|
-| `oneOf(List<String>)` | 1 | Value must be one of the given strings |
-| `notOneOf(List<String>)` | 1 | Value must not be one of the given strings |
 | `startsWith(String prefix)` | 1 | Trimmed value must start with prefix |
 | `endsWith(String suffix)` | 1 | Trimmed value must end with suffix |
 | `contains(String substring)` | 1 | Value must contain the substring |
@@ -224,7 +229,9 @@ ValidatorLocale.setLocale(ValidatorLocale({
 
 Every new method needs a corresponding `ValidationCode` entry and a hardcoded English default message. New codes:
 
-`oneOf`, `notOneOf`, `startsWith`, `endsWith`, `stringContains`, `ipAddress`, `hexColor`, `base64`, `json`, `creditCard`, `postalCode`, `numberPrecision`, `isPort`, `numberIn`, `isWeekday`, `isWeekend`, `isToday`, `isSameDay`, `isWithin`, `listContainsAll`, `mapMinSize`, `mapMaxSize`, `mapKeyInvalid`, `mapValueInvalid`
+`startsWith`, `endsWith`, `stringContains`, `ipAddress`, `hexColor`, `base64`, `json`, `creditCard`, `postalCode`, `numberPrecision`, `isPort`, `numberIn`, `isWeekday`, `isWeekend`, `isToday`, `isSameDay`, `isWithin`, `listContainsAll`, `mapMinSize`, `mapMaxSize`, `mapKeyInvalid`, `mapValueInvalid`
+
+> `oneOf` and `notOneOf` already exist in the enum (used by `includedIn()` / `excludedFrom()`). Do not add duplicates.
 
 ---
 
