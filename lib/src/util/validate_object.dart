@@ -66,10 +66,10 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
       skipPresence: skipPresence,
     );
     if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
-    final asyncFailure = await runAsyncChain(value as Map<String, dynamic>?);
+    final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
     if (value == null) return null;
-    final innerResult = await _innerSchema.validate(value as Map<String, dynamic>);
+    final innerResult = await _innerSchema.validate(value);
     if (innerResult is FormValidationFailure) {
       return NestedInnerFailure(innerResult.errors);
     }
@@ -87,7 +87,7 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     );
     if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
     if (value == null) return null;
-    final innerResult = _innerSchema.validateSync(value as Map<String, dynamic>);
+    final innerResult = _innerSchema.validateSync(value);
     if (innerResult is FormValidationFailure) {
       return NestedInnerFailure(innerResult.errors);
     }

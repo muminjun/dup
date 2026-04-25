@@ -73,10 +73,10 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       skipPresence: skipPresence,
     );
     if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
-    final asyncFailure = await runAsyncChain(value as Map<String, V>?);
+    final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
     if (value == null) return null;
-    final entryErrors = await _validateEntries(value as Map<String, V>);
+    final entryErrors = await _validateEntries(value);
     if (entryErrors.isNotEmpty) return NestedInnerFailure(entryErrors, separator: '');
     return null;
   }
@@ -92,7 +92,7 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     );
     if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
     if (value == null) return null;
-    final entryErrors = _validateEntriesSync(value as Map<String, V>);
+    final entryErrors = _validateEntriesSync(value);
     if (entryErrors.isNotEmpty) return NestedInnerFailure(entryErrors, separator: '');
     return null;
   }
