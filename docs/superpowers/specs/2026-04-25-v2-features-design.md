@@ -13,10 +13,10 @@ Add the following to the existing v2 API before first public release. No breakin
 
 ### 1-1. `when()` — Conditional Validation
 
-Applies a set of field validators only when a condition on another field is met. Multiple `when()` calls can be chained. Evaluated after the base schema validators run.
+Applies a set of field validators only when a condition on another field is met. Multiple `when()` calls can be chained.
 
 ```dart
-DupSchema(fields: {
+DupSchema({
   'paymentType': ValidateString().required().oneOf(['card', 'bank']),
   'cardNumber':  ValidateString(),
   'bankAccount': ValidateString(),
@@ -34,9 +34,9 @@ DupSchema(fields: {
 ```
 
 **Behavior:**
-- The `then` validators replace (not merge with) the base validators for those fields when the condition is true.
-- `when()` conditions are evaluated using the raw input value of `field`.
-- Multiple `when()` blocks are evaluated independently; all matching blocks apply.
+- Before any validation runs, all `when()` conditions are evaluated against the raw input data to compose the effective validator set. Only then does validation execute.
+- When a condition matches, the `then` validators replace (not merge with) the base validators for those fields.
+- Multiple `when()` blocks are evaluated independently; all matching blocks apply. If two blocks target the same field, the last matching block wins.
 - Works with both `validate()` and `validateSync()`.
 
 ### 1-2. `pick()` / `omit()`
@@ -44,7 +44,7 @@ DupSchema(fields: {
 Return a new `DupSchema` containing only the specified fields. The original schema is unchanged.
 
 ```dart
-final userSchema = DupSchema(fields: {
+final userSchema = DupSchema({
   'name':     ValidateString().required(),
   'email':    ValidateString().required().email(),
   'password': ValidateString().required().password(),
@@ -73,20 +73,22 @@ await patchSchema.validate({'email': 'bad'});   // ✗ — email format still ch
 ```
 
 **Behavior:**
-- Strips phase-0 validators (`required`, `notBlank`) from every field.
-- All phase 1–4 validators remain.
+- Strips only `required` (phase-0 presence check) from every field. `notBlank` is moved to phase 1 (see below) so it is NOT removed by `partial()`.
+- All phase 1–4 validators remain, including `notBlank` — a submitted `{ 'name': '   ' }` still fails.
 - Useful for PATCH endpoints where only changed fields are submitted.
+
+> **Note on `notBlank` phase change:** `notBlank` is reclassified from phase 0 to phase 1 in this release. It is a value-quality check (trimmed string must not be empty), not a presence check — phase 1 is the correct home. This is a behavior change: previously `notBlank` ran before format validators; now it runs alongside them. In practice this has no observable effect since they are independent checks.
 
 ---
 
 ## 2. New Validator Types
 
-### 2-1. `ValidateMap<K, V>`
+### 2-1. `ValidateMap<V>`
 
-Validates a `Map<K, V>` value. Keys and values can each have their own validator.
+Validates a `Map<String, V>` value. Keys are always `String` (covers JSON objects and the vast majority of real-world maps). Values can have their own validator.
 
 ```dart
-ValidateMap<String, int>()
+ValidateMap<int>()
   .required()
   .minSize(1)
   .maxSize(10)
@@ -100,8 +102,10 @@ ValidateMap<String, int>()
 |---|---|---|
 | `minSize(int)` | 2 | Map must have at least N entries |
 | `maxSize(int)` | 2 | Map must have at most N entries |
-| `keyValidator(ValidateString)` | 1 | Applied to every key |
-| `valueValidator(BaseValidator<V>)` | 1 | Applied to every value |
+| `keyValidator(ValidateString)` | 1 | Applied to every key (`String` only) |
+| `valueValidator(ValidateNumber \| ValidateString \| ValidateList \| ValidateBool \| ValidateDateTime)` | 1 | Applied to every value |
+
+`valueValidator` accepts any concrete `BaseValidator<V, dynamic>` subclass. The type parameter `V` on `ValidateMap<V>` constrains which validator type is valid at the call site.
 
 **Error reporting:** Key/value errors are reported as `"field[key]"` (e.g. `"metadata[score]"`).
 
@@ -110,22 +114,27 @@ ValidateMap<String, int>()
 Wraps a `DupSchema` as a single-field validator, enabling nested object validation.
 
 ```dart
-final addressSchema = DupSchema(fields: {
+final addressSchema = DupSchema({
   'street': ValidateString().required(),
   'city':   ValidateString().required(),
   'zip':    ValidateString().required().postalCode(),
 });
 
-final orderSchema = DupSchema(fields: {
+final orderSchema = DupSchema({
   'orderId':         ValidateString().required().uuid(),
   'shippingAddress': ValidateObject(addressSchema).required(),
   'billingAddress':  ValidateObject(addressSchema),
 });
 ```
 
-**Error reporting:** Nested field errors are flattened with dot notation into the parent `FormValidationFailure`:
-- `result('shippingAddress.street')?.message`
-- `result('shippingAddress.zip')?.message`
+**Error reporting:** `ValidateObject` introduces `NestedValidationFailure extends ValidationFailure`, which carries the inner `DupSchema`'s error map. `DupSchema.validate()` detects this type and flattens entries with dot notation into the parent `FormValidationFailure`:
+
+```dart
+result('shippingAddress.street')?.message  // "street is required"
+result('shippingAddress.zip')?.message     // "zip is not a valid postal code"
+```
+
+The `NestedValidationFailure` type is internal — callers always interact with the flattened `FormValidationFailure` map.
 
 ---
 
