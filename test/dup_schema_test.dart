@@ -266,4 +266,68 @@ void main() {
       expect(result, isA<FormValidationFailure>());
     });
   });
+
+  group('DupSchema.when()', () {
+    late DupSchema schema;
+
+    setUp(() {
+      schema = DupSchema({
+        'paymentType': ValidateString().required().includedIn(['card', 'bank']),
+        'cardNumber':  ValidateString(),
+        'bankAccount': ValidateString(),
+      })
+      .when(
+        field: 'paymentType',
+        condition: (dynamic v) => v == 'card',
+        then: {'cardNumber': ValidateString().required().min(16)},
+      )
+      .when(
+        field: 'paymentType',
+        condition: (dynamic v) => v == 'bank',
+        then: {'bankAccount': ValidateString().required()},
+      );
+    });
+
+    test('then validators apply when condition matches', () async {
+      final result = await schema.validate({'paymentType': 'card', 'cardNumber': null, 'bankAccount': null});
+      expect(result, isA<FormValidationFailure>());
+      expect((result as FormValidationFailure)('cardNumber')!.code, ValidationCode.required);
+    });
+
+    test('then validators are skipped when condition does not match', () async {
+      final result = await schema.validate({'paymentType': 'bank', 'cardNumber': null, 'bankAccount': 'ACC123'});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('base validators still apply regardless of condition', () async {
+      final result = await schema.validate({'paymentType': null, 'cardNumber': null, 'bankAccount': null});
+      expect(result, isA<FormValidationFailure>());
+      expect((result as FormValidationFailure)('paymentType')!.code, ValidationCode.required);
+    });
+
+    test('when().then validators skipped in partial mode', () async {
+      final partial = schema.partial();
+      final result = await partial.validate({'paymentType': 'card', 'cardNumber': null});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('hasAsyncValidators includes then-branch validators', () async {
+      final s = DupSchema({'x': ValidateString()})
+        .when(
+          field: 'x',
+          condition: (dynamic v) => v == 'y',
+          then: {'x': ValidateString().addAsyncValidator((_) async => null)},
+        );
+      expect(s.hasAsyncValidators, isTrue);
+    });
+
+    test('validateSync() works when no async in any branch', () {
+      final result = schema.validateSync({
+        'paymentType': 'card',
+        'cardNumber': '1234567890123456',
+        'bankAccount': null,
+      });
+      expect(result, isA<FormValidationSuccess>());
+    });
+  });
 }

@@ -80,7 +80,8 @@ class DupSchema {
   /// True when any field validator has at least one async validator registered.
   /// Use this to decide between [validate] and [validateSync].
   bool get hasAsyncValidators =>
-      _schema.values.any((v) => v.hasAsyncValidators);
+      _schema.values.any((v) => v.hasAsyncValidators) ||
+      _whenRules.any((r) => r.then.values.any((v) => v.hasAsyncValidators));
 
   /// Registers a cross-field validation function and returns [this] for chaining.
   ///
@@ -91,6 +92,33 @@ class DupSchema {
   ) {
     _crossValidator = fn;
     return this;
+  }
+
+  /// Registers a conditional validation rule. [condition] receives the raw input
+  /// value of [field]; when true, [then] validators replace base validators for
+  /// those fields. Evaluated before any validation runs.
+  DupSchema when({
+    required String field,
+    required bool Function(dynamic) condition,
+    required Map<String, BaseValidator> then,
+  }) {
+    for (final e in then.entries) {
+      e.value.setLabel(e.key);
+    }
+    _whenRules.add(_WhenRule(field: field, condition: condition, then: then));
+    return this;
+  }
+
+  Map<String, BaseValidator> _buildEffective(Map<String, dynamic> data) {
+    final effective = Map<String, BaseValidator>.from(_schema);
+    for (final rule in _whenRules) {
+      if (rule.condition(data[rule.field])) {
+        for (final e in rule.then.entries) {
+          effective[e.key] = e.value;
+        }
+      }
+    }
+    return effective;
   }
 
   DupSchema _derive(Map<String, BaseValidator> kept) {
@@ -151,9 +179,10 @@ class DupSchema {
   /// errors for every field that failed. [crossValidate] is only called when
   /// all individual fields pass.
   Future<FormValidationResult> validate(Map<String, dynamic> data) async {
+    final effective = _buildEffective(data);
     final errors = <String, ValidationFailure>{};
-    for (final field in _schema.keys) {
-      final result = await _schema[field]!.validateAsync(
+    for (final field in effective.keys) {
+      final result = await effective[field]!.validateAsync(
         data[field],
         skipPresence: _isPartial,
       );
@@ -181,9 +210,10 @@ class DupSchema {
       'validateSync() called on a schema that has async validators. '
       'Use validate() instead.',
     );
+    final effective = _buildEffective(data);
     final errors = <String, ValidationFailure>{};
-    for (final field in _schema.keys) {
-      final result = _schema[field]!.validate(
+    for (final field in effective.keys) {
+      final result = effective[field]!.validate(
         data[field],
         skipPresence: _isPartial,
       );
