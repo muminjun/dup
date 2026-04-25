@@ -198,4 +198,72 @@ void main() {
       expect(result, isA<FormValidationSuccess>());
     });
   });
+
+  group('DupSchema.pick()', () {
+    late DupSchema schema;
+
+    setUp(() {
+      schema = DupSchema(
+        {
+          'name':     ValidateString().required(),
+          'email':    ValidateString().required().email(),
+          'password': ValidateString().required().min(8),
+        },
+        labels: {'email': 'Email Address'},
+      );
+    });
+
+    test('keeps only specified fields', () async {
+      final login = schema.pick(['email', 'password']);
+      final result = await login.validate({'email': 'a@b.com', 'password': 'secret12'});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('excluded fields are not validated', () async {
+      final login = schema.pick(['email', 'password']);
+      final result = await login.validate({'email': 'a@b.com', 'password': 'secret12', 'name': null});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('custom label is preserved in derived schema', () async {
+      final login = schema.pick(['email']);
+      final result = await login.validate({'email': null});
+      final failure = result as FormValidationFailure;
+      expect(failure('email')!.message, contains('Email Address'));
+    });
+
+    test('original schema is unaffected', () async {
+      schema.pick(['email']);
+      final result = await schema.validate({'name': null, 'email': null, 'password': null});
+      expect(result, isA<FormValidationFailure>());
+    });
+
+    test('unknown field names are silently ignored', () {
+      expect(() => schema.pick(['nonexistent', 'email']), returnsNormally);
+    });
+  });
+
+  group('DupSchema.omit()', () {
+    late DupSchema schema;
+
+    setUp(() {
+      schema = DupSchema({
+        'name':     ValidateString().required(),
+        'email':    ValidateString().required().email(),
+        'password': ValidateString().required().min(8),
+      });
+    });
+
+    test('excluded field is not validated', () async {
+      final profile = schema.omit(['password']);
+      final result = await profile.validate({'name': 'Jane', 'email': 'j@b.com'});
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('remaining fields still validated', () async {
+      final profile = schema.omit(['password']);
+      final result = await profile.validate({'name': null, 'email': 'j@b.com'});
+      expect(result, isA<FormValidationFailure>());
+    });
+  });
 }

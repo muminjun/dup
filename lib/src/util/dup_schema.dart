@@ -93,6 +93,43 @@ class DupSchema {
     return this;
   }
 
+  DupSchema _derive(Map<String, BaseValidator> kept) {
+    final currentLabels = {
+      for (final e in kept.entries)
+        e.key: e.value.label.isNotEmpty ? e.value.label : e.key,
+    };
+    final keptRules = _whenRules
+        .where((r) => kept.containsKey(r.field))
+        .map((r) {
+          final filteredThen = Map.fromEntries(
+            r.then.entries.where((e) => kept.containsKey(e.key)),
+          );
+          if (filteredThen.isEmpty) return null;
+          return _WhenRule(field: r.field, condition: r.condition, then: filteredThen);
+        })
+        .whereType<_WhenRule>()
+        .toList();
+    return DupSchema(kept, labels: currentLabels)
+      .._whenRules.addAll(keptRules)
+      .._isPartial = _isPartial;
+  }
+
+  /// Returns a new [DupSchema] containing only [fields]. Unknown names ignored.
+  DupSchema pick(List<String> fields) {
+    final kept = Map.fromEntries(
+      _schema.entries.where((e) => fields.contains(e.key)),
+    );
+    return _derive(kept);
+  }
+
+  /// Returns a new [DupSchema] with [fields] removed. Unknown names ignored.
+  DupSchema omit(List<String> fields) {
+    final kept = Map.fromEntries(
+      _schema.entries.where((e) => !fields.contains(e.key)),
+    );
+    return _derive(kept);
+  }
+
   /// Returns a new [DupSchema] where [required] presence checks are skipped
   /// at validation time. All other validators (format, constraint, custom) remain
   /// active. Validator instances are shared — no cloning occurs.
