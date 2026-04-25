@@ -655,4 +655,96 @@ void main() {
       );
     });
   });
+
+  group('isWeekday()', () {
+    test('passes Monday', () {
+      final monday = DateTime(2025, 1, 6);
+      expect(ValidateDateTime().isWeekday().validate(monday), isA<ValidationSuccess>());
+    });
+    test('fails Saturday', () {
+      final saturday = DateTime(2025, 1, 4);
+      final r = ValidateDateTime().isWeekday().validate(saturday);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.isWeekday);
+    });
+    test('null passes', () {
+      expect(ValidateDateTime().isWeekday().validate(null), isA<ValidationSuccess>());
+    });
+  });
+
+  group('isWeekend()', () {
+    test('passes Saturday', () {
+      final saturday = DateTime(2025, 1, 4);
+      expect(ValidateDateTime().isWeekend().validate(saturday), isA<ValidationSuccess>());
+    });
+    test('fails Monday', () {
+      final monday = DateTime(2025, 1, 6);
+      expect(ValidateDateTime().isWeekend().validate(monday), isA<ValidationFailure>());
+    });
+  });
+
+  group('isSameDay()', () {
+    test('passes same calendar day', () {
+      final d = DateTime(2025, 3, 15, 10, 0);
+      final target = DateTime(2025, 3, 15, 22, 0);
+      expect(ValidateDateTime().isSameDay(target).validate(d), isA<ValidationSuccess>());
+    });
+    test('fails different day', () {
+      final d = DateTime(2025, 3, 14);
+      final target = DateTime(2025, 3, 15);
+      final r = ValidateDateTime().isSameDay(target).validate(d);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.isSameDay);
+    });
+    test('null passes', () {
+      expect(ValidateDateTime().isSameDay(DateTime.now()).validate(null), isA<ValidationSuccess>());
+    });
+  });
+
+  group('isToday()', () {
+    test('passes for today', () {
+      final now = DateTime.now();
+      expect(ValidateDateTime().isToday().validate(now), isA<ValidationSuccess>());
+    });
+    test('fails for yesterday', () {
+      final yesterday = DateTime.now().subtract(const Duration(days: 1));
+      final r = ValidateDateTime().isToday().validate(yesterday);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.isToday);
+    });
+  });
+
+  group('isWithin()', () {
+    test('passes when within duration', () {
+      final now = DateTime.now();
+      final recent = now.subtract(const Duration(hours: 1));
+      expect(
+        ValidateDateTime().isWithin(const Duration(hours: 2)).validate(recent),
+        isA<ValidationSuccess>(),
+      );
+    });
+    test('fails when outside duration', () {
+      final now = DateTime.now();
+      final old = now.subtract(const Duration(days: 10));
+      final r = ValidateDateTime().isWithin(const Duration(days: 7)).validate(old);
+      expect(r, isA<ValidationFailure>());
+      expect((r as ValidationFailure).code, ValidationCode.isWithin);
+    });
+    test('custom from parameter', () {
+      final anchor = DateTime(2025, 1, 1);
+      final target = DateTime(2025, 1, 3);
+      expect(
+        ValidateDateTime()
+          .isWithin(const Duration(days: 7), from: anchor)
+          .validate(target),
+        isA<ValidationSuccess>(),
+      );
+    });
+    test('null passes', () {
+      expect(
+        ValidateDateTime().isWithin(const Duration(days: 1)).validate(null),
+        isA<ValidationSuccess>(),
+      );
+    });
+  });
 }

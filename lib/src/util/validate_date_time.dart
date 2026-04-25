@@ -125,4 +125,96 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
       return null;
     });
   }
+
+  /// Phase 1: fails when the date falls on a weekend (Saturday or Sunday).
+  ValidateDateTime isWeekday({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null) return null;
+      if (value.weekday >= DateTime.saturday) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.isWeekday,
+          {'name': label},
+          '$label must be a weekday.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the date falls on a weekday (Monday–Friday).
+  ValidateDateTime isWeekend({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null) return null;
+      if (value.weekday < DateTime.saturday) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.isWeekend,
+          {'name': label},
+          '$label must be a weekend day.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the date is not the same calendar day as [target].
+  ValidateDateTime isSameDay(DateTime target, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null) return null;
+      if (value.year != target.year ||
+          value.month != target.month ||
+          value.day != target.day) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.isSameDay,
+          {'name': label, 'target': target},
+          '$label must be on $target.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 2: fails when the date is not the same calendar day as [DateTime.now()].
+  ValidateDateTime isToday({MessageFactory? messageFactory}) {
+    return addPhaseValidator(2, (value) {
+      if (value == null) return null;
+      final now = DateTime.now();
+      if (value.year != now.year ||
+          value.month != now.month ||
+          value.day != now.day) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.isToday,
+          {'name': label},
+          '$label must be today.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 2: fails when the absolute difference between [value] and [from]
+  /// exceeds [duration]. [from] defaults to [DateTime.now()].
+  ValidateDateTime isWithin(
+    Duration duration, {
+    DateTime? from,
+    MessageFactory? messageFactory,
+  }) {
+    return addPhaseValidator(2, (value) {
+      if (value == null) return null;
+      final anchor = from ?? DateTime.now();
+      final diff = value.difference(anchor).abs();
+      if (diff > duration) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.isWithin,
+          {'name': label, 'duration': duration},
+          '$label must be within $duration of $anchor.',
+        );
+      }
+      return null;
+    });
+  }
 }
