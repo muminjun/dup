@@ -23,12 +23,12 @@ DupSchema({
 })
 .when(
   field: 'paymentType',
-  is: (v) => v == 'card',
+  condition: (v) => v == 'card',
   then: {'cardNumber': ValidateString().required().creditCard()},
 )
 .when(
   field: 'paymentType',
-  is: (v) => v == 'bank',
+  condition: (v) => v == 'bank',
   then: {'bankAccount': ValidateString().required()},
 );
 ```
@@ -37,6 +37,7 @@ DupSchema({
 - Before any validation runs, all `when()` conditions are evaluated against the raw input data to compose the effective validator set. Only then does validation execute.
 - When a condition matches, the `then` validators replace (not merge with) the base validators for those fields.
 - Multiple `when()` blocks are evaluated independently; all matching blocks apply. If two blocks target the same field, the last matching block wins.
+- If `pick()`/`omit()` removes the `field:` target of a `when()` rule, the entire rule is dropped from the derived schema.
 - Works with both `validate()` and `validateSync()`.
 
 ### 1-2. `pick()` / `omit()`
@@ -51,7 +52,7 @@ final userSchema = DupSchema({
   'age':      ValidateNumber().required().min(18),
 });
 
-final loginSchema  = userSchema.pick(['email', 'password']);
+final loginSchema   = userSchema.pick(['email', 'password']);
 final profileSchema = userSchema.omit(['password']);
 ```
 
@@ -59,7 +60,7 @@ final profileSchema = userSchema.omit(['password']);
 - `pick(fields)` — keeps only the named fields; ignores unknown names.
 - `omit(fields)` — removes the named fields; ignores unknown names.
 - `crossValidate` is not carried over (depends on fields that may no longer exist).
-- `when()` rules referencing omitted/non-picked fields are also dropped.
+- `when()` rules are dropped when their `field:` target is removed. Rules whose `then:` targets are removed are also dropped.
 
 ### 1-3. `partial()`
 
@@ -83,7 +84,8 @@ await patchSchema.validate({'name': null});     // ✓ — required removed, nul
 **Behavior:**
 - `partial()` strips validators tagged as presence checks. Only `required` carries this tag. `notBlank` (phase 1) is unaffected.
 - Implementation: `addPhaseValidator` gains an optional `isPresence: bool` flag (default `false`). `required` passes `isPresence: true`. `partial()` filters out only those entries.
-- `partial()` must not mutate the original schema or its validators. Each concrete `BaseValidator` subclass (`ValidateString`, `ValidateNumber`, etc.) overrides an abstract `V clone()` method declared on `BaseValidator<T, V>`. `clone()` returns a new empty instance of the same concrete type. `withoutPresenceValidators()` calls `clone()` then copies only non-presence phase entries into the clone. The original validator is untouched.
+- `partial()` must not mutate the original schema or its validators. Each concrete `BaseValidator` subclass (`ValidateString`, `ValidateNumber`, etc.) overrides an abstract `V clone()` method declared on `BaseValidator<T, V>`. `clone()` returns a new instance with all phase entries copied, including the `label`. `withoutPresenceValidators()` calls `clone()` then removes entries tagged `isPresence: true` from the copy. The original validator is untouched.
+- `when()` + `partial()` interaction: `required()` in a `then:` validator is also stripped when `partial()` is applied to the parent schema.
 - Useful for PATCH endpoints where only changed fields are submitted.
 
 ---
@@ -109,19 +111,24 @@ ValidateMap<num>()
 |---|---|---|
 | `minSize(int)` | 2 | Map must have at least N entries |
 | `maxSize(int)` | 2 | Map must have at most N entries |
-| `keyValidator(ValidateString)` | 1 | Applied to every key (`String` only) |
-| `valueValidator(ValidateNumber \| ValidateString \| ValidateList \| ValidateBool \| ValidateDateTime)` | 1 | Applied to every value |
+| `keyValidator(ValidateString)` | 1 | Applied to every key |
+| `valueValidator(BaseValidator)` | 1 | Applied to every value |
 
-`valueValidator` accepts any concrete `BaseValidator<V, dynamic>` subclass. The type parameter `V` on `ValidateMap<V>` constrains which validator type is valid at the call site. Use `ValidateMap<num>` with `ValidateNumber` (which validates `num`, not `int`).
+**Type parameter:** `valueValidator` is declared as `valueValidator(covariant BaseValidator<V, dynamic> validator)`. Using `covariant` relaxes Dart's type checking at the call site while keeping the type parameter `V` on `ValidateMap<V>` for documentation clarity. Use `ValidateMap<num>` with `ValidateNumber` (which validates `num`, not `int`).
 
 **Async propagation:** `ValidateMap.hasAsyncValidators` returns `true` if the `keyValidator` or `valueValidator` has async validators registered. The parent `DupSchema` checks `hasAsyncValidators` on all field validators including `ValidateMap`, so `validateSync()` will assert correctly if an async value validator is present.
 
-**Error reporting:** Key/value errors use `NestedValidationFailure` (same mechanism as `ValidateObject`). `DupSchema.validate()` and `DupSchema.validateSync()` both flatten these into the parent `FormValidationFailure` using bracket notation:
+**Error reporting:** Key/value errors use `NestedValidationFailure` (same mechanism as `ValidateObject`). `DupSchema.validate()` and `DupSchema.validateSync()` both flatten these into the parent `FormValidationFailure`:
+
+- Key errors: `"metadata[badKey]"` — `mapKeyInvalid` code, label is the key string itself.
+- Value errors: `"metadata[score]"` — individual validator's code and label (the key string).
 
 ```dart
 result('metadata[score]')?.message   // "score must be at most 100"
-result('metadata[rank]')?.message    // "rank must be at least 0"
+result('metadata[badKey]')?.message  // "badKey is not alphabetic"
 ```
+
+`mapKeyInvalid` and `mapValueInvalid` are wrapper codes used only when the inner validator itself does not produce a code (i.e., as a fallback). Normally, the inner validator's own code is preserved.
 
 ### 2-2. `ValidateObject`
 
@@ -141,11 +148,21 @@ final orderSchema = DupSchema({
 });
 ```
 
-**Error reporting (via DupSchema):** `ValidateObject` returns a `NestedValidationFailure extends ValidationFailure`, which carries the inner `DupSchema`'s error map. Both `DupSchema.validate()` and `DupSchema.validateSync()` detect this type and flatten entries with dot notation into the parent `FormValidationFailure`:
+**`NestedValidationFailure` class definition:**
 
 ```dart
-result('shippingAddress.street')?.message  // "street is required"
-result('shippingAddress.zip')?.message     // "zip is not a valid postal code"
+// Internal transport type — not exported from dup.dart
+class NestedValidationFailure extends ValidationFailure {
+  final Map<String, ValidationFailure> nestedErrors;
+
+  NestedValidationFailure(this.nestedErrors)
+      : super(
+          code: ValidationCode.nestedFailed,
+          message: 'Nested validation failed: '
+              '${nestedErrors.keys.first} — '
+              '${nestedErrors.values.first.message}',
+        );
+}
 ```
 
 **Internal flattening path:** `ValidateObject` and `ValidateMap` implement the internal `_NestedValidator` interface:
@@ -176,7 +193,7 @@ abstract interface class _NestedValidator {
 |---|---|---|
 | `startsWith(String prefix)` | 1 | Trimmed value must start with prefix |
 | `endsWith(String suffix)` | 1 | Trimmed value must end with suffix |
-| `contains(String substring)` | 1 | Value must contain the substring |
+| `contains(String substring)` | 1 | Value must contain the substring (no trim — trimming would change match semantics) |
 | `ipAddress()` | 1 | Valid IPv4 or IPv6 address |
 | `hexColor()` | 1 | Valid hex color code (`#RGB` or `#RRGGBB`) |
 | `base64()` | 1 | Valid Base64-encoded string |
@@ -186,23 +203,29 @@ abstract interface class _NestedValidator {
 
 All methods follow the null-skip pattern: return `null` (pass) when value is `null`.
 
+`startsWith` and `endsWith` trim before checking (accidental leading/trailing whitespace is common). `contains` does not trim — trimming would prevent matching substrings that begin or end with spaces.
+
 ### ValidateNumber — 3 new methods
 
 | Method | Phase | Description |
 |---|---|---|
 | `isPrecision(int digits)` | 1 | At most `digits` decimal places |
-| `isPort()` | 1 | Integer in range 0–65535 |
+| `isPort()` | 1 | Integer in range 0–65535; non-integer values (e.g. `80.5`) also fail |
 | `isIn(List<num>)` | 1 | Value must be one of the given numbers |
+
+`isPort()` implicitly checks that the value is an integer. A float like `80.5` fails even if it is in range.
 
 ### ValidateDateTime — 5 new methods
 
 | Method | Phase | Description |
 |---|---|---|
-| `isWeekday()` | 1 | Monday–Friday |
-| `isWeekend()` | 1 | Saturday–Sunday |
-| `isToday()` | 1 | Same calendar day as `DateTime.now()` |
-| `isSameDay(DateTime target)` | 1 | Same calendar day as `target` |
-| `isWithin(Duration duration, {DateTime? from})` | 2 | Within `duration` of `from` (default: `DateTime.now()`) |
+| `isWeekday()` | 1 | Monday–Friday (local time) |
+| `isWeekend()` | 1 | Saturday–Sunday (local time) |
+| `isToday()` | 1 | Same calendar day as `DateTime.now()` (local time) |
+| `isSameDay(DateTime target)` | 1 | Same calendar day as `target`; comparison uses local time on both sides |
+| `isWithin(Duration duration, {DateTime? from})` | 2 | Within `duration` of `from` (default: `DateTime.now()` local time) |
+
+**Phase rationale:** `isWeekday`, `isWeekend`, `isToday`, `isSameDay` classify the type of date (analogous to `isBefore`/`isAfter` at phase 1). `isWithin` is a range constraint (analogous to `between`/`isInFuture` at phase 2). All comparisons use local time (`DateTime.now()` returns local). Pass a UTC-converted `DateTime` explicitly if UTC behavior is needed.
 
 ### ValidateList — 1 new method
 
@@ -224,7 +247,7 @@ All methods follow the null-skip pattern: return `null` (pass) when value is `nu
 
 **`ValidatorLocale.base`** — exposes the built-in English defaults as a `ValidatorLocale` instance.
 
-**`merge(Map<ValidationCode, LocaleMessage>)`** — returns a new `ValidatorLocale` with the given messages overlaid on top of the receiver.
+**`merge(Map<ValidationCode, LocaleMessage> overrides)`** — returns a new `ValidatorLocale` whose message map is the receiver's map with `overrides` applied on top (overlay semantics: `overrides` wins on conflict, all other receiver entries are preserved). The receiver is not mutated.
 
 ```dart
 // Override a few messages, keep the rest in English
