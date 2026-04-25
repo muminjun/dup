@@ -9,7 +9,8 @@ import 'validate_locale.dart';
 class _ValidatorEntry<T> {
   final int phase;
   final ValidationFailure? Function(T?) fn;
-  const _ValidatorEntry(this.phase, this.fn);
+  final bool isPresence;
+  const _ValidatorEntry(this.phase, this.fn, {this.isPresence = false});
 }
 
 /// Base class for all validators.
@@ -47,8 +48,12 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Registers a sync validator at the given [phase].
   /// Lower phase numbers run first; within the same phase, registration order
   /// is preserved.
-  V addPhaseValidator(int phase, ValidationFailure? Function(T?) fn) {
-    _entries.add(_ValidatorEntry(phase, fn));
+  V addPhaseValidator(
+    int phase,
+    ValidationFailure? Function(T?) fn, {
+    bool isPresence = false,
+  }) {
+    _entries.add(_ValidatorEntry(phase, fn, isPresence: isPresence));
     _entries.sort((a, b) => a.phase.compareTo(b.phase));
     return this as V;
   }
@@ -64,17 +69,41 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
     return this as V;
   }
 
+  /// Runs sync phase entries only. When [skipPresence] is true, entries
+  /// registered with isPresence:true (i.e. required()) are skipped.
+  ValidationResult runPhaseChain(T? value, {bool skipPresence = false}) {
+    for (final entry in _entries) {
+      if (skipPresence && entry.isPresence) continue;
+      final failure = entry.fn(value);
+      if (failure != null) return failure;
+    }
+    return const ValidationSuccess();
+  }
+
+  /// Runs async entries only. Returns the first failure or null.
+  Future<ValidationFailure?> runAsyncChain(T? value) async {
+    for (final fn in _asyncEntries) {
+      final failure = await fn(value);
+      if (failure != null) return failure;
+    }
+    return null;
+  }
+
   /// Phase 0: fails when value is null or an empty string.
   /// Without this, null values silently pass all other phases.
   V required({MessageFactory? messageFactory}) {
-    return addPhaseValidator(0, (value) {
-      if (value == null || (value is String && value.isEmpty)) {
-        return getFailure(messageFactory, ValidationCode.required, {
-          'name': label,
-        }, '$label is required.');
-      }
-      return null;
-    });
+    return addPhaseValidator(
+      0,
+      (value) {
+        if (value == null || (value is String && value.isEmpty)) {
+          return getFailure(messageFactory, ValidationCode.required, {
+            'name': label,
+          }, '$label is required.');
+        }
+        return null;
+      },
+      isPresence: true,
+    );
   }
 
   /// Phase 3: fails when value does not equal [target].
@@ -150,24 +179,17 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Runs all registered sync validators in phase order.
   /// Stops at the first [ValidationFailure] and returns it immediately.
   /// Returns [ValidationSuccess] if all pass.
-  ValidationResult validate(T? value) {
-    for (final entry in _entries) {
-      final failure = entry.fn(value);
-      if (failure != null) return failure;
-    }
-    return const ValidationSuccess();
+  ValidationResult validate(T? value, {bool skipPresence = false}) {
+    return runPhaseChain(value, skipPresence: skipPresence);
   }
 
   /// Runs sync phases first, then async validators in registration order.
   /// Short-circuits: if any sync phase fails the async entries are not executed.
-  Future<ValidationResult> validateAsync(T? value) async {
-    final syncResult = validate(value);
+  Future<ValidationResult> validateAsync(T? value, {bool skipPresence = false}) async {
+    final syncResult = runPhaseChain(value, skipPresence: skipPresence);
     if (syncResult is ValidationFailure) return syncResult;
-    for (final fn in _asyncEntries) {
-      final failure = await fn(value);
-      if (failure != null) return failure;
-    }
-    return const ValidationSuccess();
+    final asyncFailure = await runAsyncChain(value);
+    return asyncFailure ?? const ValidationSuccess();
   }
 
   /// Returns a sync adapter compatible with Flutter's [TextFormField.validator].

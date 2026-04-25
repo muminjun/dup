@@ -810,4 +810,25 @@ void main() {
       expect(secondCalled, isFalse);
     });
   });
+
+  group('partial / isPresence', () {
+    test('required() registers as presence validator', () {
+      final v = ValidateString().required();
+      expect(v.validate(null, skipPresence: true), isA<ValidationSuccess>());
+      expect(v.validate(null), isA<ValidationFailure>());
+    });
+
+    test('non-presence validators still run when skipPresence:true', () {
+      final v = ValidateString().required().email();
+      expect(v.validate('bad', skipPresence: true), isA<ValidationFailure>());
+    });
+
+    test('validateAsync respects skipPresence', () async {
+      final v = ValidateString().required();
+      expect(
+        await v.validateAsync(null, skipPresence: true),
+        isA<ValidationSuccess>(),
+      );
+    });
+  });
 }
