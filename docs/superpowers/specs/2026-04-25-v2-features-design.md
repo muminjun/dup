@@ -17,7 +17,7 @@ Applies a set of field validators only when a condition on another field is met.
 
 ```dart
 DupSchema({
-  'paymentType': ValidateString().required().oneOf(['card', 'bank']),
+  'paymentType': ValidateString().required().includedIn(['card', 'bank']),
   'cardNumber':  ValidateString(),
   'bankAccount': ValidateString(),
 })
@@ -74,9 +74,9 @@ await patchSchema.validate({'name': '   '});         // ✗ — notBlank still a
 ```
 
 **Behavior:**
-- `partial()` strips validators tagged as presence checks. Only `required` carries this tag. `notBlank` does NOT — it is a value-quality check, not a presence check.
+- `partial()` strips validators tagged as presence checks. Only `required` carries this tag. `notBlank` does NOT — it is already a phase-1 value-quality check in the current implementation and is unaffected.
 - Implementation: `addPhaseValidator` gains an optional `isPresence: bool` flag (default `false`). `required` passes `isPresence: true`. `partial()` filters out only those entries.
-- `notBlank` stays at phase 0 and its execution order is unchanged. No phase migration needed.
+- `partial()` must not mutate the original schema or its validators. `BaseValidator` gains an internal `withoutPresenceValidators()` method that returns a new validator instance with presence entries removed, leaving the original intact.
 - Useful for PATCH endpoints where only changed fields are submitted.
 
 ---
@@ -107,6 +107,8 @@ ValidateMap<num>()
 
 `valueValidator` accepts any concrete `BaseValidator<V, dynamic>` subclass. The type parameter `V` on `ValidateMap<V>` constrains which validator type is valid at the call site. Use `ValidateMap<num>` with `ValidateNumber` (which validates `num`, not `int`).
 
+**Async propagation:** `ValidateMap.hasAsyncValidators` returns `true` if the `keyValidator` or `valueValidator` has async validators registered. The parent `DupSchema` checks `hasAsyncValidators` on all field validators including `ValidateMap`, so `validateSync()` will assert correctly if an async value validator is present.
+
 **Error reporting:** Key/value errors use `NestedValidationFailure` (same mechanism as `ValidateObject`). `DupSchema.validate()` and `DupSchema.validateSync()` both flatten these into the parent `FormValidationFailure` using bracket notation:
 
 ```dart
@@ -132,14 +134,16 @@ final orderSchema = DupSchema({
 });
 ```
 
-**Error reporting:** `ValidateObject` returns a `NestedValidationFailure extends ValidationFailure`, which carries the inner `DupSchema`'s error map. Both `DupSchema.validate()` and `DupSchema.validateSync()` detect this type and flatten entries with dot notation into the parent `FormValidationFailure`:
+**Error reporting (via DupSchema):** `ValidateObject` returns a `NestedValidationFailure extends ValidationFailure`, which carries the inner `DupSchema`'s error map. Both `DupSchema.validate()` and `DupSchema.validateSync()` detect this type and flatten entries with dot notation into the parent `FormValidationFailure`:
 
 ```dart
 result('shippingAddress.street')?.message  // "street is required"
 result('shippingAddress.zip')?.message     // "zip is not a valid postal code"
 ```
 
-The `NestedValidationFailure` type is internal — callers always interact with the flattened `FormValidationFailure` map.
+**Direct call path:** When `ValidateObject.validate(value)` or `ValidateObject.validateAsync(value)` is called directly (e.g. via `DupSchema.validateField()`), the return type is `ValidationResult`. In this case `ValidateObject` returns a single `ValidationFailure` with `ValidationCode.nestedFailed` and a summary message listing the first failing sub-field. `NestedValidationFailure` is not exposed to callers — it is an internal transport type only visible within `DupSchema`'s flattening logic.
+
+**Async propagation:** `ValidateObject.hasAsyncValidators` delegates to the inner schema's `hasAsyncValidators`, so the parent `DupSchema.validateSync()` assert fires correctly when the nested schema contains async validators.
 
 ---
 
@@ -229,7 +233,7 @@ ValidatorLocale.setLocale(ValidatorLocale({
 
 Every new method needs a corresponding `ValidationCode` entry and a hardcoded English default message. New codes:
 
-`startsWith`, `endsWith`, `stringContains`, `ipAddress`, `hexColor`, `base64`, `json`, `creditCard`, `postalCode`, `numberPrecision`, `isPort`, `numberIn`, `isWeekday`, `isWeekend`, `isToday`, `isSameDay`, `isWithin`, `listContainsAll`, `mapMinSize`, `mapMaxSize`, `mapKeyInvalid`, `mapValueInvalid`
+`startsWith`, `endsWith`, `stringContains`, `ipAddress`, `hexColor`, `base64`, `json`, `creditCard`, `postalCode`, `numberPrecision`, `isPort`, `numberIn`, `isWeekday`, `isWeekend`, `isToday`, `isSameDay`, `isWithin`, `listContainsAll`, `mapMinSize`, `mapMaxSize`, `mapKeyInvalid`, `mapValueInvalid`, `nestedFailed`
 
 > `oneOf` and `notOneOf` already exist in the enum (used by `includedIn()` / `excludedFrom()`). Do not add duplicates.
 
