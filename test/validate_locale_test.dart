@@ -43,4 +43,42 @@ void main() {
       expect(locale.messages[ValidationCode.emailInvalid], isNull);
     });
   });
+
+  group('ValidatorLocale.base', () {
+    test('base contains required code', () {
+      expect(ValidatorLocale.base.messages[ValidationCode.required], isNotNull);
+    });
+
+    test('base required message uses name parameter', () {
+      final msg = ValidatorLocale.base.messages[ValidationCode.required]!({'name': 'Email'});
+      expect(msg, contains('Email'));
+    });
+  });
+
+  group('ValidatorLocale.merge()', () {
+    tearDown(() => ValidatorLocale.resetLocale());
+
+    test('merge overrides specified codes', () {
+      final custom = ValidatorLocale.base.merge({
+        ValidationCode.required: (_) => 'custom required',
+      });
+      expect(custom.messages[ValidationCode.required]!({}), equals('custom required'));
+    });
+
+    test('merge preserves unspecified codes from receiver', () {
+      final custom = ValidatorLocale.base.merge({
+        ValidationCode.required: (_) => 'custom',
+      });
+      expect(custom.messages[ValidationCode.emailInvalid], isNotNull);
+    });
+
+    test('merge does not mutate receiver', () {
+      final original = ValidatorLocale.base;
+      original.merge({ValidationCode.required: (_) => 'x'});
+      expect(
+        original.messages[ValidationCode.required]!({'name': 'F'}),
+        isNot(equals('x')),
+      );
+    });
+  });
 }

@@ -38,4 +38,70 @@ class ValidatorLocale {
 
   /// The currently active locale, or null if none has been set.
   static ValidatorLocale? get current => _current;
+
+  /// The built-in English defaults as a locale instance.
+  /// Use as a base for partial overrides via [merge].
+  static final ValidatorLocale base = ValidatorLocale({
+    ValidationCode.required: (p) => '${p['name']} is required.',
+    ValidationCode.notBlank: (p) => '${p['name']} cannot be blank.',
+    ValidationCode.equal: (p) => '${p['name']} does not match.',
+    ValidationCode.notEqual: (p) => '${p['name']} is not allowed.',
+    ValidationCode.oneOf: (p) => '${p['name']} must be one of: ${p['options']}.',
+    ValidationCode.notOneOf: (p) => '${p['name']} must not be one of: ${p['options']}.',
+    ValidationCode.condition: (p) => '${p['name']} does not satisfy the condition.',
+    ValidationCode.stringMin: (p) => '${p['name']} must be at least ${p['min']} characters.',
+    ValidationCode.stringMax: (p) => '${p['name']} must be at most ${p['max']} characters.',
+    ValidationCode.matches: (p) => '${p['name']} does not match the required format.',
+    ValidationCode.emailInvalid: (p) => '${p['name']} is not a valid email address.',
+    ValidationCode.passwordMin: (p) => '${p['name']} must be at least ${p['minLength']} characters.',
+    ValidationCode.emoji: (p) => '${p['name']} cannot contain emoji.',
+    ValidationCode.mobileInvalid: (p) => '${p['name']} is not a valid mobile number.',
+    ValidationCode.phoneInvalid: (p) => '${p['name']} is not a valid phone number.',
+    ValidationCode.biznoInvalid: (p) => '${p['name']} is not a valid business registration number.',
+    ValidationCode.url: (p) => '${p['name']} is not a valid URL.',
+    ValidationCode.uuid: (p) => '${p['name']} is not a valid UUID.',
+    ValidationCode.alpha: (p) => '${p['name']} must contain only letters.',
+    ValidationCode.alphanumeric: (p) => '${p['name']} must contain only letters and numbers.',
+    ValidationCode.numeric: (p) => '${p['name']} must contain only digits.',
+    ValidationCode.numberMin: (p) => '${p['name']} must be at least ${p['min']}.',
+    ValidationCode.numberMax: (p) => '${p['name']} must be at most ${p['max']}.',
+    ValidationCode.integer: (p) => '${p['name']} must be an integer.',
+    ValidationCode.positive: (p) => '${p['name']} must be positive.',
+    ValidationCode.negative: (p) => '${p['name']} must be negative.',
+    ValidationCode.nonNegative: (p) => '${p['name']} must be non-negative.',
+    ValidationCode.nonPositive: (p) => '${p['name']} must be non-positive.',
+    ValidationCode.between: (p) => '${p['name']} must be between ${p['min']} and ${p['max']}.',
+    ValidationCode.even: (p) => '${p['name']} must be even.',
+    ValidationCode.odd: (p) => '${p['name']} must be odd.',
+    ValidationCode.multipleOf: (p) => '${p['name']} must be a multiple of ${p['factor']}.',
+    ValidationCode.listNotEmpty: (p) => '${p['name']} cannot be empty.',
+    ValidationCode.listEmpty: (p) => '${p['name']} must be empty.',
+    ValidationCode.listMin: (p) => '${p['name']} must have at least ${p['min']} items.',
+    ValidationCode.listMax: (p) => '${p['name']} cannot have more than ${p['max']} items.',
+    ValidationCode.listLengthBetween: (p) => '${p['name']} length must be between ${p['min']} and ${p['max']}.',
+    ValidationCode.listExactLength: (p) => '${p['name']} must have exactly ${p['length']} items.',
+    ValidationCode.contains: (p) => '${p['name']} must contain ${p['item']}.',
+    ValidationCode.doesNotContain: (p) => '${p['name']} must not contain ${p['item']}.',
+    ValidationCode.all: (p) => 'All items in ${p['name']} must satisfy the condition.',
+    ValidationCode.any: (p) => 'At least one item in ${p['name']} must satisfy the condition.',
+    ValidationCode.none: (p) => 'No items in ${p['name']} must satisfy the condition.',
+    ValidationCode.noDuplicates: (p) => '${p['name']} must not contain duplicate items.',
+    ValidationCode.eachItem: (p) => 'Item at index ${p['index']} in ${p['name']}: ${p['error']}',
+    ValidationCode.dateMin: (p) => '${p['name']} must be on or after ${p['min']}.',
+    ValidationCode.dateMax: (p) => '${p['name']} must be on or before ${p['max']}.',
+    ValidationCode.dateBefore: (p) => '${p['name']} must be before ${p['target']}.',
+    ValidationCode.dateAfter: (p) => '${p['name']} must be after ${p['target']}.',
+    ValidationCode.dateBetween: (p) => '${p['name']} must be between ${p['min']} and ${p['max']}.',
+    ValidationCode.dateInFuture: (p) => '${p['name']} must be in the future.',
+    ValidationCode.dateInPast: (p) => '${p['name']} must be in the past.',
+    ValidationCode.boolTrue: (p) => '${p['name']} must be true.',
+    ValidationCode.boolFalse: (p) => '${p['name']} must be false.',
+  });
+
+  /// Returns a new [ValidatorLocale] with [overrides] applied on top of this
+  /// locale's messages (overlay semantics: [overrides] wins on conflict).
+  /// The receiver is not mutated.
+  ValidatorLocale merge(Map<ValidationCode, LocaleMessage> overrides) {
+    return ValidatorLocale({...messages, ...overrides});
+  }
 }
