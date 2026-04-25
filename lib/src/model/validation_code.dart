@@ -71,4 +71,38 @@ enum ValidationCode {
   // Bool (ValidateBool)
   boolTrue, // isTrue() — value is false
   boolFalse, // isFalse() — value is true
+
+  // String — new in v2
+  startsWith, // startsWith() — value does not start with prefix
+  endsWith, // endsWith() — value does not end with suffix
+  stringContains, // contains() — required substring absent
+  ipAddress, // ipAddress() — not a valid IP address
+  hexColor, // hexColor() — not a valid hex color
+  base64, // base64() — not valid Base64
+  json, // json() — not parseable JSON
+  creditCard, // creditCard() — Luhn check failed
+  koPostalCode, // koPostalCode() — not a valid Korean postal code
+
+  // Number — new in v2
+  numberPrecision, // isPrecision() — too many decimal places
+  isPort, // isPort() — not a valid port number
+
+  // DateTime — new in v2
+  isWeekday, // isWeekday() — not a weekday
+  isWeekend, // isWeekend() — not a weekend
+  isToday, // isToday() — not today
+  isSameDay, // isSameDay() — not the same calendar day
+  isWithin, // isWithin() — outside the allowed duration
+
+  // List — new in v2
+  listContainsAll, // containsAll() — missing required items
+
+  // Map (ValidateMap) — new in v2
+  mapMinSize, // minSize() — too few entries
+  mapMaxSize, // maxSize() — too many entries
+  mapKeyInvalid, // keyValidator() fallback — key failed validation
+  mapValueInvalid, // valueValidator() fallback — value failed validation
+
+  // Nested (ValidateObject / ValidateMap) — new in v2
+  nestedFailed, // inner schema validation failed (direct-call summary)
 }
