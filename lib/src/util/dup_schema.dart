@@ -55,6 +55,10 @@ class DupSchema {
   /// Field name → validator map. Each validator has its label set in the constructor.
   final Map<String, BaseValidator> _schema;
 
+  /// Label overrides supplied at construction time; used by [_buildEffective]
+  /// to apply the correct label to when-rule then-validators at validation time.
+  final Map<String, String> _labels;
+
   /// Optional cross-field validator, set via [crossValidate].
   /// Receives the full data map; returns field-level errors or null if everything passes.
   /// Not called when any individual field has already failed.
@@ -70,7 +74,8 @@ class DupSchema {
   DupSchema(
     Map<String, BaseValidator> schema, {
     Map<String, String> labels = const {},
-  }) : _schema = Map.from(schema) {
+  })  : _schema = Map.from(schema),
+        _labels = Map.from(labels) {
     // Inject labels now so error messages carry the correct field name.
     for (final entry in _schema.entries) {
       final label = labels[entry.key] ?? entry.key;
@@ -103,9 +108,6 @@ class DupSchema {
     required bool Function(dynamic) condition,
     required Map<String, BaseValidator> then,
   }) {
-    for (final e in then.entries) {
-      e.value.setLabel(e.key);
-    }
     _whenRules.add(_WhenRule(field: field, condition: condition, then: then));
     return this;
   }
@@ -129,6 +131,7 @@ class DupSchema {
     for (final rule in _whenRules) {
       if (rule.condition(data[rule.field])) {
         for (final e in rule.then.entries) {
+          e.value.setLabel(_labels[e.key] ?? e.key);
           effective[e.key] = e.value;
         }
       }
@@ -137,9 +140,9 @@ class DupSchema {
   }
 
   DupSchema _derive(Map<String, BaseValidator> kept) {
-    final currentLabels = {
-      for (final e in kept.entries)
-        e.key: e.value.label.isNotEmpty ? e.value.label : e.key,
+    final derivedLabels = {
+      for (final key in kept.keys)
+        key: _labels[key] ?? (kept[key]!.label.isNotEmpty ? kept[key]!.label : key),
     };
     final keptRules = _whenRules
         .where((r) => kept.containsKey(r.field))
@@ -152,9 +155,10 @@ class DupSchema {
         })
         .whereType<_WhenRule>()
         .toList();
-    return DupSchema(kept, labels: currentLabels)
+    return DupSchema(kept, labels: derivedLabels)
       .._whenRules.addAll(keptRules)
-      .._isPartial = _isPartial;
+      .._isPartial = _isPartial
+      .._crossValidator = _crossValidator;
   }
 
   /// Returns a new [DupSchema] containing only [fields]. Unknown names ignored.
@@ -177,11 +181,7 @@ class DupSchema {
   /// at validation time. All other validators (format, constraint, custom) remain
   /// active. Validator instances are shared — no cloning occurs.
   DupSchema partial() {
-    final currentLabels = {
-      for (final e in _schema.entries)
-        e.key: e.value.label.isNotEmpty ? e.value.label : e.key,
-    };
-    return DupSchema(_schema, labels: currentLabels)
+    return DupSchema(_schema, labels: _labels)
       .._isPartial = true
       .._whenRules.addAll(_whenRules)
       .._crossValidator = _crossValidator;
@@ -193,7 +193,11 @@ class DupSchema {
   /// All fields are validated before returning; [FormValidationFailure] contains
   /// errors for every field that failed. [crossValidate] is only called when
   /// all individual fields pass.
-  Future<FormValidationResult> validate(Map<String, dynamic> data) async {
+  Future<FormValidationResult> validate(
+    Map<String, dynamic> data, {
+    bool skipPresence = false,
+  }) async {
+    final effectiveSkip = _isPartial || skipPresence;
     final effective = _buildEffective(data);
     final errors = <String, ValidationFailure>{};
     for (final field in effective.keys) {
@@ -201,13 +205,13 @@ class DupSchema {
       if (validator is NestedValidator) {
         final result = await (validator as NestedValidator).validateNested(
           data[field],
-          skipPresence: _isPartial,
+          skipPresence: effectiveSkip,
         );
         _applyNestedResult(field, result, errors);
       } else {
         final result = await validator.validateAsync(
           data[field],
-          skipPresence: _isPartial,
+          skipPresence: effectiveSkip,
         );
         if (result is ValidationFailure) errors[field] = result;
       }
@@ -226,12 +230,17 @@ class DupSchema {
   ///
   /// Asserts in debug mode that no async validators are registered.
   /// Use [validate] when the schema contains async validators.
-  FormValidationResult validateSync(Map<String, dynamic> data) {
-    assert(
-      !hasAsyncValidators,
-      'validateSync() called on a schema that has async validators. '
-      'Use validate() instead.',
-    );
+  FormValidationResult validateSync(
+    Map<String, dynamic> data, {
+    bool skipPresence = false,
+  }) {
+    if (hasAsyncValidators) {
+      throw StateError(
+        'validateSync() called on a schema that has async validators. '
+        'Use validate() instead.',
+      );
+    }
+    final effectiveSkip = _isPartial || skipPresence;
     final effective = _buildEffective(data);
     final errors = <String, ValidationFailure>{};
     for (final field in effective.keys) {
@@ -239,13 +248,13 @@ class DupSchema {
       if (validator is NestedValidator) {
         final result = (validator as NestedValidator).validateNestedSync(
           data[field],
-          skipPresence: _isPartial,
+          skipPresence: effectiveSkip,
         );
         _applyNestedResult(field, result, errors);
       } else {
         final result = validator.validate(
           data[field],
-          skipPresence: _isPartial,
+          skipPresence: effectiveSkip,
         );
         if (result is ValidationFailure) errors[field] = result;
       }
@@ -264,9 +273,17 @@ class DupSchema {
   /// [TextFormField]).
   ///
   /// Returns [ValidationSuccess] when [field] is not registered in the schema.
-  Future<ValidationResult> validateField(String field, dynamic value) async {
-    final validator = _schema[field];
+  ///
+  /// Provide [data] (the full form data map) to apply [when] conditional rules.
+  /// Without [data], only the base schema validator for the field is used.
+  Future<ValidationResult> validateField(
+    String field,
+    dynamic value, {
+    Map<String, dynamic>? data,
+  }) async {
+    final effective = data != null ? _buildEffective(data) : _schema;
+    final validator = effective[field];
     if (validator == null) return const ValidationSuccess();
-    return validator.validateAsync(value);
+    return validator.validateAsync(value, skipPresence: _isPartial);
   }
 }

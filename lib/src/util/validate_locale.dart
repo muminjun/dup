@@ -42,6 +42,7 @@ class ValidatorLocale {
   /// The built-in English defaults as a locale instance.
   /// Use as a base for partial overrides via [merge].
   static final ValidatorLocale base = ValidatorLocale({
+    ValidationCode.custom: (p) => '${p['name']} is invalid.',
     ValidationCode.required: (p) => '${p['name']} is required.',
     ValidationCode.notBlank: (p) => '${p['name']} cannot be blank.',
     ValidationCode.equal: (p) => '${p['name']} does not match.',
@@ -96,6 +97,32 @@ class ValidatorLocale {
     ValidationCode.dateInPast: (p) => '${p['name']} must be in the past.',
     ValidationCode.boolTrue: (p) => '${p['name']} must be true.',
     ValidationCode.boolFalse: (p) => '${p['name']} must be false.',
+    // v2 string validators
+    ValidationCode.startsWith: (p) => '${p['name']} must start with "${p['prefix']}".',
+    ValidationCode.endsWith: (p) => '${p['name']} must end with "${p['suffix']}".',
+    ValidationCode.stringContains: (p) => '${p['name']} must contain "${p['substring']}".',
+    ValidationCode.ipAddress: (p) => '${p['name']} is not a valid IP address.',
+    ValidationCode.hexColor: (p) => '${p['name']} is not a valid hex color.',
+    ValidationCode.base64: (p) => '${p['name']} is not valid Base64.',
+    ValidationCode.json: (p) => '${p['name']} is not valid JSON.',
+    ValidationCode.creditCard: (p) => '${p['name']} is not a valid credit card number.',
+    ValidationCode.koPostalCode: (p) => '${p['name']} is not a valid Korean postal code.',
+    // v2 number validators
+    ValidationCode.numberPrecision: (p) => '${p['name']} must have at most ${p['digits']} decimal places.',
+    ValidationCode.isPort: (p) => '${p['name']} is not a valid port number.',
+    // v2 date validators
+    ValidationCode.isWeekday: (p) => '${p['name']} must be a weekday.',
+    ValidationCode.isWeekend: (p) => '${p['name']} must be a weekend day.',
+    ValidationCode.isToday: (p) => '${p['name']} must be today.',
+    ValidationCode.isSameDay: (p) => '${p['name']} must be the same day as ${p['target']}.',
+    ValidationCode.isWithin: (p) => '${p['name']} must be within ${p['duration']}.',
+    // v2 list validators
+    ValidationCode.listContainsAll: (p) => '${p['name']} must contain all required items.',
+    // v2 map validators
+    ValidationCode.mapMinSize: (p) => '${p['name']} must have at least ${p['min']} entries.',
+    ValidationCode.mapMaxSize: (p) => '${p['name']} must have at most ${p['max']} entries.',
+    // v2 nested validators
+    ValidationCode.nestedFailed: (p) => '${p['name']} has nested validation errors.',
   });
 
   /// Returns a new [ValidatorLocale] with [overrides] applied on top of this

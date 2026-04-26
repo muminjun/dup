@@ -22,6 +22,12 @@ See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
 
 - `DupSchema` — replaces `BaseValidatorSchema` + `useUiForm` pair; supports
   `validate()` (async), `validateSync()`, `validateField()`, and `crossValidate()`.
+- `DupSchema.when()` — conditional validation; replaces base validators when a
+  field satisfies a predicate at validation time.
+- `DupSchema.pick(fields)` / `omit(fields)` — derive a sub-schema from an
+  existing one without duplicating validator definitions.
+- `DupSchema.partial()` — returns a new schema that skips all `required` checks;
+  useful for PATCH-style partial updates.
 - `FormValidationResult` sealed class (`FormValidationSuccess`, `FormValidationFailure`)
   returned from `DupSchema.validate()` and `DupSchema.validateSync()`.
 - `FormValidationFailure` — call operator, `hasError()`, `fields`, `firstField`.
@@ -31,13 +37,23 @@ See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
   from every single-field `validate()` / `validateAsync()` call.
 - `ValidateBool` — new validator type with `isTrue()` and `isFalse()`.
 - `ValidateDateTime` — new validator type with `isBefore()`, `isAfter()`, `min()`,
-  `max()`, `between()`, `isInFuture()`, `isInPast()`.
-- `ValidateNumber.toValidator({parseErrorMessage})` — strips non-numeric characters
-  (`"1,000"`, `"17세"`) before validating; directly usable as `TextFormField.validator`.
-- `ValidateList` additions: `hasLength()`, `all()`, `any()`, `none()`,
-  `hasNoDuplicates()`, `eachItem()`.
+  `max()`, `between()`, `isInFuture()`, `isInPast()`, `isWeekday()`, `isWeekend()`,
+  `isSameDay()`, `isToday()`, `isWithin()`.
+- `ValidateObject` — nested object validator; errors are flattened with dot notation
+  (`result('address.city')`).
+- `ValidateMap<V>` — map validator with `keyValidator()`, `valueValidator()`,
+  `minSize()`, `maxSize()`; errors are flattened with bracket notation
+  (`result('scores[math]')`).
+- `ValidateNumber.toValidator({parseErrorMessage})` — parses a string input as a number
+  before validating; returns a parse error for non-numeric input (e.g. `"abc"`, `"17세"`);
+  directly usable as `TextFormField.validator`.
 - `ValidateNumber` additions: `isPositive()`, `isNegative()`, `isNonNegative()`,
-  `isNonPositive()`, `isEven()`, `isOdd()`, `isMultipleOf()`, `between()`.
+  `isNonPositive()`, `isEven()`, `isOdd()`, `isMultipleOf()`, `between()`,
+  `isPrecision(digits)`, `isPort()`.
+- `ValidateList` additions: `hasLength()`, `all()`, `any()`, `none()`,
+  `hasNoDuplicates()`, `eachItem()`, `containsAll()`.
+- `ValidateString` additions: `startsWith()`, `endsWith()`, `contains()`,
+  `ipAddress()`, `hexColor()`, `base64()`, `json()`, `creditCard()`, `koPostalCode()`.
 - `DupSchema.crossValidate()` — cross-field validation called only when all
   individual fields pass.
 - Phase-based execution (0 = required, 1 = format, 2 = constraint, 3 = custom,

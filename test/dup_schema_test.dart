@@ -64,12 +64,12 @@ void main() {
       expect(schema.validateSync({'name': null}), isA<FormValidationFailure>());
     });
 
-    test('asserts in debug mode when async validators present', () {
+    test('throws StateError when async validators present', () {
       final schema = DupSchema({
         'email': ValidateString()
           ..addAsyncValidator((_) async => null),
       });
-      expect(() => schema.validateSync({}), throwsA(isA<AssertionError>()));
+      expect(() => schema.validateSync({}), throwsA(isA<StateError>()));
     });
   });
 
@@ -328,6 +328,76 @@ void main() {
         'bankAccount': null,
       });
       expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('then validator uses custom label from schema labels map', () async {
+      final s = DupSchema(
+        {
+          'type': ValidateString().required(),
+          'card': ValidateString(),
+        },
+        labels: {'card': 'Card number'},
+      ).when(
+        field: 'type',
+        condition: (dynamic v) => v == 'card',
+        then: {'card': ValidateString().required()},
+      );
+      final result = await s.validate({'type': 'card', 'card': null});
+      expect(result, isA<FormValidationFailure>());
+      expect((result as FormValidationFailure)('card')!.message, contains('Card number'));
+    });
+  });
+
+  group('DupSchema.pick() + crossValidate()', () {
+    test('crossValidate is preserved through pick()', () async {
+      var crossRan = false;
+      final schema = DupSchema({
+        'password': ValidateString().required(),
+        'confirm':  ValidateString().required(),
+      }).crossValidate((data) {
+        crossRan = true;
+        return null;
+      });
+      final picked = schema.pick(['password', 'confirm']);
+      await picked.validate({'password': 'secret', 'confirm': 'secret'});
+      expect(crossRan, isTrue);
+    });
+
+    test('crossValidate is preserved through omit()', () async {
+      var crossRan = false;
+      final schema = DupSchema({
+        'a': ValidateString().required(),
+        'b': ValidateString().required(),
+        'c': ValidateString().required(),
+      }).crossValidate((data) {
+        crossRan = true;
+        return null;
+      });
+      final omitted = schema.omit(['c']);
+      await omitted.validate({'a': 'x', 'b': 'y'});
+      expect(crossRan, isTrue);
+    });
+  });
+
+  group('DupSchema.pick() + when() + custom labels', () {
+    test('custom label is preserved through pick() and applied to then-validator', () async {
+      final schema = DupSchema(
+        {
+          'type':    ValidateString().required(),
+          'cardNo':  ValidateString(),
+          'extra':   ValidateString(),
+        },
+        labels: {'cardNo': 'Card number'},
+      ).when(
+        field: 'type',
+        condition: (dynamic v) => v == 'card',
+        then: {'cardNo': ValidateString().required()},
+      );
+
+      final picked = schema.pick(['type', 'cardNo']);
+      final result = await picked.validate({'type': 'card', 'cardNo': null});
+      expect(result, isA<FormValidationFailure>());
+      expect((result as FormValidationFailure)('cardNo')!.message, contains('Card number'));
     });
   });
 }

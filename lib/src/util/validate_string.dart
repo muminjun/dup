@@ -259,7 +259,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   /// Phase 1: fails when the trimmed value does not start with [prefix].
   ValidateString startsWith(String prefix, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
-      if (value != null && !value.trim().startsWith(prefix)) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!value.trim().startsWith(prefix)) {
         return getFailure(
           messageFactory,
           ValidationCode.startsWith,
@@ -274,7 +275,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   /// Phase 1: fails when the trimmed value does not end with [suffix].
   ValidateString endsWith(String suffix, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
-      if (value != null && !value.trim().endsWith(suffix)) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!value.trim().endsWith(suffix)) {
         return getFailure(
           messageFactory,
           ValidationCode.endsWith,
@@ -290,7 +292,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   /// Does NOT trim — trimming would change substring match semantics.
   ValidateString contains(String substring, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
-      if (value != null && !value.contains(substring)) {
+      if (value == null || value.isEmpty) return null;
+      if (!value.contains(substring)) {
         return getFailure(
           messageFactory,
           ValidationCode.stringContains,
@@ -323,7 +326,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   bool _isValidIpv4(String s) {
     final parts = s.split('.');
     if (parts.length != 4) return false;
+    final digitsOnly = RegExp(r'^\d+$');
     return parts.every((p) {
+      if (!digitsOnly.hasMatch(p)) return false;
       final n = int.tryParse(p);
       return n != null && n >= 0 && n <= 255;
     });
@@ -398,7 +403,10 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.trim().isEmpty) return null;
       final digits = value.replaceAll(RegExp(r'[\s\-]'), '');
-      if (!RegExp(r'^\d+$').hasMatch(digits) || !_luhnCheck(digits)) {
+      if (!RegExp(r'^\d+$').hasMatch(digits) ||
+          digits.length < 13 ||
+          digits.length > 19 ||
+          !_luhnCheck(digits)) {
         return getFailure(
           messageFactory,
           ValidationCode.creditCard,

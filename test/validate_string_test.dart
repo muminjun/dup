@@ -1627,6 +1627,9 @@ void main() {
     test('null passes', () {
       expect(ValidateString().startsWith('x').validate(null), isA<ValidationSuccess>());
     });
+    test('empty string passes', () {
+      expect(ValidateString().startsWith('https://').validate(''), isA<ValidationSuccess>());
+    });
   });
 
   group('endsWith()', () {
@@ -1635,6 +1638,12 @@ void main() {
     });
     test('fails when value does not end with suffix', () {
       expect(ValidateString().endsWith('.pdf').validate('report.doc'), isA<ValidationFailure>());
+    });
+    test('null passes', () {
+      expect(ValidateString().endsWith('.pdf').validate(null), isA<ValidationSuccess>());
+    });
+    test('empty string passes', () {
+      expect(ValidateString().endsWith('.pdf').validate(''), isA<ValidationSuccess>());
     });
   });
 
@@ -1649,6 +1658,12 @@ void main() {
     });
     test('does not trim before checking', () {
       expect(ValidateString().contains(' word').validate('a word'), isA<ValidationSuccess>());
+    });
+    test('null passes', () {
+      expect(ValidateString().contains('@').validate(null), isA<ValidationSuccess>());
+    });
+    test('empty string passes', () {
+      expect(ValidateString().contains('@').validate(''), isA<ValidationSuccess>());
     });
   });
 

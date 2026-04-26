@@ -32,7 +32,7 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     final chainResult = runPhaseChain(value, skipPresence: skipPresence);
     if (chainResult is ValidationFailure) return chainResult;
     if (value == null) return const ValidationSuccess();
-    final innerResult = _innerSchema.validateSync(value);
+    final innerResult = _innerSchema.validateSync(value, skipPresence: skipPresence);
     if (innerResult is FormValidationFailure) {
       return _innerSummary(innerResult);
     }
@@ -49,7 +49,7 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return asyncFailure;
     if (value == null) return const ValidationSuccess();
-    final innerResult = await _innerSchema.validate(value);
+    final innerResult = await _innerSchema.validate(value, skipPresence: skipPresence);
     if (innerResult is FormValidationFailure) {
       return _innerSummary(innerResult);
     }
@@ -69,7 +69,7 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
     if (value == null) return null;
-    final innerResult = await _innerSchema.validate(value);
+    final innerResult = await _innerSchema.validate(value, skipPresence: skipPresence);
     if (innerResult is FormValidationFailure) {
       return NestedInnerFailure(innerResult.errors);
     }
@@ -87,7 +87,7 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     );
     if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
     if (value == null) return null;
-    final innerResult = _innerSchema.validateSync(value);
+    final innerResult = _innerSchema.validateSync(value, skipPresence: skipPresence);
     if (innerResult is FormValidationFailure) {
       return NestedInnerFailure(innerResult.errors);
     }

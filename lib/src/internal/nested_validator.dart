@@ -1,22 +1,4 @@
-import '../model/validation_code.dart';
 import '../model/validation_result.dart';
-
-/// Internal transport type for nested validation results.
-/// NOT exported from lib/dup.dart.
-class NestedValidationFailure extends ValidationFailure {
-  final Map<String, ValidationFailure> nestedErrors;
-
-  NestedValidationFailure(this.nestedErrors)
-      : super(
-          code: ValidationCode.nestedFailed,
-          message: nestedErrors.isEmpty
-              ? 'Nested validation failed.'
-              : 'Nested validation failed: '
-                '${nestedErrors.keys.first} — '
-                '${nestedErrors.values.first.message}',
-          context: const {},
-        );
-}
 
 /// Sealed result type returned by [NestedValidator.validateNested].
 sealed class NestedValidationResult {}

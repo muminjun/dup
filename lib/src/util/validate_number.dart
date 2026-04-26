@@ -169,9 +169,10 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   ValidateNumber isPrecision(int digits, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
-      final str = value.toString();
-      final dotIndex = str.indexOf('.');
-      if (dotIndex != -1 && str.length - dotIndex - 1 > digits) {
+      final s = value.toString();
+      final dotIndex = s.indexOf('.');
+      final actualDigits = dotIndex < 0 ? 0 : s.length - dotIndex - 1;
+      if (actualDigits > digits) {
         return getFailure(
           messageFactory,
           ValidationCode.numberPrecision,

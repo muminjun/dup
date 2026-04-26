@@ -81,4 +81,45 @@ void main() {
       expect(v.hasAsyncValidators, isTrue);
     });
   });
+
+  group('ValidateMap — standalone validate()', () {
+    test('validate() runs keyValidator when used standalone', () {
+      final v = ValidateMap<String>()
+        .keyValidator(ValidateString().alpha());
+      final result = v.validate({'123': 'x'});
+      expect(result, isA<ValidationFailure>());
+    });
+
+    test('validate() runs valueValidator when used standalone', () {
+      final v = ValidateMap<num>()
+        .valueValidator(ValidateNumber().min(0));
+      final result = v.validate({'score': -1});
+      expect(result, isA<ValidationFailure>());
+    });
+
+    test('validate() returns success when all entries pass', () {
+      final v = ValidateMap<String>()
+        .keyValidator(ValidateString().alpha())
+        .valueValidator(ValidateString().min(1));
+      final result = v.validate({'name': 'Alice'});
+      expect(result, isA<ValidationSuccess>());
+    });
+
+    test('validateAsync() runs keyValidator when used standalone', () async {
+      final v = ValidateMap<String>()
+        .keyValidator(ValidateString().alpha());
+      final result = await v.validateAsync({'123': 'x'});
+      expect(result, isA<ValidationFailure>());
+    });
+
+    test('validate() passes null when not required', () {
+      final v = ValidateMap<String>().keyValidator(ValidateString().alpha());
+      expect(v.validate(null), isA<ValidationSuccess>());
+    });
+
+    test('validateAsync() passes null when not required', () async {
+      final v = ValidateMap<String>().keyValidator(ValidateString().alpha());
+      expect(await v.validateAsync(null), isA<ValidationSuccess>());
+    });
+  });
 }

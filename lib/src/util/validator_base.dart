@@ -8,9 +8,11 @@ import 'validate_locale.dart';
 /// 3 = custom, 4 = async).
 class _ValidatorEntry<T> {
   final int phase;
+  final int sortIndex;
   final ValidationFailure? Function(T?) fn;
   final bool isPresence;
-  const _ValidatorEntry(this.phase, this.fn, {this.isPresence = false});
+  const _ValidatorEntry(this.phase, this.sortIndex, this.fn,
+      {this.isPresence = false});
 }
 
 /// Base class for all validators.
@@ -30,6 +32,7 @@ class _ValidatorEntry<T> {
 abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   final List<_ValidatorEntry<T>> _entries = [];
   final List<Future<ValidationFailure?> Function(T?)> _asyncEntries = [];
+  bool _sorted = false;
 
   /// Display label used in error messages. Set via [setLabel].
   String label = '';
@@ -53,8 +56,10 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
     ValidationFailure? Function(T?) fn, {
     bool isPresence = false,
   }) {
-    _entries.add(_ValidatorEntry(phase, fn, isPresence: isPresence));
-    _entries.sort((a, b) => a.phase.compareTo(b.phase));
+    _entries.add(
+      _ValidatorEntry(phase, _entries.length, fn, isPresence: isPresence),
+    );
+    _sorted = false;
     return this as V;
   }
 
@@ -72,6 +77,13 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Runs sync phase entries only. When [skipPresence] is true, entries
   /// registered with isPresence:true (i.e. required()) are skipped.
   ValidationResult runPhaseChain(T? value, {bool skipPresence = false}) {
+    if (!_sorted) {
+      _entries.sort((a, b) {
+        final c = a.phase.compareTo(b.phase);
+        return c != 0 ? c : a.sortIndex.compareTo(b.sortIndex);
+      });
+      _sorted = true;
+    }
     for (final entry in _entries) {
       if (skipPresence && entry.isPresence) continue;
       final failure = entry.fn(value);

@@ -965,6 +965,18 @@ void main() {
     test('null passes', () {
       expect(ValidateNumber().isPrecision(2).validate(null), isA<ValidationSuccess>());
     });
+    test('passes 1.005 at isPrecision(3) — floating-point edge case', () {
+      expect(ValidateNumber().isPrecision(3).validate(1.005), isA<ValidationSuccess>());
+    });
+    test('fails 1.005 at isPrecision(2) — 3 decimal places exceed limit', () {
+      expect(ValidateNumber().isPrecision(2).validate(1.005), isA<ValidationFailure>());
+    });
+    test('passes 0 decimal places at isPrecision(0)', () {
+      expect(ValidateNumber().isPrecision(0).validate(42), isA<ValidationSuccess>());
+    });
+    test('fails 1.5 at isPrecision(0)', () {
+      expect(ValidateNumber().isPrecision(0).validate(1.5), isA<ValidationFailure>());
+    });
   });
 
   group('isPort()', () {

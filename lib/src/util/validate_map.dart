@@ -64,6 +64,43 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
   }
 
   @override
+  ValidationResult validate(
+    Map<String, V>? value, {
+    bool skipPresence = false,
+  }) {
+    final chainResult = runPhaseChain(value, skipPresence: skipPresence);
+    if (chainResult is ValidationFailure) return chainResult;
+    if (value == null) return const ValidationSuccess();
+    final entryErrors = _validateEntriesSync(value, skipPresence: skipPresence);
+    if (entryErrors.isNotEmpty) return _entrySummary(entryErrors);
+    return const ValidationSuccess();
+  }
+
+  @override
+  Future<ValidationResult> validateAsync(
+    Map<String, V>? value, {
+    bool skipPresence = false,
+  }) async {
+    final chainResult = runPhaseChain(value, skipPresence: skipPresence);
+    if (chainResult is ValidationFailure) return chainResult;
+    final asyncFailure = await runAsyncChain(value);
+    if (asyncFailure != null) return asyncFailure;
+    if (value == null) return const ValidationSuccess();
+    final entryErrors = await _validateEntries(value, skipPresence: skipPresence);
+    if (entryErrors.isNotEmpty) return _entrySummary(entryErrors);
+    return const ValidationSuccess();
+  }
+
+  ValidationFailure _entrySummary(Map<String, ValidationFailure> errors) {
+    final firstKey = errors.keys.first;
+    return ValidationFailure(
+      code: ValidationCode.nestedFailed,
+      message: 'Map validation failed: $firstKey — ${errors[firstKey]!.message}',
+      context: {'name': label, 'firstField': firstKey},
+    );
+  }
+
+  @override
   Future<NestedValidationResult?> validateNested(
     dynamic value, {
     bool skipPresence = false,
@@ -76,7 +113,7 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
     if (value == null) return null;
-    final entryErrors = await _validateEntries(value);
+    final entryErrors = await _validateEntries(value, skipPresence: skipPresence);
     if (entryErrors.isNotEmpty) return NestedInnerFailure(entryErrors, separator: '');
     return null;
   }
@@ -92,27 +129,35 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     );
     if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
     if (value == null) return null;
-    final entryErrors = _validateEntriesSync(value);
+    final entryErrors = _validateEntriesSync(value, skipPresence: skipPresence);
     if (entryErrors.isNotEmpty) return NestedInnerFailure(entryErrors, separator: '');
     return null;
   }
 
   Future<Map<String, ValidationFailure>> _validateEntries(
-    Map<String, V> map,
-  ) async {
+    Map<String, V> map, {
+    bool skipPresence = false,
+  }) async {
     final errors = <String, ValidationFailure>{};
     for (final entry in map.entries) {
       if (_keyValidator != null) {
+        final savedLabel = _keyValidator!.label;
         _keyValidator!.setLabel(entry.key);
         final kr = await _keyValidator!.validateAsync(entry.key);
+        _keyValidator!.setLabel(savedLabel);
         if (kr is ValidationFailure) {
           errors['[${entry.key}]'] = kr;
           continue;
         }
       }
       if (_valueValidator != null) {
+        final savedLabel = _valueValidator!.label;
         _valueValidator!.setLabel(entry.key);
-        final vr = await _valueValidator!.validateAsync(entry.value);
+        final vr = await _valueValidator!.validateAsync(
+          entry.value,
+          skipPresence: skipPresence,
+        );
+        _valueValidator!.setLabel(savedLabel);
         if (vr is ValidationFailure) {
           errors['[${entry.key}]'] = vr;
         }
@@ -121,20 +166,30 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     return errors;
   }
 
-  Map<String, ValidationFailure> _validateEntriesSync(Map<String, V> map) {
+  Map<String, ValidationFailure> _validateEntriesSync(
+    Map<String, V> map, {
+    bool skipPresence = false,
+  }) {
     final errors = <String, ValidationFailure>{};
     for (final entry in map.entries) {
       if (_keyValidator != null) {
+        final savedLabel = _keyValidator!.label;
         _keyValidator!.setLabel(entry.key);
         final kr = _keyValidator!.validate(entry.key);
+        _keyValidator!.setLabel(savedLabel);
         if (kr is ValidationFailure) {
           errors['[${entry.key}]'] = kr;
           continue;
         }
       }
       if (_valueValidator != null) {
+        final savedLabel = _valueValidator!.label;
         _valueValidator!.setLabel(entry.key);
-        final vr = _valueValidator!.validate(entry.value);
+        final vr = _valueValidator!.validate(
+          entry.value,
+          skipPresence: skipPresence,
+        );
+        _valueValidator!.setLabel(savedLabel);
         if (vr is ValidationFailure) {
           errors['[${entry.key}]'] = vr;
         }
