@@ -89,7 +89,7 @@ class DupSchema {
       _schema.values.any((v) => v.hasAsyncValidators) ||
       _whenRules.any((r) => r.then.values.any((v) => v.hasAsyncValidators));
 
-  /// Registers a cross-field validation function and returns [this] for chaining.
+  /// Registers a cross-field validation function and returns this schema for chaining.
   ///
   /// [fn] receives the raw data map and returns a field-error map or null.
   /// It is only called when all individual fields pass their own validators.
@@ -184,7 +184,7 @@ class DupSchema {
     return _derive(kept);
   }
 
-  /// Returns a new [DupSchema] where [required] presence checks are skipped
+  /// Returns a new [DupSchema] where `required()` presence checks are skipped
   /// at validation time. All other validators (format, constraint, custom) remain
   /// active. Validator instances are shared — no cloning occurs.
   DupSchema partial() {
@@ -277,7 +277,7 @@ class DupSchema {
   }
 
   /// Validates a single field in isolation (e.g. for on-change feedback in a
-  /// [TextFormField]).
+  /// `TextFormField`).
   ///
   /// Returns [ValidationSuccess] when [field] is not registered in the schema.
   ///

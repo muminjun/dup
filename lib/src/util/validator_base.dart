@@ -41,7 +41,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Display label used in error messages. Set via [setLabel].
   String label = '';
 
-  /// Sets the field label and returns [this] for chaining.
+  /// Sets the field label and returns the validator for chaining.
   V setLabel(String text) {
     label = text;
     return this as V;
@@ -207,7 +207,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
     return asyncFailure ?? const ValidationSuccess();
   }
 
-  /// Returns a sync adapter compatible with Flutter's [TextFormField.validator].
+  /// Returns a sync adapter compatible with Flutter's `TextFormField.validator`.
   /// Returns null on success, the error message string on failure.
   String? Function(T?) toValidator() {
     return (value) {
@@ -217,7 +217,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   }
 
   /// Returns an async adapter for non-Flutter async contexts.
-  /// NOT compatible with [TextFormField.validator] (which is synchronous).
+  /// NOT compatible with `TextFormField.validator` (which is synchronous).
   Future<String?> Function(T?) toAsyncValidator() {
     return (value) async {
       final result = await validateAsync(value);

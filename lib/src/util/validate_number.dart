@@ -7,7 +7,7 @@ import 'validator_base.dart';
 ///
 /// All methods null-skip: they return null (pass) when the value is null.
 ///
-/// For Flutter [TextFormField] integration use [toValidator], which parses
+/// For Flutter `TextFormField` integration use [toValidator], which parses
 /// a string input to [num] before running validation:
 ///
 /// ```dart
@@ -162,7 +162,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
     });
   }
 
-  /// Returns a [TextFormField]-compatible adapter that parses string input to
+  /// Returns a `TextFormField`-compatible adapter that parses string input to
   /// [num] before running validation.
   ///
   /// - null / empty string → runs `required` check (if registered)
