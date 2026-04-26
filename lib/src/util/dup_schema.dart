@@ -169,6 +169,11 @@ class DupSchema {
   }
 
   /// Returns a new [DupSchema] containing only [fields]. Unknown names ignored.
+  ///
+  /// The [crossValidate] function is carried over to the derived schema.
+  /// If your cross-validator accesses fields that were not included in [fields],
+  /// those values will be `null` at validation time — guard against this in your
+  /// cross-validator if necessary.
   DupSchema pick(List<String> fields) {
     final kept = Map.fromEntries(
       _schema.entries.where((e) => fields.contains(e.key)),
@@ -177,6 +182,11 @@ class DupSchema {
   }
 
   /// Returns a new [DupSchema] with [fields] removed. Unknown names ignored.
+  ///
+  /// The [crossValidate] function is carried over to the derived schema.
+  /// If your cross-validator accesses fields that were removed via [fields],
+  /// those values will be `null` at validation time — guard against this in your
+  /// cross-validator if necessary.
   DupSchema omit(List<String> fields) {
     final kept = Map.fromEntries(
       _schema.entries.where((e) => !fields.contains(e.key)),

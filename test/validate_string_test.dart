@@ -1524,6 +1524,12 @@ void main() {
         isA<ValidationSuccess>(),
       );
     });
+    test('URL with single-char host — passes', () {
+      expect(
+        ValidateString().url().validate('http://a'),
+        isA<ValidationSuccess>(),
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -1781,6 +1787,24 @@ void main() {
       final r = ValidateString().ipAddress().validate('999.999.999.999');
       expect(r, isA<ValidationFailure>());
       expect((r as ValidationFailure).code, ValidationCode.ipAddress);
+    });
+    test('fails IPv4 with leading zeros in octet', () {
+      expect(
+        ValidateString().ipAddress().validate('192.168.01.1'),
+        isA<ValidationFailure>(),
+      );
+    });
+    test('fails IPv4 with all-zero-padded octets', () {
+      expect(
+        ValidateString().ipAddress().validate('01.001.000.001'),
+        isA<ValidationFailure>(),
+      );
+    });
+    test('passes IPv4 with zero octet (0 itself is valid)', () {
+      expect(
+        ValidateString().ipAddress().validate('0.0.0.0'),
+        isA<ValidationSuccess>(),
+      );
     });
   });
 

@@ -62,7 +62,7 @@ final profileSchema = userSchema.omit(['password']);
 **Behavior:**
 - `pick(fields)` — keeps only the named fields; ignores unknown names.
 - `omit(fields)` — removes the named fields; ignores unknown names.
-- `crossValidate` is not carried over (depends on fields that may no longer exist).
+- `crossValidate` is carried over. If the cross-validator accesses fields removed by `omit()` or not included by `pick()`, those values arrive as `null` — callers should guard against this inside the cross-validator.
 - `when()` rules are dropped when their `field:` target is removed. Rules whose `then:` targets are partially removed are retained with the remaining fields.
 - Validator instances are reused (not cloned). To prevent the new schema's constructor from overwriting custom labels, `pick()`/`omit()` capture each validator's current label (`validator.label.isNotEmpty ? validator.label : fieldName`) and pass it as the `labels` map to the derived schema's constructor.
 

@@ -108,6 +108,3 @@ See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
 - Schema-based validation for strings, numbers, and lists.
 - Custom error messages and labels.
 - Form validation service with exception handling.
-
-[1] programming.data_validation
-[2] programming.smart_notices

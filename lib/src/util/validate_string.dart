@@ -227,7 +227,7 @@ class ValidateString extends BaseValidator<String, ValidateString> {
 
   /// Phase 1: fails when the value is not a valid HTTP/HTTPS URL.
   ValidateString url({MessageFactory? messageFactory}) {
-    final regex = RegExp(r'^https?://[^\s/$.?#].[^\s]*$');
+    final regex = RegExp(r'^https?://[^\s/$.?#][^\s]*$');
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
@@ -329,6 +329,7 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     final digitsOnly = RegExp(r'^\d+$');
     return parts.every((p) {
       if (!digitsOnly.hasMatch(p)) return false;
+      if (p.length > 1 && p.startsWith('0')) return false;
       final n = int.tryParse(p);
       return n != null && n >= 0 && n <= 255;
     });

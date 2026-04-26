@@ -108,4 +108,40 @@ void main() {
       expect(ValidateObject(addressSchema).hasAsyncValidators, isFalse);
     });
   });
+
+  group('ValidateObject — sync path with async inner schema throws', () {
+    test('validate() throws clear StateError when inner schema has async validators', () {
+      final asyncSchema = DupSchema({
+        'x': ValidateString().addAsyncValidator((_) async => null),
+      });
+      final obj = ValidateObject(asyncSchema);
+      expect(
+        () => obj.validate({'x': 'hello'}),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('Use validateAsync()'),
+          ),
+        ),
+      );
+    });
+
+    test('validateNestedSync() throws clear StateError when inner schema has async validators', () {
+      final asyncSchema = DupSchema({
+        'x': ValidateString().addAsyncValidator((_) async => null),
+      });
+      final obj = ValidateObject(asyncSchema);
+      expect(
+        () => obj.validateNestedSync({'x': 'hello'}),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('Use validateNested()'),
+          ),
+        ),
+      );
+    });
+  });
 }

@@ -29,6 +29,12 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     Map<String, dynamic>? value, {
     bool skipPresence = false,
   }) {
+    if (_innerSchema.hasAsyncValidators) {
+      throw StateError(
+        'ValidateObject.validate() called on an object whose inner schema '
+        'has async validators. Use validateAsync() instead.',
+      );
+    }
     final chainResult = runPhaseChain(value, skipPresence: skipPresence);
     if (chainResult is ValidationFailure) return chainResult;
     if (value == null) return const ValidationSuccess();
@@ -92,6 +98,12 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     dynamic value, {
     bool skipPresence = false,
   }) {
+    if (_innerSchema.hasAsyncValidators) {
+      throw StateError(
+        'ValidateObject.validateNestedSync() called on an object whose inner '
+        'schema has async validators. Use validateNested() instead.',
+      );
+    }
     final chainResult = runPhaseChain(
       value as Map<String, dynamic>?,
       skipPresence: skipPresence,

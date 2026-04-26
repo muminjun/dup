@@ -727,6 +727,16 @@ void main() {
               as ValidationFailure;
       expect(result.message, '숫자 배수 오류');
     });
+
+    test('non-integer factors may be unreliable due to IEEE 754 (known limitation)', () {
+      // 0.3 % 0.1 ≈ 0.09999999999999998 in IEEE 754, not 0.0 — so this fails
+      // even though 0.3 is mathematically a multiple of 0.1.
+      // Use integer factors for reliable results.
+      expect(
+        ValidateNumber().isMultipleOf(0.1).validate(0.3),
+        isA<ValidationFailure>(),
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -1069,6 +1079,31 @@ void main() {
     test('fails 1.5 at isPrecision(0)', () {
       expect(
         ValidateNumber().isPrecision(0).validate(1.5),
+        isA<ValidationFailure>(),
+      );
+    });
+    test('fails 1e-10 at isPrecision(2) — scientific notation has 10 decimal places', () {
+      expect(
+        ValidateNumber().isPrecision(2).validate(1e-10),
+        isA<ValidationFailure>(),
+      );
+    });
+    test('1e2 (= 100.0 as double) fails isPrecision(0) — Dart shows it as "100.0"', () {
+      // In Dart, 1e2 is a double whose toString() is "100.0" (1 decimal place).
+      expect(
+        ValidateNumber().isPrecision(0).validate(1e2),
+        isA<ValidationFailure>(),
+      );
+    });
+    test('1e2 passes isPrecision(1) — "100.0" has exactly 1 decimal place', () {
+      expect(
+        ValidateNumber().isPrecision(1).validate(1e2),
+        isA<ValidationSuccess>(),
+      );
+    });
+    test('fails 1.23e-10 at isPrecision(11) — 12 decimal places', () {
+      expect(
+        ValidateNumber().isPrecision(11).validate(1.23e-10),
         isA<ValidationFailure>(),
       );
     });

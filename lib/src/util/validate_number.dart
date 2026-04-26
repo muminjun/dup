@@ -148,6 +148,10 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   }
 
   /// Phase 2: fails when value is not a multiple of [factor].
+  ///
+  /// **Note:** floating-point arithmetic may produce unexpected results for
+  /// non-integer factors (e.g. `0.3 % 0.1` ≈ `0.1` in IEEE 754, not `0.0`).
+  /// Prefer integer factors for reliable results.
   ValidateNumber isMultipleOf(num factor, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
       if (value != null && value % factor != 0) {
@@ -189,12 +193,31 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   }
 
   /// Phase 1: fails when the value has more than [digits] decimal places.
+  ///
+  /// Handles scientific notation (e.g. `1e-10` has 10 decimal places,
+  /// `1.5e2 = 150` has 0).
   ValidateNumber isPrecision(int digits, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       final s = value.toString();
-      final dotIndex = s.indexOf('.');
-      final actualDigits = dotIndex < 0 ? 0 : s.length - dotIndex - 1;
+      final int actualDigits;
+      final eIndex = s.indexOf(RegExp('[eE]'));
+      if (eIndex >= 0) {
+        final mantissa = s.substring(0, eIndex);
+        final exponent = int.parse(s.substring(eIndex + 1));
+        final dotIndex = mantissa.indexOf('.');
+        final mantissaDecimals =
+            dotIndex < 0 ? 0 : mantissa.length - dotIndex - 1;
+        // Shifting the decimal point right (positive exp) reduces precision;
+        // shifting left (negative exp) increases it.
+        actualDigits =
+            (mantissaDecimals - exponent) > 0
+                ? mantissaDecimals - exponent
+                : 0;
+      } else {
+        final dotIndex = s.indexOf('.');
+        actualDigits = dotIndex < 0 ? 0 : s.length - dotIndex - 1;
+      }
       if (actualDigits > digits) {
         return getFailure(
           messageFactory,
