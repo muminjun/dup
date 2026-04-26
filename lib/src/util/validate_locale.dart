@@ -164,6 +164,10 @@ class ValidatorLocale {
         (p) => '${p['name']} must have at least ${p['min']} entries.',
     ValidationCode.mapMaxSize:
         (p) => '${p['name']} must have at most ${p['max']} entries.',
+    ValidationCode.mapKeyInvalid:
+        (p) => '${p['name']} has an invalid key.',
+    ValidationCode.mapValueInvalid:
+        (p) => '${p['name']} has an invalid value.',
     // v2 nested validators
     ValidationCode.nestedFailed:
         (p) => '${p['name']} has nested validation errors.',
