@@ -25,11 +25,18 @@ void main() {
   // Scenario 1: Sign-up form
   // =========================================================================
   group('Scenario — sign-up form', () {
-    final nameValidator = ValidateString().setLabel('이름').required().min(2).max(20);
+    final nameValidator = ValidateString()
+        .setLabel('이름')
+        .required()
+        .min(2)
+        .max(20);
     final emailValidator = ValidateString().setLabel('이메일').required().email();
-    final passwordValidator =
-        ValidateString().setLabel('비밀번호').required().password(minLength: 8);
-    final mobileValidator = ValidateString().setLabel('휴대폰').required().mobile();
+    final passwordValidator = ValidateString()
+        .setLabel('비밀번호')
+        .required()
+        .password(minLength: 8);
+    final mobileValidator =
+        ValidateString().setLabel('휴대폰').required().mobile();
     final agreeValidator = ValidateBool().setLabel('이용약관').required().isTrue();
 
     group('valid sign-up cases', () {
@@ -55,11 +62,14 @@ void main() {
     });
 
     group('name field error cases', () {
-      test('whitespace-only name — required passes, min fails (spaces pass required)', () {
-        // required only blocks empty string; whitespace passes.
-        // min(2) measures trimmed length — whitespace trims to 0 chars.
-        expectFailure(nameValidator.validate('   '));
-      });
+      test(
+        'whitespace-only name — required passes, min fails (spaces pass required)',
+        () {
+          // required only blocks empty string; whitespace passes.
+          // min(2) measures trimmed length — whitespace trims to 0 chars.
+          expectFailure(nameValidator.validate('   '));
+        },
+      );
 
       test('name 1 char — min(2) fails', () {
         expectFailure(nameValidator.validate('김'));
@@ -112,11 +122,14 @@ void main() {
         expectSuccess(passwordValidator.validate('abcdefgh'));
       });
 
-      test('whitespace-only password — passes (blank skip; required only blocks empty string)', () {
-        // required blocks empty string only — spaces pass.
-        // password() blank-skips whitespace-only strings.
-        expectSuccess(passwordValidator.validate('        '));
-      });
+      test(
+        'whitespace-only password — passes (blank skip; required only blocks empty string)',
+        () {
+          // required blocks empty string only — spaces pass.
+          // password() blank-skips whitespace-only strings.
+          expectSuccess(passwordValidator.validate('        '));
+        },
+      );
 
       test('null password — required fails', () {
         final f = expectFailure(passwordValidator.validate(null));
@@ -166,10 +179,16 @@ void main() {
   // Scenario 2: Product review form
   // =========================================================================
   group('Scenario — product review form', () {
-    final titleValidator =
-        ValidateString().setLabel('제목').required().min(5).max(50);
-    final contentValidator =
-        ValidateString().setLabel('내용').required().min(10).max(500);
+    final titleValidator = ValidateString()
+        .setLabel('제목')
+        .required()
+        .min(5)
+        .max(50);
+    final contentValidator = ValidateString()
+        .setLabel('내용')
+        .required()
+        .min(10)
+        .max(500);
     final ratingValidator =
         ValidateNumber().setLabel('별점').required().between(1, 5).isInteger();
     final tagValidator =
@@ -178,7 +197,9 @@ void main() {
     group('valid review cases', () {
       test('all fields valid — all pass', () {
         expectSuccess(titleValidator.validate('정말 좋은 상품입니다'));
-        expectSuccess(contentValidator.validate('배송도 빠르고 품질도 훌륭해요. 재구매 의사 있습니다.'));
+        expectSuccess(
+          contentValidator.validate('배송도 빠르고 품질도 훌륭해요. 재구매 의사 있습니다.'),
+        );
         expectSuccess(ratingValidator.validate(5));
         expectSuccess(tagValidator.validate(['배송', '품질']));
       });
@@ -248,8 +269,7 @@ void main() {
         ValidateNumber().setLabel('인원').required().between(1, 20).isInteger();
     final contactValidator =
         ValidateString().setLabel('연락처').required().mobile();
-    final requestValidator =
-        ValidateString().setLabel('요청사항').max(200);
+    final requestValidator = ValidateString().setLabel('요청사항').max(200);
 
     group('valid reservation cases', () {
       test('tomorrow, 4 guests, valid contact — all pass', () {
@@ -318,16 +338,17 @@ void main() {
   // Scenario 4: Business registration form
   // =========================================================================
   group('Scenario — business registration form', () {
-    final companyNameValidator =
-        ValidateString().setLabel('상호명').required().min(2).max(30);
+    final companyNameValidator = ValidateString()
+        .setLabel('상호명')
+        .required()
+        .min(2)
+        .max(30);
     final biznoValidator =
         ValidateString().setLabel('사업자등록번호').required().bizno();
     final phoneValidator =
         ValidateString().setLabel('대표 전화').required().phone();
-    final foundedDateValidator = ValidateDateTime()
-        .setLabel('설립일')
-        .required()
-        .isInPast();
+    final foundedDateValidator =
+        ValidateDateTime().setLabel('설립일').required().isInPast();
 
     group('valid registration cases', () {
       test('all fields valid — all pass', () {
@@ -376,8 +397,11 @@ void main() {
   // Scenario 5: Product listing form (seller)
   // =========================================================================
   group('Scenario — product listing form', () {
-    final productNameValidator =
-        ValidateString().setLabel('상품명').required().min(2).max(100);
+    final productNameValidator = ValidateString()
+        .setLabel('상품명')
+        .required()
+        .min(2)
+        .max(100);
     final priceValidator =
         ValidateNumber().setLabel('판매가').required().isPositive();
     final stockValidator =
@@ -386,8 +410,11 @@ void main() {
         .setLabel('카테고리')
         .minLength(1)
         .maxLength(3);
-    final descriptionValidator =
-        ValidateString().setLabel('상품 설명').required().min(10).max(2000);
+    final descriptionValidator = ValidateString()
+        .setLabel('상품 설명')
+        .required()
+        .min(10)
+        .max(2000);
 
     group('valid listing cases', () {
       test('all fields valid — all pass', () {
@@ -395,7 +422,9 @@ void main() {
         expectSuccess(priceValidator.validate(59900));
         expectSuccess(stockValidator.validate(100));
         expectSuccess(categoryValidator.validate(['전자기기', '음향기기']));
-        expectSuccess(descriptionValidator.validate('최고 품질의 무선 이어폰입니다. 노이즈 캔슬링 지원.'));
+        expectSuccess(
+          descriptionValidator.validate('최고 품질의 무선 이어폰입니다. 노이즈 캔슬링 지원.'),
+        );
       });
 
       test('stock 0 — passes (out-of-stock; isNonNegative allows 0)', () {
@@ -460,11 +489,19 @@ void main() {
   // Scenario 6: Password change form
   // =========================================================================
   group('Scenario — password change form', () {
-    final newPwValidator =
-        ValidateString().setLabel('새 비밀번호').required().password(minLength: 8);
-    const forbiddenPasswords = ['12345678', 'password', 'qwerty123', '00000000'];
-    final notCommonValidator =
-        ValidateString().setLabel('새 비밀번호').excludedFrom(forbiddenPasswords);
+    final newPwValidator = ValidateString()
+        .setLabel('새 비밀번호')
+        .required()
+        .password(minLength: 8);
+    const forbiddenPasswords = [
+      '12345678',
+      'password',
+      'qwerty123',
+      '00000000',
+    ];
+    final notCommonValidator = ValidateString()
+        .setLabel('새 비밀번호')
+        .excludedFrom(forbiddenPasswords);
 
     group('valid change cases', () {
       test('sufficient-length new password — passes', () {
@@ -535,17 +572,23 @@ void main() {
       expect(result, isA<ValidationFailure>());
     });
 
-    test('null username — sync required fails (does not reach async)', () async {
-      final result = await buildUsernameValidator().validateAsync(null);
-      expect(result, isA<ValidationFailure>());
-      expect((result as ValidationFailure).code, ValidationCode.required);
-    });
+    test(
+      'null username — sync required fails (does not reach async)',
+      () async {
+        final result = await buildUsernameValidator().validateAsync(null);
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).code, ValidationCode.required);
+      },
+    );
 
-    test('2-char username — sync min(3) fails (does not reach async)', () async {
-      final result = await buildUsernameValidator().validateAsync('hi');
-      expect(result, isA<ValidationFailure>());
-      expect((result as ValidationFailure).code, ValidationCode.stringMin);
-    });
+    test(
+      '2-char username — sync min(3) fails (does not reach async)',
+      () async {
+        final result = await buildUsernameValidator().validateAsync('hi');
+        expect(result, isA<ValidationFailure>());
+        expect((result as ValidationFailure).code, ValidationCode.stringMin);
+      },
+    );
 
     test('username with special chars — sync alphanumeric fails', () async {
       final result = await buildUsernameValidator().validateAsync('hong!');
@@ -563,82 +606,81 @@ void main() {
         ValidatorLocale({
           ValidationCode.required: (p) => '${p['name']}은(는) 필수 입력 항목입니다.',
           ValidationCode.emailInvalid: (p) => '${p['name']} 형식이 올바르지 않습니다.',
-          ValidationCode.stringMin: (p) =>
-              '${p['name']}은(는) 최소 ${p['min']}자 이상 입력해야 합니다.',
-          ValidationCode.stringMax: (p) =>
-              '${p['name']}은(는) 최대 ${p['max']}자까지 입력할 수 있습니다.',
-          ValidationCode.numberMin: (p) =>
-              '${p['name']}은(는) ${p['min']} 이상이어야 합니다.',
-          ValidationCode.passwordMin: (p) =>
-              '${p['name']}은(는) ${p['minLength']}자 이상이어야 합니다.',
-          ValidationCode.mobileInvalid: (p) => '${p['name']} 형식이 올바르지 않습니다. (예: 010-1234-5678)',
+          ValidationCode.stringMin:
+              (p) => '${p['name']}은(는) 최소 ${p['min']}자 이상 입력해야 합니다.',
+          ValidationCode.stringMax:
+              (p) => '${p['name']}은(는) 최대 ${p['max']}자까지 입력할 수 있습니다.',
+          ValidationCode.numberMin:
+              (p) => '${p['name']}은(는) ${p['min']} 이상이어야 합니다.',
+          ValidationCode.passwordMin:
+              (p) => '${p['name']}은(는) ${p['minLength']}자 이상이어야 합니다.',
+          ValidationCode.mobileInvalid:
+              (p) => '${p['name']} 형식이 올바르지 않습니다. (예: 010-1234-5678)',
           ValidationCode.boolTrue: (p) => '${p['name']}에 동의해 주세요.',
         }),
       );
     });
 
     test('email not entered — Korean required message', () {
-      final result = ValidateString()
-              .setLabel('이메일')
-              .required()
-              .validate(null) as ValidationFailure;
+      final result =
+          ValidateString().setLabel('이메일').required().validate(null)
+              as ValidationFailure;
       expect(result.message, '이메일은(는) 필수 입력 항목입니다.');
     });
 
     test('invalid email format — Korean emailInvalid message', () {
-      final result = ValidateString()
-              .setLabel('이메일')
-              .email()
-              .validate('bad') as ValidationFailure;
+      final result =
+          ValidateString().setLabel('이메일').email().validate('bad')
+              as ValidationFailure;
       expect(result.message, '이메일 형식이 올바르지 않습니다.');
     });
 
     test('name too short — Korean stringMin message', () {
-      final result = ValidateString()
-              .setLabel('이름')
-              .min(2)
-              .validate('A') as ValidationFailure;
+      final result =
+          ValidateString().setLabel('이름').min(2).validate('A')
+              as ValidationFailure;
       expect(result.message, '이름은(는) 최소 2자 이상 입력해야 합니다.');
     });
 
     test('password too short — Korean passwordMin message', () {
-      final result = ValidateString()
-              .setLabel('비밀번호')
-              .password(minLength: 8)
-              .validate('abc') as ValidationFailure;
+      final result =
+          ValidateString()
+                  .setLabel('비밀번호')
+                  .password(minLength: 8)
+                  .validate('abc')
+              as ValidationFailure;
       expect(result.message, '비밀번호은(는) 8자 이상이어야 합니다.');
     });
 
     test('terms not agreed — Korean boolTrue message', () {
-      final result = ValidateBool()
-              .setLabel('이용약관')
-              .isTrue()
-              .validate(false) as ValidationFailure;
+      final result =
+          ValidateBool().setLabel('이용약관').isTrue().validate(false)
+              as ValidationFailure;
       expect(result.message, '이용약관에 동의해 주세요.');
     });
 
-    test('invalid mobile format — Korean mobileInvalid message with example', () {
-      final result = ValidateString()
-              .setLabel('휴대폰')
-              .mobile()
-              .validate('01012345678') as ValidationFailure;
-      expect(result.message, contains('010-1234-5678'));
-    });
+    test(
+      'invalid mobile format — Korean mobileInvalid message with example',
+      () {
+        final result =
+            ValidateString().setLabel('휴대폰').mobile().validate('01012345678')
+                as ValidationFailure;
+        expect(result.message, contains('010-1234-5678'));
+      },
+    );
 
     test('age out of range — Korean numberMin message', () {
-      final result = ValidateNumber()
-              .setLabel('나이')
-              .min(0)
-              .validate(-1) as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('나이').min(0).validate(-1)
+              as ValidationFailure;
       expect(result.message, '나이은(는) 0 이상이어야 합니다.');
     });
 
     test('after locale reset — English default message restored', () {
       ValidatorLocale.resetLocale();
-      final result = ValidateString()
-              .setLabel('Email')
-              .required()
-              .validate(null) as ValidationFailure;
+      final result =
+          ValidateString().setLabel('Email').required().validate(null)
+              as ValidationFailure;
       expect(result.message, 'Email is required.');
     });
   });

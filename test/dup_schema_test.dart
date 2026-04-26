@@ -56,7 +56,10 @@ void main() {
   group('DupSchema.validateSync()', () {
     test('returns success for valid data', () {
       final schema = DupSchema({'name': ValidateString().required()});
-      expect(schema.validateSync({'name': 'Alice'}), isA<FormValidationSuccess>());
+      expect(
+        schema.validateSync({'name': 'Alice'}),
+        isA<FormValidationSuccess>(),
+      );
     });
 
     test('returns failure for invalid data', () {
@@ -66,8 +69,7 @@ void main() {
 
     test('throws StateError when async validators present', () {
       final schema = DupSchema({
-        'email': ValidateString()
-          ..addAsyncValidator((_) async => null),
+        'email': ValidateString()..addAsyncValidator((_) async => null),
       });
       expect(() => schema.validateSync({}), throwsA(isA<StateError>()));
     });
@@ -76,17 +78,26 @@ void main() {
   group('DupSchema.validateField()', () {
     test('returns ValidationSuccess for valid field value', () async {
       final schema = DupSchema({'email': ValidateString().email()});
-      expect(await schema.validateField('email', 'a@b.com'), isA<ValidationSuccess>());
+      expect(
+        await schema.validateField('email', 'a@b.com'),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('returns ValidationFailure for invalid field value', () async {
       final schema = DupSchema({'email': ValidateString().email()});
-      expect(await schema.validateField('email', 'bad'), isA<ValidationFailure>());
+      expect(
+        await schema.validateField('email', 'bad'),
+        isA<ValidationFailure>(),
+      );
     });
 
     test('returns ValidationSuccess for unknown field', () async {
       final schema = DupSchema({});
-      expect(await schema.validateField('unknown', 'x'), isA<ValidationSuccess>());
+      expect(
+        await schema.validateField('unknown', 'x'),
+        isA<ValidationSuccess>(),
+      );
     });
   });
 
@@ -160,13 +171,16 @@ void main() {
 
     setUp(() {
       schema = DupSchema({
-        'name':  ValidateString().required().notBlank(),
+        'name': ValidateString().required().notBlank(),
         'email': ValidateString().required().email(),
       });
     });
 
     test('null passes for all fields', () async {
-      final result = await schema.partial().validate({'name': null, 'email': null});
+      final result = await schema.partial().validate({
+        'name': null,
+        'email': null,
+      });
       expect(result, isA<FormValidationSuccess>());
     });
 
@@ -178,13 +192,19 @@ void main() {
     test('format errors still fire', () async {
       final result = await schema.partial().validate({'email': 'bad'});
       expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('email')!.code, ValidationCode.emailInvalid);
+      expect(
+        (result as FormValidationFailure)('email')!.code,
+        ValidationCode.emailInvalid,
+      );
     });
 
     test('notBlank still fires for submitted blank value', () async {
       final result = await schema.partial().validate({'name': '   '});
       expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('name')!.code, ValidationCode.notBlank);
+      expect(
+        (result as FormValidationFailure)('name')!.code,
+        ValidationCode.notBlank,
+      );
     });
 
     test('original schema is unaffected', () async {
@@ -205,8 +225,8 @@ void main() {
     setUp(() {
       schema = DupSchema(
         {
-          'name':     ValidateString().required(),
-          'email':    ValidateString().required().email(),
+          'name': ValidateString().required(),
+          'email': ValidateString().required().email(),
           'password': ValidateString().required().min(8),
         },
         labels: {'email': 'Email Address'},
@@ -215,13 +235,20 @@ void main() {
 
     test('keeps only specified fields', () async {
       final login = schema.pick(['email', 'password']);
-      final result = await login.validate({'email': 'a@b.com', 'password': 'secret12'});
+      final result = await login.validate({
+        'email': 'a@b.com',
+        'password': 'secret12',
+      });
       expect(result, isA<FormValidationSuccess>());
     });
 
     test('excluded fields are not validated', () async {
       final login = schema.pick(['email', 'password']);
-      final result = await login.validate({'email': 'a@b.com', 'password': 'secret12', 'name': null});
+      final result = await login.validate({
+        'email': 'a@b.com',
+        'password': 'secret12',
+        'name': null,
+      });
       expect(result, isA<FormValidationSuccess>());
     });
 
@@ -234,7 +261,11 @@ void main() {
 
     test('original schema is unaffected', () async {
       schema.pick(['email']);
-      final result = await schema.validate({'name': null, 'email': null, 'password': null});
+      final result = await schema.validate({
+        'name': null,
+        'email': null,
+        'password': null,
+      });
       expect(result, isA<FormValidationFailure>());
     });
 
@@ -248,15 +279,18 @@ void main() {
 
     setUp(() {
       schema = DupSchema({
-        'name':     ValidateString().required(),
-        'email':    ValidateString().required().email(),
+        'name': ValidateString().required(),
+        'email': ValidateString().required().email(),
         'password': ValidateString().required().min(8),
       });
     });
 
     test('excluded field is not validated', () async {
       final profile = schema.omit(['password']);
-      final result = await profile.validate({'name': 'Jane', 'email': 'j@b.com'});
+      final result = await profile.validate({
+        'name': 'Jane',
+        'email': 'j@b.com',
+      });
       expect(result, isA<FormValidationSuccess>());
     });
 
@@ -272,52 +306,75 @@ void main() {
 
     setUp(() {
       schema = DupSchema({
-        'paymentType': ValidateString().required().includedIn(['card', 'bank']),
-        'cardNumber':  ValidateString(),
-        'bankAccount': ValidateString(),
-      })
-      .when(
-        field: 'paymentType',
-        condition: (dynamic v) => v == 'card',
-        then: {'cardNumber': ValidateString().required().min(16)},
-      )
-      .when(
-        field: 'paymentType',
-        condition: (dynamic v) => v == 'bank',
-        then: {'bankAccount': ValidateString().required()},
-      );
+            'paymentType': ValidateString().required().includedIn([
+              'card',
+              'bank',
+            ]),
+            'cardNumber': ValidateString(),
+            'bankAccount': ValidateString(),
+          })
+          .when(
+            field: 'paymentType',
+            condition: (dynamic v) => v == 'card',
+            then: {'cardNumber': ValidateString().required().min(16)},
+          )
+          .when(
+            field: 'paymentType',
+            condition: (dynamic v) => v == 'bank',
+            then: {'bankAccount': ValidateString().required()},
+          );
     });
 
     test('then validators apply when condition matches', () async {
-      final result = await schema.validate({'paymentType': 'card', 'cardNumber': null, 'bankAccount': null});
+      final result = await schema.validate({
+        'paymentType': 'card',
+        'cardNumber': null,
+        'bankAccount': null,
+      });
       expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('cardNumber')!.code, ValidationCode.required);
+      expect(
+        (result as FormValidationFailure)('cardNumber')!.code,
+        ValidationCode.required,
+      );
     });
 
     test('then validators are skipped when condition does not match', () async {
-      final result = await schema.validate({'paymentType': 'bank', 'cardNumber': null, 'bankAccount': 'ACC123'});
+      final result = await schema.validate({
+        'paymentType': 'bank',
+        'cardNumber': null,
+        'bankAccount': 'ACC123',
+      });
       expect(result, isA<FormValidationSuccess>());
     });
 
     test('base validators still apply regardless of condition', () async {
-      final result = await schema.validate({'paymentType': null, 'cardNumber': null, 'bankAccount': null});
+      final result = await schema.validate({
+        'paymentType': null,
+        'cardNumber': null,
+        'bankAccount': null,
+      });
       expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('paymentType')!.code, ValidationCode.required);
+      expect(
+        (result as FormValidationFailure)('paymentType')!.code,
+        ValidationCode.required,
+      );
     });
 
     test('when().then validators skipped in partial mode', () async {
       final partial = schema.partial();
-      final result = await partial.validate({'paymentType': 'card', 'cardNumber': null});
+      final result = await partial.validate({
+        'paymentType': 'card',
+        'cardNumber': null,
+      });
       expect(result, isA<FormValidationSuccess>());
     });
 
     test('hasAsyncValidators includes then-branch validators', () async {
-      final s = DupSchema({'x': ValidateString()})
-        .when(
-          field: 'x',
-          condition: (dynamic v) => v == 'y',
-          then: {'x': ValidateString().addAsyncValidator((_) async => null)},
-        );
+      final s = DupSchema({'x': ValidateString()}).when(
+        field: 'x',
+        condition: (dynamic v) => v == 'y',
+        then: {'x': ValidateString().addAsyncValidator((_) async => null)},
+      );
       expect(s.hasAsyncValidators, isTrue);
     });
 
@@ -332,10 +389,7 @@ void main() {
 
     test('then validator uses custom label from schema labels map', () async {
       final s = DupSchema(
-        {
-          'type': ValidateString().required(),
-          'card': ValidateString(),
-        },
+        {'type': ValidateString().required(), 'card': ValidateString()},
         labels: {'card': 'Card number'},
       ).when(
         field: 'type',
@@ -344,7 +398,10 @@ void main() {
       );
       final result = await s.validate({'type': 'card', 'card': null});
       expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('card')!.message, contains('Card number'));
+      expect(
+        (result as FormValidationFailure)('card')!.message,
+        contains('Card number'),
+      );
     });
   });
 
@@ -353,7 +410,7 @@ void main() {
       var crossRan = false;
       final schema = DupSchema({
         'password': ValidateString().required(),
-        'confirm':  ValidateString().required(),
+        'confirm': ValidateString().required(),
       }).crossValidate((data) {
         crossRan = true;
         return null;
@@ -380,24 +437,30 @@ void main() {
   });
 
   group('DupSchema.pick() + when() + custom labels', () {
-    test('custom label is preserved through pick() and applied to then-validator', () async {
-      final schema = DupSchema(
-        {
-          'type':    ValidateString().required(),
-          'cardNo':  ValidateString(),
-          'extra':   ValidateString(),
-        },
-        labels: {'cardNo': 'Card number'},
-      ).when(
-        field: 'type',
-        condition: (dynamic v) => v == 'card',
-        then: {'cardNo': ValidateString().required()},
-      );
+    test(
+      'custom label is preserved through pick() and applied to then-validator',
+      () async {
+        final schema = DupSchema(
+          {
+            'type': ValidateString().required(),
+            'cardNo': ValidateString(),
+            'extra': ValidateString(),
+          },
+          labels: {'cardNo': 'Card number'},
+        ).when(
+          field: 'type',
+          condition: (dynamic v) => v == 'card',
+          then: {'cardNo': ValidateString().required()},
+        );
 
-      final picked = schema.pick(['type', 'cardNo']);
-      final result = await picked.validate({'type': 'card', 'cardNo': null});
-      expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('cardNo')!.message, contains('Card number'));
-    });
+        final picked = schema.pick(['type', 'cardNo']);
+        final result = await picked.validate({'type': 'card', 'cardNo': null});
+        expect(result, isA<FormValidationFailure>());
+        expect(
+          (result as FormValidationFailure)('cardNo')!.message,
+          contains('Card number'),
+        );
+      },
+    );
   });
 }

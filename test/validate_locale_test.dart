@@ -50,7 +50,9 @@ void main() {
     });
 
     test('base required message uses name parameter', () {
-      final msg = ValidatorLocale.base.messages[ValidationCode.required]!({'name': 'Email'});
+      final msg = ValidatorLocale.base.messages[ValidationCode.required]!({
+        'name': 'Email',
+      });
       expect(msg, contains('Email'));
     });
   });
@@ -62,7 +64,10 @@ void main() {
       final custom = ValidatorLocale.base.merge({
         ValidationCode.required: (_) => 'custom required',
       });
-      expect(custom.messages[ValidationCode.required]!({}), equals('custom required'));
+      expect(
+        custom.messages[ValidationCode.required]!({}),
+        equals('custom required'),
+      );
     });
 
     test('merge preserves unspecified codes from receiver', () {

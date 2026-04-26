@@ -63,7 +63,7 @@ class DupSchema {
   /// Receives the full data map; returns field-level errors or null if everything passes.
   /// Not called when any individual field has already failed.
   Map<String, ValidationFailure>? Function(Map<String, dynamic>)?
-      _crossValidator;
+  _crossValidator;
 
   bool _isPartial = false;
   final List<_WhenRule> _whenRules = [];
@@ -74,8 +74,8 @@ class DupSchema {
   DupSchema(
     Map<String, BaseValidator> schema, {
     Map<String, String> labels = const {},
-  })  : _schema = Map.from(schema),
-        _labels = Map.from(labels) {
+  }) : _schema = Map.from(schema),
+       _labels = Map.from(labels) {
     // Inject labels now so error messages carry the correct field name.
     for (final entry in _schema.entries) {
       final label = labels[entry.key] ?? entry.key;
@@ -142,19 +142,26 @@ class DupSchema {
   DupSchema _derive(Map<String, BaseValidator> kept) {
     final derivedLabels = {
       for (final key in kept.keys)
-        key: _labels[key] ?? (kept[key]!.label.isNotEmpty ? kept[key]!.label : key),
+        key:
+            _labels[key] ??
+            (kept[key]!.label.isNotEmpty ? kept[key]!.label : key),
     };
-    final keptRules = _whenRules
-        .where((r) => kept.containsKey(r.field))
-        .map((r) {
-          final filteredThen = Map.fromEntries(
-            r.then.entries.where((e) => kept.containsKey(e.key)),
-          );
-          if (filteredThen.isEmpty) return null;
-          return _WhenRule(field: r.field, condition: r.condition, then: filteredThen);
-        })
-        .whereType<_WhenRule>()
-        .toList();
+    final keptRules =
+        _whenRules
+            .where((r) => kept.containsKey(r.field))
+            .map((r) {
+              final filteredThen = Map.fromEntries(
+                r.then.entries.where((e) => kept.containsKey(e.key)),
+              );
+              if (filteredThen.isEmpty) return null;
+              return _WhenRule(
+                field: r.field,
+                condition: r.condition,
+                then: filteredThen,
+              );
+            })
+            .whereType<_WhenRule>()
+            .toList();
     return DupSchema(kept, labels: derivedLabels)
       .._whenRules.addAll(keptRules)
       .._isPartial = _isPartial

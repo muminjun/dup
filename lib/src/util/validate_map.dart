@@ -86,7 +86,10 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return asyncFailure;
     if (value == null) return const ValidationSuccess();
-    final entryErrors = await _validateEntries(value, skipPresence: skipPresence);
+    final entryErrors = await _validateEntries(
+      value,
+      skipPresence: skipPresence,
+    );
     if (entryErrors.isNotEmpty) return _entrySummary(entryErrors);
     return const ValidationSuccess();
   }
@@ -95,7 +98,8 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     final firstKey = errors.keys.first;
     return ValidationFailure(
       code: ValidationCode.nestedFailed,
-      message: 'Map validation failed: $firstKey — ${errors[firstKey]!.message}',
+      message:
+          'Map validation failed: $firstKey — ${errors[firstKey]!.message}',
       context: {'name': label, 'firstField': firstKey},
     );
   }
@@ -109,12 +113,19 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       value as Map<String, V>?,
       skipPresence: skipPresence,
     );
-    if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
+    if (chainResult is ValidationFailure) {
+      return NestedNormalFailure(chainResult);
+    }
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
     if (value == null) return null;
-    final entryErrors = await _validateEntries(value, skipPresence: skipPresence);
-    if (entryErrors.isNotEmpty) return NestedInnerFailure(entryErrors, separator: '');
+    final entryErrors = await _validateEntries(
+      value,
+      skipPresence: skipPresence,
+    );
+    if (entryErrors.isNotEmpty) {
+      return NestedInnerFailure(entryErrors, separator: '');
+    }
     return null;
   }
 
@@ -127,10 +138,14 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       value as Map<String, V>?,
       skipPresence: skipPresence,
     );
-    if (chainResult is ValidationFailure) return NestedNormalFailure(chainResult);
+    if (chainResult is ValidationFailure) {
+      return NestedNormalFailure(chainResult);
+    }
     if (value == null) return null;
     final entryErrors = _validateEntriesSync(value, skipPresence: skipPresence);
-    if (entryErrors.isNotEmpty) return NestedInnerFailure(entryErrors, separator: '');
+    if (entryErrors.isNotEmpty) {
+      return NestedInnerFailure(entryErrors, separator: '');
+    }
     return null;
   }
 

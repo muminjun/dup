@@ -11,19 +11,22 @@ void main() async {
       'password': ValidateString()
           .required(messageFactory: (label, _) => 'Please enter your password.')
           .password(
-            messageFactory: (label, _) =>
-                'Password must be at least 4 characters and contain only ASCII letters, numbers, or symbols.',
+            messageFactory:
+                (label, _) =>
+                    'Password must be at least 4 characters and contain only ASCII letters, numbers, or symbols.',
           ),
       'age': ValidateNumber()
           .required(messageFactory: (label, _) => 'Please enter your age.')
           .min(
             18,
-            messageFactory: (label, args) =>
-                'You must be at least 18 years old to sign up.',
+            messageFactory:
+                (label, args) =>
+                    'You must be at least 18 years old to sign up.',
           ),
       'phone': ValidateString()
           .required(
-              messageFactory: (label, _) => 'Please enter your phone number.')
+            messageFactory: (label, _) => 'Please enter your phone number.',
+          )
           .mobile(messageFactory: (label, _) => 'Invalid phone number format.'),
     },
     labels: {

@@ -11,19 +11,27 @@ void main() {
     });
 
     test('minSize fails when too few entries', () {
-      final result = ValidateMap<String>().setLabel('Tags').minSize(2).validate({'a': 'x'});
+      final result = ValidateMap<String>().setLabel('Tags').minSize(2).validate(
+        {'a': 'x'},
+      );
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.mapMinSize);
     });
 
     test('maxSize fails when too many entries', () {
-      final result = ValidateMap<String>().maxSize(1).validate({'a': 'x', 'b': 'y'});
+      final result = ValidateMap<String>().maxSize(1).validate({
+        'a': 'x',
+        'b': 'y',
+      });
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.mapMaxSize);
     });
 
     test('null passes (null-skip)', () {
-      expect(ValidateMap<String>().minSize(1).validate(null), isA<ValidationSuccess>());
+      expect(
+        ValidateMap<String>().minSize(1).validate(null),
+        isA<ValidationSuccess>(),
+      );
     });
   });
 
@@ -33,9 +41,9 @@ void main() {
     setUp(() {
       schema = DupSchema({
         'scores': ValidateMap<num>()
-          .required()
-          .minSize(1)
-          .valueValidator(ValidateNumber().min(0).max(100)),
+            .required()
+            .minSize(1)
+            .valueValidator(ValidateNumber().min(0).max(100)),
       });
     });
 
@@ -70,44 +78,45 @@ void main() {
     test('outer required fires as normal field error', () async {
       final result = await schema.validate({'scores': null});
       expect(result, isA<FormValidationFailure>());
-      expect((result as FormValidationFailure)('scores')!.code, ValidationCode.required);
+      expect(
+        (result as FormValidationFailure)('scores')!.code,
+        ValidationCode.required,
+      );
     });
   });
 
   group('ValidateMap — hasAsyncValidators', () {
     test('true when valueValidator has async', () {
-      final v = ValidateMap<String>()
-        .valueValidator(ValidateString().addAsyncValidator((_) async => null));
+      final v = ValidateMap<String>().valueValidator(
+        ValidateString().addAsyncValidator((_) async => null),
+      );
       expect(v.hasAsyncValidators, isTrue);
     });
   });
 
   group('ValidateMap — standalone validate()', () {
     test('validate() runs keyValidator when used standalone', () {
-      final v = ValidateMap<String>()
-        .keyValidator(ValidateString().alpha());
+      final v = ValidateMap<String>().keyValidator(ValidateString().alpha());
       final result = v.validate({'123': 'x'});
       expect(result, isA<ValidationFailure>());
     });
 
     test('validate() runs valueValidator when used standalone', () {
-      final v = ValidateMap<num>()
-        .valueValidator(ValidateNumber().min(0));
+      final v = ValidateMap<num>().valueValidator(ValidateNumber().min(0));
       final result = v.validate({'score': -1});
       expect(result, isA<ValidationFailure>());
     });
 
     test('validate() returns success when all entries pass', () {
       final v = ValidateMap<String>()
-        .keyValidator(ValidateString().alpha())
-        .valueValidator(ValidateString().min(1));
+          .keyValidator(ValidateString().alpha())
+          .valueValidator(ValidateString().min(1));
       final result = v.validate({'name': 'Alice'});
       expect(result, isA<ValidationSuccess>());
     });
 
     test('validateAsync() runs keyValidator when used standalone', () async {
-      final v = ValidateMap<String>()
-        .keyValidator(ValidateString().alpha());
+      final v = ValidateMap<String>().keyValidator(ValidateString().alpha());
       final result = await v.validateAsync({'123': 'x'});
       expect(result, isA<ValidationFailure>());
     });

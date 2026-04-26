@@ -7,8 +7,8 @@ void main() {
   setUp(() {
     addressSchema = DupSchema({
       'street': ValidateString().required(),
-      'city':   ValidateString().required(),
-      'zip':    ValidateString().required().koPostalCode(),
+      'city': ValidateString().required(),
+      'zip': ValidateString().required().koPostalCode(),
     });
   });
 
@@ -29,14 +29,20 @@ void main() {
     });
 
     test('null fails when required() set', () async {
-      final result = await ValidateObject(addressSchema).required().validateAsync(null);
+      final result = await ValidateObject(
+        addressSchema,
+      ).required().validateAsync(null);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.required);
     });
 
     test('inner failure returns nestedFailed code', () async {
       final v = ValidateObject(addressSchema);
-      final result = await v.validateAsync({'street': null, 'city': 'Seoul', 'zip': '06000'});
+      final result = await v.validateAsync({
+        'street': null,
+        'city': 'Seoul',
+        'zip': '06000',
+      });
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.nestedFailed);
     });
@@ -53,7 +59,7 @@ void main() {
 
     setUp(() {
       orderSchema = DupSchema({
-        'id':      ValidateString().required(),
+        'id': ValidateString().required(),
         'address': ValidateObject(addressSchema).required(),
       });
     });
@@ -70,7 +76,10 @@ void main() {
     });
 
     test('outer required fires as normal field error', () async {
-      final result = await orderSchema.validate({'id': 'order1', 'address': null});
+      final result = await orderSchema.validate({
+        'id': 'order1',
+        'address': null,
+      });
       expect(result, isA<FormValidationFailure>());
       final failure = result as FormValidationFailure;
       expect(failure('address'), isNotNull);

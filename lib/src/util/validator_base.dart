@@ -11,8 +11,12 @@ class _ValidatorEntry<T> {
   final int sortIndex;
   final ValidationFailure? Function(T?) fn;
   final bool isPresence;
-  const _ValidatorEntry(this.phase, this.sortIndex, this.fn,
-      {this.isPresence = false});
+  const _ValidatorEntry(
+    this.phase,
+    this.sortIndex,
+    this.fn, {
+    this.isPresence = false,
+  });
 }
 
 /// Base class for all validators.
@@ -104,18 +108,14 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Phase 0: fails when value is null or an empty string.
   /// Without this, null values silently pass all other phases.
   V required({MessageFactory? messageFactory}) {
-    return addPhaseValidator(
-      0,
-      (value) {
-        if (value == null || (value is String && value.isEmpty)) {
-          return getFailure(messageFactory, ValidationCode.required, {
-            'name': label,
-          }, '$label is required.');
-        }
-        return null;
-      },
-      isPresence: true,
-    );
+    return addPhaseValidator(0, (value) {
+      if (value == null || (value is String && value.isEmpty)) {
+        return getFailure(messageFactory, ValidationCode.required, {
+          'name': label,
+        }, '$label is required.');
+      }
+      return null;
+    }, isPresence: true);
   }
 
   /// Phase 3: fails when value does not equal [target].
@@ -197,7 +197,10 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
 
   /// Runs sync phases first, then async validators in registration order.
   /// Short-circuits: if any sync phase fails the async entries are not executed.
-  Future<ValidationResult> validateAsync(T? value, {bool skipPresence = false}) async {
+  Future<ValidationResult> validateAsync(
+    T? value, {
+    bool skipPresence = false,
+  }) async {
     final syncResult = runPhaseChain(value, skipPresence: skipPresence);
     if (syncResult is ValidationFailure) return syncResult;
     final asyncFailure = await runAsyncChain(value);

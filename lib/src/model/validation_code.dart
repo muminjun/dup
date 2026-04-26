@@ -14,7 +14,6 @@ enum ValidationCode {
   notOneOf, // excludedFrom() — value is in the forbidden list
   condition, // satisfy() — custom condition returned false
   custom, // addValidator() and other user-defined validators
-
   // String (ValidateString)
   stringMin, // min() — too few characters
   stringMax, // max() — too many characters
@@ -30,7 +29,6 @@ enum ValidationCode {
   alpha, // alpha() — non-alpha characters present
   alphanumeric, // alphanumeric() — non-alphanumeric characters present
   numeric, // numeric() — non-digit characters present
-
   // Number (ValidateNumber)
   numberMin, // min() — value below minimum
   numberMax, // max() — value above maximum
@@ -43,7 +41,6 @@ enum ValidationCode {
   even, // isEven() — value is odd
   odd, // isOdd() — value is even
   multipleOf, // isMultipleOf() — value is not a multiple
-
   // List (ValidateList)
   listNotEmpty, // isNotEmpty() — list is empty
   listEmpty, // isEmpty() — list is not empty
@@ -58,7 +55,6 @@ enum ValidationCode {
   none, // none() — at least one item satisfies the predicate
   noDuplicates, // hasNoDuplicates() — duplicate items found
   eachItem, // eachItem() — an individual item failed validation
-
   // DateTime (ValidateDateTime)
   dateMin, // min() — date is before the minimum
   dateMax, // max() — date is after the maximum
@@ -67,11 +63,9 @@ enum ValidationCode {
   dateBetween, // between() — date is outside the range
   dateInFuture, // isInFuture() — date is in the past
   dateInPast, // isInPast() — date is in the future
-
   // Bool (ValidateBool)
   boolTrue, // isTrue() — value is false
   boolFalse, // isFalse() — value is true
-
   // String — new in v2
   startsWith, // startsWith() — value does not start with prefix
   endsWith, // endsWith() — value does not end with suffix
@@ -82,25 +76,20 @@ enum ValidationCode {
   json, // json() — not parseable JSON
   creditCard, // creditCard() — Luhn check failed
   koPostalCode, // koPostalCode() — not a valid Korean postal code
-
   // Number — new in v2
   numberPrecision, // isPrecision() — too many decimal places
   isPort, // isPort() — not a valid port number
-
   // DateTime — new in v2
   isWeekday, // isWeekday() — not a weekday
   isWeekend, // isWeekend() — not a weekend
   isToday, // isToday() — not today
   isSameDay, // isSameDay() — not the same calendar day
   isWithin, // isWithin() — outside the allowed duration
-
   // List — new in v2
   listContainsAll, // containsAll() — missing required items
-
   // Map (ValidateMap) — new in v2
   mapMinSize, // minSize() — too few entries
   mapMaxSize, // maxSize() — too many entries
-
   // Nested (ValidateObject / ValidateMap) — new in v2
   nestedFailed, // inner schema validation failed (direct-call summary)
 }

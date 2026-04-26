@@ -131,12 +131,9 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.weekday >= DateTime.saturday) {
-        return getFailure(
-          messageFactory,
-          ValidationCode.isWeekday,
-          {'name': label},
-          '$label must be a weekday.',
-        );
+        return getFailure(messageFactory, ValidationCode.isWeekday, {
+          'name': label,
+        }, '$label must be a weekday.');
       }
       return null;
     });
@@ -147,30 +144,28 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.weekday < DateTime.saturday) {
-        return getFailure(
-          messageFactory,
-          ValidationCode.isWeekend,
-          {'name': label},
-          '$label must be a weekend day.',
-        );
+        return getFailure(messageFactory, ValidationCode.isWeekend, {
+          'name': label,
+        }, '$label must be a weekend day.');
       }
       return null;
     });
   }
 
   /// Phase 1: fails when the date is not the same calendar day as [target].
-  ValidateDateTime isSameDay(DateTime target, {MessageFactory? messageFactory}) {
+  ValidateDateTime isSameDay(
+    DateTime target, {
+    MessageFactory? messageFactory,
+  }) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.year != target.year ||
           value.month != target.month ||
           value.day != target.day) {
-        return getFailure(
-          messageFactory,
-          ValidationCode.isSameDay,
-          {'name': label, 'target': target},
-          '$label must be on $target.',
-        );
+        return getFailure(messageFactory, ValidationCode.isSameDay, {
+          'name': label,
+          'target': target,
+        }, '$label must be on $target.');
       }
       return null;
     });
@@ -184,12 +179,9 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
       if (value.year != now.year ||
           value.month != now.month ||
           value.day != now.day) {
-        return getFailure(
-          messageFactory,
-          ValidationCode.isToday,
-          {'name': label},
-          '$label must be today.',
-        );
+        return getFailure(messageFactory, ValidationCode.isToday, {
+          'name': label,
+        }, '$label must be today.');
       }
       return null;
     });

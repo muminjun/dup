@@ -367,12 +367,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
       if (value == null || value.trim().isEmpty) return null;
       final trimmed = value.trim();
       if (!regex.hasMatch(trimmed) || trimmed.length % 4 != 0) {
-        return getFailure(
-          messageFactory,
-          ValidationCode.base64,
-          {'name': label},
-          '$label is not valid Base64.',
-        );
+        return getFailure(messageFactory, ValidationCode.base64, {
+          'name': label,
+        }, '$label is not valid Base64.');
       }
       return null;
     });
@@ -387,12 +384,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
         jsonDecode(value.trim());
         return null;
       } catch (_) {
-        return getFailure(
-          messageFactory,
-          ValidationCode.json,
-          {'name': label},
-          '$label is not valid JSON.',
-        );
+        return getFailure(messageFactory, ValidationCode.json, {
+          'name': label,
+        }, '$label is not valid JSON.');
       }
     });
   }

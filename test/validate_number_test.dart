@@ -39,11 +39,15 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Age')
-              .min(18, messageFactory: (label, p) => '$label 최소 ${p['min']}')
-              .validate(17)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Age')
+                  .min(
+                    18,
+                    messageFactory: (label, p) => '$label 최소 ${p['min']}',
+                  )
+                  .validate(17)
+              as ValidationFailure;
       expect(result.message, 'Age 최소 18');
     });
 
@@ -53,8 +57,9 @@ void main() {
           ValidationCode.numberMin: (p) => '${p['name']} 최솟값 초과',
         }),
       );
-      final result = ValidateNumber().setLabel('나이').min(18).validate(10)
-          as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('나이').min(18).validate(10)
+              as ValidationFailure;
       expect(result.message, '나이 최솟값 초과');
     });
   });
@@ -79,7 +84,10 @@ void main() {
     });
 
     test('passes for null (null-skip)', () {
-      expect(ValidateNumber().max(100).validate(null), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().max(100).validate(null),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('works with negative max', () {
@@ -89,11 +97,15 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Score')
-              .max(100, messageFactory: (label, p) => '$label 최대 ${p['max']}')
-              .validate(200)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Score')
+                  .max(
+                    100,
+                    messageFactory: (label, p) => '$label 최대 ${p['max']}',
+                  )
+                  .validate(200)
+              as ValidationFailure;
       expect(result.message, 'Score 최대 100');
     });
 
@@ -103,8 +115,9 @@ void main() {
           ValidationCode.numberMax: (p) => '${p['name']} 최댓값 초과',
         }),
       );
-      final result = ValidateNumber().setLabel('점수').max(100).validate(200)
-          as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('점수').max(100).validate(200)
+              as ValidationFailure;
       expect(result.message, '점수 최댓값 초과');
     });
   });
@@ -114,29 +127,47 @@ void main() {
   // ---------------------------------------------------------------------------
   group('isInteger()', () {
     test('passes for int literal', () {
-      expect(ValidateNumber().isInteger().validate(3), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isInteger().validate(3),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('passes for whole-number double (1.0)', () {
-      expect(ValidateNumber().isInteger().validate(1.0), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isInteger().validate(1.0),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('passes for zero', () {
-      expect(ValidateNumber().isInteger().validate(0), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isInteger().validate(0),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('passes for negative whole number', () {
-      expect(ValidateNumber().isInteger().validate(-5), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isInteger().validate(-5),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('fails for decimal', () {
-      final result = ValidateNumber().setLabel('Count').isInteger().validate(1.5);
+      final result = ValidateNumber()
+          .setLabel('Count')
+          .isInteger()
+          .validate(1.5);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.integer);
     });
 
     test('fails for small decimal', () {
-      expect(ValidateNumber().isInteger().validate(1.001), isA<ValidationFailure>());
+      expect(
+        ValidateNumber().isInteger().validate(1.001),
+        isA<ValidationFailure>(),
+      );
     });
 
     test('passes for null (null-skip)', () {
@@ -147,22 +178,22 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Count')
-              .isInteger(messageFactory: (label, _) => '$label 정수만 가능')
-              .validate(1.5)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Count')
+                  .isInteger(messageFactory: (label, _) => '$label 정수만 가능')
+                  .validate(1.5)
+              as ValidationFailure;
       expect(result.message, 'Count 정수만 가능');
     });
 
     test('uses locale', () {
       ValidatorLocale.setLocale(
-        ValidatorLocale({
-          ValidationCode.integer: (p) => '${p['name']} 정수 오류',
-        }),
+        ValidatorLocale({ValidationCode.integer: (p) => '${p['name']} 정수 오류'}),
       );
-      final result = ValidateNumber().setLabel('수량').isInteger().validate(1.5)
-          as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('수량').isInteger().validate(1.5)
+              as ValidationFailure;
       expect(result.message, '수량 정수 오류');
     });
   });
@@ -172,7 +203,10 @@ void main() {
   // ---------------------------------------------------------------------------
   group('isPositive()', () {
     test('passes for positive integer', () {
-      expect(ValidateNumber().isPositive().validate(1), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPositive().validate(1),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('passes for small positive decimal', () {
@@ -189,7 +223,10 @@ void main() {
     });
 
     test('fails for negative number', () {
-      expect(ValidateNumber().isPositive().validate(-1), isA<ValidationFailure>());
+      expect(
+        ValidateNumber().isPositive().validate(-1),
+        isA<ValidationFailure>(),
+      );
     });
 
     test('passes for null (null-skip)', () {
@@ -200,22 +237,22 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Price')
-              .isPositive(messageFactory: (label, _) => '$label 양수만 가능')
-              .validate(-1)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Price')
+                  .isPositive(messageFactory: (label, _) => '$label 양수만 가능')
+                  .validate(-1)
+              as ValidationFailure;
       expect(result.message, 'Price 양수만 가능');
     });
 
     test('uses locale', () {
       ValidatorLocale.setLocale(
-        ValidatorLocale({
-          ValidationCode.positive: (p) => '${p['name']} 양수 오류',
-        }),
+        ValidatorLocale({ValidationCode.positive: (p) => '${p['name']} 양수 오류'}),
       );
       final result =
-          ValidateNumber().setLabel('가격').isPositive().validate(-1) as ValidationFailure;
+          ValidateNumber().setLabel('가격').isPositive().validate(-1)
+              as ValidationFailure;
       expect(result.message, '가격 양수 오류');
     });
   });
@@ -225,7 +262,10 @@ void main() {
   // ---------------------------------------------------------------------------
   group('isNegative()', () {
     test('passes for negative integer', () {
-      expect(ValidateNumber().isNegative().validate(-1), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isNegative().validate(-1),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('passes for small negative decimal', () {
@@ -242,7 +282,10 @@ void main() {
     });
 
     test('fails for positive number', () {
-      expect(ValidateNumber().isNegative().validate(1), isA<ValidationFailure>());
+      expect(
+        ValidateNumber().isNegative().validate(1),
+        isA<ValidationFailure>(),
+      );
     });
 
     test('passes for null (null-skip)', () {
@@ -253,22 +296,22 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Delta')
-              .isNegative(messageFactory: (label, _) => '$label 음수만 가능')
-              .validate(1)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Delta')
+                  .isNegative(messageFactory: (label, _) => '$label 음수만 가능')
+                  .validate(1)
+              as ValidationFailure;
       expect(result.message, 'Delta 음수만 가능');
     });
 
     test('uses locale', () {
       ValidatorLocale.setLocale(
-        ValidatorLocale({
-          ValidationCode.negative: (p) => '${p['name']} 음수 오류',
-        }),
+        ValidatorLocale({ValidationCode.negative: (p) => '${p['name']} 음수 오류'}),
       );
       final result =
-          ValidateNumber().setLabel('변화량').isNegative().validate(5) as ValidationFailure;
+          ValidateNumber().setLabel('변화량').isNegative().validate(5)
+              as ValidationFailure;
       expect(result.message, '변화량 음수 오류');
     });
   });
@@ -285,11 +328,17 @@ void main() {
     });
 
     test('passes for zero (zero is allowed)', () {
-      expect(ValidateNumber().isNonNegative().validate(0), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isNonNegative().validate(0),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('fails for negative integer', () {
-      final result = ValidateNumber().setLabel('N').isNonNegative().validate(-1);
+      final result = ValidateNumber()
+          .setLabel('N')
+          .isNonNegative()
+          .validate(-1);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.nonNegative);
     });
@@ -309,11 +358,12 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Qty')
-              .isNonNegative(messageFactory: (label, _) => '$label 0 이상')
-              .validate(-1)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Qty')
+                  .isNonNegative(messageFactory: (label, _) => '$label 0 이상')
+                  .validate(-1)
+              as ValidationFailure;
       expect(result.message, 'Qty 0 이상');
     });
 
@@ -342,7 +392,10 @@ void main() {
     });
 
     test('passes for zero (zero is allowed)', () {
-      expect(ValidateNumber().isNonPositive().validate(0), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isNonPositive().validate(0),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('fails for positive integer', () {
@@ -366,11 +419,12 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Offset')
-              .isNonPositive(messageFactory: (label, _) => '$label 0 이하')
-              .validate(1)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Offset')
+                  .isNonPositive(messageFactory: (label, _) => '$label 0 이하')
+                  .validate(1)
+              as ValidationFailure;
       expect(result.message, 'Offset 0 이하');
     });
 
@@ -457,27 +511,27 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('Score')
-              .between(
-                1,
-                100,
-                messageFactory: (label, p) =>
-                    '$label ${p['min']}~${p['max']} 사이',
-              )
-              .validate(0)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('Score')
+                  .between(
+                    1,
+                    100,
+                    messageFactory:
+                        (label, p) => '$label ${p['min']}~${p['max']} 사이',
+                  )
+                  .validate(0)
+              as ValidationFailure;
       expect(result.message, 'Score 1~100 사이');
     });
 
     test('uses locale', () {
       ValidatorLocale.setLocale(
-        ValidatorLocale({
-          ValidationCode.between: (p) => '${p['name']} 범위 오류',
-        }),
+        ValidatorLocale({ValidationCode.between: (p) => '${p['name']} 범위 오류'}),
       );
-      final result = ValidateNumber().setLabel('점수').between(1, 10).validate(0)
-          as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('점수').between(1, 10).validate(0)
+              as ValidationFailure;
       expect(result.message, '점수 범위 오류');
     });
   });
@@ -517,15 +571,19 @@ void main() {
     });
 
     test('passes for null (null-skip)', () {
-      expect(ValidateNumber().isEven().validate(null), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isEven().validate(null),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('N')
-              .isEven(messageFactory: (label, _) => '$label 짝수만 가능')
-              .validate(3)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('N')
+                  .isEven(messageFactory: (label, _) => '$label 짝수만 가능')
+                  .validate(3)
+              as ValidationFailure;
       expect(result.message, 'N 짝수만 가능');
     });
 
@@ -534,7 +592,8 @@ void main() {
         ValidatorLocale({ValidationCode.even: (p) => '${p['name']} 짝수 오류'}),
       );
       final result =
-          ValidateNumber().setLabel('숫자').isEven().validate(3) as ValidationFailure;
+          ValidateNumber().setLabel('숫자').isEven().validate(3)
+              as ValidationFailure;
       expect(result.message, '숫자 짝수 오류');
     });
   });
@@ -578,11 +637,12 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('N')
-              .isOdd(messageFactory: (label, _) => '$label 홀수만 가능')
-              .validate(4)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('N')
+                  .isOdd(messageFactory: (label, _) => '$label 홀수만 가능')
+                  .validate(4)
+              as ValidationFailure;
       expect(result.message, 'N 홀수만 가능');
     });
 
@@ -591,7 +651,8 @@ void main() {
         ValidatorLocale({ValidationCode.odd: (p) => '${p['name']} 홀수 오류'}),
       );
       final result =
-          ValidateNumber().setLabel('숫자').isOdd().validate(4) as ValidationFailure;
+          ValidateNumber().setLabel('숫자').isOdd().validate(4)
+              as ValidationFailure;
       expect(result.message, '숫자 홀수 오류');
     });
   });
@@ -608,7 +669,10 @@ void main() {
     });
 
     test('passes for zero (0 is a multiple of anything)', () {
-      expect(ValidateNumber().isMultipleOf(5).validate(0), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isMultipleOf(5).validate(0),
+        isA<ValidationSuccess>(),
+      );
     });
 
     test('passes for negative multiples', () {
@@ -640,14 +704,15 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateNumber()
-              .setLabel('N')
-              .isMultipleOf(
-                3,
-                messageFactory: (label, p) => '$label ${p['factor']}의 배수',
-              )
-              .validate(7)
-          as ValidationFailure;
+      final result =
+          ValidateNumber()
+                  .setLabel('N')
+                  .isMultipleOf(
+                    3,
+                    messageFactory: (label, p) => '$label ${p['factor']}의 배수',
+                  )
+                  .validate(7)
+              as ValidationFailure;
       expect(result.message, 'N 3의 배수');
     });
 
@@ -657,8 +722,9 @@ void main() {
           ValidationCode.multipleOf: (p) => '${p['name']} 배수 오류',
         }),
       );
-      final result = ValidateNumber().setLabel('숫자').isMultipleOf(5).validate(7)
-          as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('숫자').isMultipleOf(5).validate(7)
+              as ValidationFailure;
       expect(result.message, '숫자 배수 오류');
     });
   });
@@ -722,8 +788,9 @@ void main() {
           ValidationCode.numberMin: (p) => '${p['name']} 최솟값 초과',
         }),
       );
-      final result = ValidateNumber().setLabel('나이').min(18).validate(10)
-          as ValidationFailure;
+      final result =
+          ValidateNumber().setLabel('나이').min(18).validate(10)
+              as ValidationFailure;
       expect(result.message, '나이 최솟값 초과');
     });
   });
@@ -732,7 +799,8 @@ void main() {
   // 실제 유저 입력 패턴 — 나이(age) 필드
   // ---------------------------------------------------------------------------
   group('real user input — age field', () {
-    final ageValidator = ValidateNumber().setLabel('나이').min(0).max(150).isInteger();
+    final ageValidator =
+        ValidateNumber().setLabel('나이').min(0).max(150).isInteger();
 
     test('age 25 — passes', () {
       expect(ageValidator.validate(25), isA<ValidationSuccess>());
@@ -794,8 +862,11 @@ void main() {
   // real user input — quantity field
   // ---------------------------------------------------------------------------
   group('real user input — quantity field', () {
-    final qtyValidator =
-        ValidateNumber().setLabel('수량').isInteger().isPositive().max(999);
+    final qtyValidator = ValidateNumber()
+        .setLabel('수량')
+        .isInteger()
+        .isPositive()
+        .max(999);
 
     test('quantity 1 — passes', () {
       expect(qtyValidator.validate(1), isA<ValidationSuccess>());
@@ -919,11 +990,14 @@ void main() {
   // Chaining / interaction
   // ---------------------------------------------------------------------------
   group('chaining validators', () {
-    test('isInteger + min: non-integer checked at phase 1 before min at phase 2', () {
-      final v = ValidateNumber().setLabel('Count').isInteger().min(5);
-      final result = v.validate(1.5) as ValidationFailure;
-      expect(result.code, ValidationCode.integer);
-    });
+    test(
+      'isInteger + min: non-integer checked at phase 1 before min at phase 2',
+      () {
+        final v = ValidateNumber().setLabel('Count').isInteger().min(5);
+        final result = v.validate(1.5) as ValidationFailure;
+        expect(result.code, ValidationCode.integer);
+      },
+    );
 
     test('isInteger + min: integer that is below min fails at min', () {
       final v = ValidateNumber().setLabel('Count').isInteger().min(5);
@@ -952,10 +1026,16 @@ void main() {
 
   group('isPrecision()', () {
     test('passes when precision within limit', () {
-      expect(ValidateNumber().isPrecision(2).validate(1.23), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPrecision(2).validate(1.23),
+        isA<ValidationSuccess>(),
+      );
     });
     test('passes integer', () {
-      expect(ValidateNumber().isPrecision(2).validate(5), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPrecision(2).validate(5),
+        isA<ValidationSuccess>(),
+      );
     });
     test('fails when too many decimal places', () {
       final r = ValidateNumber().isPrecision(2).validate(1.234);
@@ -963,19 +1043,34 @@ void main() {
       expect((r as ValidationFailure).code, ValidationCode.numberPrecision);
     });
     test('null passes', () {
-      expect(ValidateNumber().isPrecision(2).validate(null), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPrecision(2).validate(null),
+        isA<ValidationSuccess>(),
+      );
     });
     test('passes 1.005 at isPrecision(3) — floating-point edge case', () {
-      expect(ValidateNumber().isPrecision(3).validate(1.005), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPrecision(3).validate(1.005),
+        isA<ValidationSuccess>(),
+      );
     });
     test('fails 1.005 at isPrecision(2) — 3 decimal places exceed limit', () {
-      expect(ValidateNumber().isPrecision(2).validate(1.005), isA<ValidationFailure>());
+      expect(
+        ValidateNumber().isPrecision(2).validate(1.005),
+        isA<ValidationFailure>(),
+      );
     });
     test('passes 0 decimal places at isPrecision(0)', () {
-      expect(ValidateNumber().isPrecision(0).validate(42), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPrecision(0).validate(42),
+        isA<ValidationSuccess>(),
+      );
     });
     test('fails 1.5 at isPrecision(0)', () {
-      expect(ValidateNumber().isPrecision(0).validate(1.5), isA<ValidationFailure>());
+      expect(
+        ValidateNumber().isPrecision(0).validate(1.5),
+        isA<ValidationFailure>(),
+      );
     });
   });
 
@@ -984,13 +1079,19 @@ void main() {
       expect(ValidateNumber().isPort().validate(0), isA<ValidationSuccess>());
     });
     test('passes port 65535', () {
-      expect(ValidateNumber().isPort().validate(65535), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPort().validate(65535),
+        isA<ValidationSuccess>(),
+      );
     });
     test('fails negative', () {
       expect(ValidateNumber().isPort().validate(-1), isA<ValidationFailure>());
     });
     test('fails above 65535', () {
-      expect(ValidateNumber().isPort().validate(65536), isA<ValidationFailure>());
+      expect(
+        ValidateNumber().isPort().validate(65536),
+        isA<ValidationFailure>(),
+      );
     });
     test('fails float (e.g. 80.5)', () {
       final r = ValidateNumber().isPort().validate(80.5);
@@ -998,7 +1099,10 @@ void main() {
       expect((r as ValidationFailure).code, ValidationCode.isPort);
     });
     test('null passes', () {
-      expect(ValidateNumber().isPort().validate(null), isA<ValidationSuccess>());
+      expect(
+        ValidateNumber().isPort().validate(null),
+        isA<ValidationSuccess>(),
+      );
     });
   });
 }

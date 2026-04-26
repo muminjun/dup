@@ -23,11 +23,12 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateBool()
-              .setLabel('Terms')
-              .isTrue(messageFactory: (label, _) => '$label 동의 필요')
-              .validate(false)
-          as ValidationFailure;
+      final result =
+          ValidateBool()
+                  .setLabel('Terms')
+                  .isTrue(messageFactory: (label, _) => '$label 동의 필요')
+                  .validate(false)
+              as ValidationFailure;
       expect(result.message, 'Terms 동의 필요');
     });
 
@@ -38,13 +39,15 @@ void main() {
         }),
       );
       final result =
-          ValidateBool().setLabel('동의').isTrue().validate(false) as ValidationFailure;
+          ValidateBool().setLabel('동의').isTrue().validate(false)
+              as ValidationFailure;
       expect(result.message, '동의 참이어야 합니다.');
     });
 
     test('default message contains label', () {
       final result =
-          ValidateBool().setLabel('Consent').isTrue().validate(false) as ValidationFailure;
+          ValidateBool().setLabel('Consent').isTrue().validate(false)
+              as ValidationFailure;
       expect(result.message, contains('Consent'));
     });
 
@@ -90,11 +93,12 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result = ValidateBool()
-              .setLabel('Flag')
-              .isFalse(messageFactory: (label, _) => '$label 거짓이어야 함')
-              .validate(true)
-          as ValidationFailure;
+      final result =
+          ValidateBool()
+                  .setLabel('Flag')
+                  .isFalse(messageFactory: (label, _) => '$label 거짓이어야 함')
+                  .validate(true)
+              as ValidationFailure;
       expect(result.message, 'Flag 거짓이어야 함');
     });
 
@@ -105,13 +109,15 @@ void main() {
         }),
       );
       final result =
-          ValidateBool().setLabel('플래그').isFalse().validate(true) as ValidationFailure;
+          ValidateBool().setLabel('플래그').isFalse().validate(true)
+              as ValidationFailure;
       expect(result.message, '플래그 거짓이어야 합니다.');
     });
 
     test('default message contains label', () {
       final result =
-          ValidateBool().setLabel('Lock').isFalse().validate(true) as ValidationFailure;
+          ValidateBool().setLabel('Lock').isFalse().validate(true)
+              as ValidationFailure;
       expect(result.message, contains('Lock'));
     });
 
