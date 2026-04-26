@@ -90,8 +90,6 @@ enum ValidationCode {
   // Map (ValidateMap) — new in v2
   mapMinSize, // minSize() — too few entries
   mapMaxSize, // maxSize() — too many entries
-  mapKeyInvalid, // keyValidator() — key failed, no specific code from inner validator
-  mapValueInvalid, // valueValidator() — value failed, no specific code from inner validator
   // Nested (ValidateObject / ValidateMap) — new in v2
   nestedFailed, // inner schema validation failed (direct-call summary)
 }

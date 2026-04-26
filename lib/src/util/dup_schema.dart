@@ -51,6 +51,14 @@ class _WhenRule {
 ///   return null;
 /// });
 /// ```
+///
+/// **Shared validator instances:** validator objects passed to the schema are
+/// used directly — they are not cloned. [pick], [omit], and [partial] return
+/// new [DupSchema] instances that share the same underlying validator objects.
+/// This means calling [setLabel] (done internally during validation) on a
+/// shared instance affects all schemas that reference it. Do not share a single
+/// validator instance across concurrent [validate] / [validateAsync] calls on
+/// different schemas.
 class DupSchema {
   /// Field name → validator map. Each validator has its label set in the constructor.
   final Map<String, BaseValidator> _schema;

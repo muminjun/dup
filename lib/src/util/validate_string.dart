@@ -361,7 +361,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     });
   }
 
-  /// Phase 1: fails when value is not valid Base64.
+  /// Phase 1: fails when value is not valid Base64 (RFC 4648 §4 — standard
+  /// alphabet using `+` and `/`). URL-safe Base64 (RFC 4648 §5, using `-` and
+  /// `_`) is not accepted; strip or convert the value before calling this.
   ValidateString base64({MessageFactory? messageFactory}) {
     final regex = RegExp(r'^[A-Za-z0-9+/]*={0,2}$');
     return addPhaseValidator(1, (value) {
@@ -438,7 +440,7 @@ class ValidateString extends BaseValidator<String, ValidateString> {
           messageFactory,
           ValidationCode.koPostalCode,
           {'name': label},
-          '$label is not a valid postal code.',
+          '$label is not a valid Korean postal code.',
         );
       }
       return null;

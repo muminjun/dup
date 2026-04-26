@@ -132,7 +132,7 @@ result('metadata[badKey]')?.message  // "badKey is not alphabetic"
 
 The bracket vs dot distinction is intentional: `[]` matches Map access syntax; `.` matches object property access syntax.
 
-`mapKeyInvalid` and `mapValueInvalid` are fallback codes used only when the inner validator does not produce its own code. Normally the inner validator's code is preserved.
+When a key or value fails, the inner validator's actual `ValidationFailure` (with its own code) is propagated directly. There are no wrapper codes for key/value failures.
 
 ### 2-2. `ValidateObject`
 
@@ -285,7 +285,7 @@ ValidatorLocale.setLocale(myLocale);
 
 ## 5. New ValidationCode Values Required
 
-`startsWith`, `endsWith`, `stringContains`, `ipAddress`, `hexColor`, `base64`, `json`, `creditCard`, `koPostalCode`, `numberPrecision`, `isPort`, `isWeekday`, `isWeekend`, `isToday`, `isSameDay`, `isWithin`, `listContainsAll`, `mapMinSize`, `mapMaxSize`, `mapKeyInvalid`, `mapValueInvalid`, `nestedFailed`
+`startsWith`, `endsWith`, `stringContains`, `ipAddress`, `hexColor`, `base64`, `json`, `creditCard`, `koPostalCode`, `numberPrecision`, `isPort`, `isWeekday`, `isWeekend`, `isToday`, `isSameDay`, `isWithin`, `listContainsAll`, `mapMinSize`, `mapMaxSize`, `nestedFailed`
 
 > `oneOf`/`notOneOf` already exist. `numberIn` removed (duplicate of `oneOf` via `includedIn`). `postalCode` renamed to `koPostalCode`.
 
