@@ -165,7 +165,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
         return getFailure(messageFactory, ValidationCode.isSameDay, {
           'name': label,
           'target': target,
-        }, '$label must be on $target.');
+        }, '$label must be on ${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}.');
       }
       return null;
     });
@@ -202,7 +202,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
         return getFailure(
           messageFactory,
           ValidationCode.isWithin,
-          {'name': label, 'duration': duration},
+          {'name': label, 'duration': duration, 'from': anchor},
           '$label must be within $duration of $anchor.',
         );
       }

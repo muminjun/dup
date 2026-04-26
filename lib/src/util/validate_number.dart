@@ -86,7 +86,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
           messageFactory,
           ValidationCode.nonNegative,
           {'name': label},
-          '$label must be zero or positive.',
+          '$label must be non-negative.',
         );
       }
       return null;
@@ -101,7 +101,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
           messageFactory,
           ValidationCode.nonPositive,
           {'name': label},
-          '$label must be zero or negative.',
+          '$label must be non-positive.',
         );
       }
       return null;
