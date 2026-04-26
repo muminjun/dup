@@ -80,7 +80,16 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
 
   /// Runs sync phase entries only. When [skipPresence] is true, entries
   /// registered with isPresence:true (i.e. required()) are skipped.
-  ValidationResult runPhaseChain(T? value, {bool skipPresence = false}) {
+  ///
+  /// Use [fromPhase] and [toPhase] to run only a subset of phases (inclusive).
+  /// This allows callers to interleave entry validation between phase bands
+  /// (e.g. run phases 0–1 first, then entry checks, then phases 2+).
+  ValidationResult runPhaseChain(
+    T? value, {
+    bool skipPresence = false,
+    int fromPhase = 0,
+    int toPhase = 999,
+  }) {
     if (!_sorted) {
       _entries.sort((a, b) {
         final c = a.phase.compareTo(b.phase);
@@ -89,6 +98,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
       _sorted = true;
     }
     for (final entry in _entries) {
+      if (entry.phase < fromPhase || entry.phase > toPhase) continue;
       if (skipPresence && entry.isPresence) continue;
       final failure = entry.fn(value);
       if (failure != null) return failure;

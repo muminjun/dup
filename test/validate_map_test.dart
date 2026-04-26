@@ -85,6 +85,27 @@ void main() {
     });
   });
 
+  group('ValidateMap — phase ordering', () {
+    test('keyValidator (Phase 1) error takes priority over minSize (Phase 2)', () {
+      final v = ValidateMap<String>()
+          .keyValidator(ValidateString().alpha())
+          .minSize(5); // requires 5 entries, map only has 1 with bad key
+      final result = v.validate({'bad key!': 'value'});
+      expect(result, isA<ValidationFailure>());
+      // The error should be from keyValidator (nested), not minSize
+      expect((result as ValidationFailure).code, ValidationCode.nestedFailed);
+    });
+
+    test('keyValidator (Phase 1) error takes priority over minSize (Phase 2) — async', () async {
+      final v = ValidateMap<String>()
+          .keyValidator(ValidateString().alpha())
+          .minSize(5);
+      final result = await v.validateAsync({'bad key!': 'value'});
+      expect(result, isA<ValidationFailure>());
+      expect((result as ValidationFailure).code, ValidationCode.nestedFailed);
+    });
+  });
+
   group('ValidateMap — hasAsyncValidators', () {
     test('true when valueValidator has async', () {
       final v = ValidateMap<String>().valueValidator(
