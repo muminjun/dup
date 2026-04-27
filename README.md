@@ -94,6 +94,9 @@ final fieldResult = await schema.validateField('email', value);
 
 // Single field with when() rules applied
 final fieldResult = await schema.validateField('type', value, data: formData);
+
+// Parallel — runs all field validators concurrently; faster for I/O-bound async validators
+final result = await schema.validateParallel(data);
 ```
 
 ### Cross-field validation

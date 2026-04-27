@@ -21,7 +21,11 @@ See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
 ### Added
 
 - `DupSchema` — replaces `BaseValidatorSchema` + `useUiForm` pair; supports
-  `validate()` (async), `validateSync()`, `validateField()`, and `crossValidate()`.
+  `validate()` (async), `validateSync()`, `validateParallel()`, `validateField()`,
+  and `crossValidate()`.
+- `DupSchema.validateParallel()` — runs all field validators concurrently via
+  `Future.wait`; faster than `validate()` when multiple async validators (e.g.
+  DB uniqueness checks) are registered.
 - `DupSchema.when()` — conditional validation; replaces base validators when a
   field satisfies a predicate at validation time.
 - `DupSchema.pick(fields)` / `omit(fields)` — derive a sub-schema from an

@@ -91,8 +91,8 @@ class ValidatorLocale {
     ValidationCode.nonPositive: (p) => '${p['name']} must be non-positive.',
     ValidationCode.between:
         (p) => '${p['name']} must be between ${p['min']} and ${p['max']}.',
-    ValidationCode.even: (p) => '${p['name']} must be even.',
-    ValidationCode.odd: (p) => '${p['name']} must be odd.',
+    ValidationCode.even: (p) => '${p['name']} must be an even number.',
+    ValidationCode.odd: (p) => '${p['name']} must be an odd number.',
     ValidationCode.multipleOf:
         (p) => '${p['name']} must be a multiple of ${p['factor']}.',
     ValidationCode.listNotEmpty: (p) => '${p['name']} cannot be empty.',
@@ -151,7 +151,8 @@ class ValidatorLocale {
     // v2 number validators
     ValidationCode.numberPrecision:
         (p) => '${p['name']} must have at most ${p['digits']} decimal places.',
-    ValidationCode.port: (p) => '${p['name']} is not a valid port number.',
+    ValidationCode.port:
+        (p) => '${p['name']} must be a valid port number (0–65535).',
     // v2 date validators
     ValidationCode.isWeekday: (p) => '${p['name']} must be a weekday.',
     ValidationCode.isWeekend: (p) => '${p['name']} must be a weekend day.',
@@ -159,7 +160,7 @@ class ValidatorLocale {
     ValidationCode.isSameDay:
         (p) => '${p['name']} must be the same day as ${p['targetFormatted']}.',
     ValidationCode.isWithin:
-        (p) => '${p['name']} must be within ${p['duration']}.',
+        (p) => '${p['name']} must be within ${p['duration']} of ${p['from']}.',
     // v2 list validators
     ValidationCode.listContainsAll:
         (p) =>
