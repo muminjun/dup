@@ -38,8 +38,8 @@ class _ValidatorEntry<T> {
 abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   final List<_ValidatorEntry<T>> _entries = [];
   final List<Future<ValidationFailure?> Function(T?)> _asyncEntries = [];
-  // Safe after construction; not concurrent-safe if addPhaseValidator is called
-  // while another isolate is running the phase chain.
+  // Not safe for concurrent modification: do not call addPhaseValidator while
+  // validate or validateAsync is executing on the same instance.
   bool _sorted = false;
 
   /// Display label used in error messages. Set via [setLabel].

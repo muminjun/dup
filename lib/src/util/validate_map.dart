@@ -132,6 +132,13 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     dynamic value, {
     bool skipPresence = false,
   }) async {
+    if (value != null && value is! Map<String, V>) {
+      return NestedNormalFailure(ValidationFailure(
+        code: ValidationCode.nestedFailed,
+        message: '$label must be a map.',
+        context: {'name': label},
+      ));
+    }
     // Phase 0–1 first (required + format checks including keyValidator/valueValidator).
     final phase01 = runPhaseChain(
       value as Map<String, V>?,
@@ -159,6 +166,13 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     dynamic value, {
     bool skipPresence = false,
   }) {
+    if (value != null && value is! Map<String, V>) {
+      return NestedNormalFailure(ValidationFailure(
+        code: ValidationCode.nestedFailed,
+        message: '$label must be a map.',
+        context: {'name': label},
+      ));
+    }
     // Phase 0–1 first (required + format checks including keyValidator/valueValidator).
     final phase01 = runPhaseChain(
       value as Map<String, V>?,

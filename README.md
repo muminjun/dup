@@ -143,6 +143,24 @@ final publicSchema = fullSchema.omit(['passwordConfirm']);
 final patchSchema = fullSchema.partial();
 ```
 
+### Sharing validator instances across schemas
+
+Validator objects are used directly — they are not cloned when passed to a schema or when deriving schemas with `pick`/`omit`/`partial`. Each validator's label is set at `DupSchema` construction time, so sharing the same instance between two schemas with different label overrides will result in the label reflecting whichever schema was constructed last.
+
+```dart
+// Wrong: same instance in two schemas — label will be 'Email Address' for both
+final v = ValidateString().email().required();
+final loginSchema = DupSchema({'email': v});
+final profileSchema = DupSchema({'email': v}, labels: {'email': 'Email Address'});
+
+// Right: separate instances per schema
+final loginSchema = DupSchema({'email': ValidateString().email().required()});
+final profileSchema = DupSchema(
+  {'email': ValidateString().email().required()},
+  labels: {'email': 'Email Address'},
+);
+```
+
 ---
 
 ## Validators

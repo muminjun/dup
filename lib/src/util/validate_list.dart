@@ -1,6 +1,7 @@
 import '../model/message_factory.dart';
 import '../model/validation_code.dart';
 import '../model/validation_result.dart';
+import 'validate_locale.dart';
 import 'validator_base.dart';
 
 /// Validator for [List<T>] values.
@@ -234,17 +235,12 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
       for (int i = 0; i < value.length; i++) {
         final failure = itemValidator(value[i]);
         if (failure != null) {
+          final ctx = {'name': label, 'index': i, 'error': failure.message};
           final msg =
-              messageFactory?.call(label, {
-                'index': i,
-                'error': failure.message,
-              }) ??
-              getFailure(
-                null,
-                ValidationCode.eachItem,
-                {'name': label, 'index': i, 'error': failure.message},
-                'Item at index $i in $label: ${failure.message}',
-              ).message;
+              messageFactory?.call(label, ctx) ??
+              ValidatorLocale.current?.messages[ValidationCode.eachItem]
+                  ?.call(ctx) ??
+              'Item at index $i in $label: ${failure.message}';
           return ValidationFailure(
             code: ValidationCode.eachItem,
             message: msg,

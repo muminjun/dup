@@ -115,6 +115,32 @@ void main() {
     });
   });
 
+  group('ValidateMap — wrong-type input', () {
+    test('string value returns nestedFailed via validateNested', () async {
+      final s = DupSchema({
+        'scores': ValidateMap<num>().required(),
+      });
+      final result = await s.validate({'scores': 'not-a-map'});
+      expect(result, isA<FormValidationFailure>());
+      expect(
+        (result as FormValidationFailure)('scores')!.code,
+        ValidationCode.nestedFailed,
+      );
+    });
+
+    test('integer value returns nestedFailed via validateNestedSync', () {
+      final s = DupSchema({
+        'scores': ValidateMap<num>().required(),
+      });
+      final result = s.validateSync({'scores': 42});
+      expect(result, isA<FormValidationFailure>());
+      expect(
+        (result as FormValidationFailure)('scores')!.code,
+        ValidationCode.nestedFailed,
+      );
+    });
+  });
+
   group('ValidateMap — standalone validate()', () {
     test('validate() runs keyValidator when used standalone', () {
       final v = ValidateMap<String>().keyValidator(ValidateString().alpha());

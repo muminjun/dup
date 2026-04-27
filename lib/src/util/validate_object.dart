@@ -76,6 +76,13 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     dynamic value, {
     bool skipPresence = false,
   }) async {
+    if (value != null && value is! Map<String, dynamic>) {
+      return NestedNormalFailure(ValidationFailure(
+        code: ValidationCode.nestedFailed,
+        message: '$label must be an object.',
+        context: {'name': label},
+      ));
+    }
     final chainResult = runPhaseChain(
       value as Map<String, dynamic>?,
       skipPresence: skipPresence,
@@ -107,6 +114,13 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
         'ValidateObject.validateNestedSync() called on an object whose inner '
         'schema has async validators. Use validateNested() instead.',
       );
+    }
+    if (value != null && value is! Map<String, dynamic>) {
+      return NestedNormalFailure(ValidationFailure(
+        code: ValidationCode.nestedFailed,
+        message: '$label must be an object.',
+        context: {'name': label},
+      ));
     }
     final chainResult = runPhaseChain(
       value as Map<String, dynamic>?,

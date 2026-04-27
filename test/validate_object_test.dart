@@ -109,6 +109,32 @@ void main() {
     });
   });
 
+  group('ValidateObject — wrong-type input', () {
+    test('string value returns nestedFailed via validateNested', () async {
+      final schema = DupSchema({
+        'address': ValidateObject(addressSchema),
+      });
+      final result = await schema.validate({'address': 'not-a-map'});
+      expect(result, isA<FormValidationFailure>());
+      expect(
+        (result as FormValidationFailure)('address')!.code,
+        ValidationCode.nestedFailed,
+      );
+    });
+
+    test('integer value returns nestedFailed via validateNestedSync', () {
+      final schema = DupSchema({
+        'address': ValidateObject(addressSchema),
+      });
+      final result = schema.validateSync({'address': 42});
+      expect(result, isA<FormValidationFailure>());
+      expect(
+        (result as FormValidationFailure)('address')!.code,
+        ValidationCode.nestedFailed,
+      );
+    });
+  });
+
   group('ValidateObject — sync path with async inner schema throws', () {
     test('validate() throws clear StateError when inner schema has async validators', () {
       final asyncSchema = DupSchema({

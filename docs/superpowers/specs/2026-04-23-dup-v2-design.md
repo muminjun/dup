@@ -1,7 +1,11 @@
 # dup v2.0 — Design Spec
 
+> **⚠️ SUPERSEDED** — This document describes the initial v2 design and contains APIs that were replaced during implementation.
+> The `ValidatorLocaleKeys` string-constants API, the multi-parameter `ValidatorLocale` constructor, and `UiFormService`
+> were all removed in the final implementation. See the codebase and CLAUDE.md for the authoritative architecture.
+
 **Date:** 2026-04-23  
-**Status:** Approved  
+**Status:** Superseded  
 **Scope:** Full package overhaul — bug fixes, new validator types, async support, phase-based execution, pure Dart
 
 ---
