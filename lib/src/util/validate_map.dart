@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../internal/nested_validator.dart';
 import '../model/message_factory.dart';
 import '../model/validation_code.dart';
@@ -125,6 +127,7 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
   }
 
   @override
+  @internal
   Future<NestedValidationResult?> validateNested(
     dynamic value, {
     bool skipPresence = false,
@@ -151,6 +154,7 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
   }
 
   @override
+  @internal
   NestedValidationResult? validateNestedSync(
     dynamic value, {
     bool skipPresence = false,

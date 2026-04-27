@@ -27,7 +27,7 @@ void main() async {
           .required(
             messageFactory: (label, _) => 'Please enter your phone number.',
           )
-          .mobile(messageFactory: (label, _) => 'Invalid phone number format.'),
+          .koMobile(messageFactory: (label, _) => 'Invalid phone number format.'),
     },
     labels: {
       'email': 'Email',

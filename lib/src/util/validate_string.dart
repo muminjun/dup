@@ -171,9 +171,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     });
   }
 
-  /// Phase 1: validates mobile phone number format.
+  /// Phase 1: validates Korean mobile phone number format.
   /// Default pattern: `010-1234-5678`. Override with [customRegex].
-  ValidateString mobile({RegExp? customRegex, MessageFactory? messageFactory}) {
+  ValidateString koMobile({RegExp? customRegex, MessageFactory? messageFactory}) {
     final regex = customRegex ?? RegExp(r'^\d{2,3}-\d{3,4}-\d{4}$');
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
@@ -189,9 +189,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     });
   }
 
-  /// Phase 1: validates landline phone number format.
+  /// Phase 1: validates Korean landline phone number format.
   /// Default pattern: `02-1234-5678`. Override with [customRegex].
-  ValidateString phone({RegExp? customRegex, MessageFactory? messageFactory}) {
+  ValidateString koPhone({RegExp? customRegex, MessageFactory? messageFactory}) {
     final regex = customRegex ?? RegExp(r'^(0[2-9]{1}\d?)-\d{3,4}-\d{4}$');
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;

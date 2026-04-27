@@ -941,6 +941,38 @@ void main() {
               as ValidationFailure;
       expect(result.message, 'Items[0]: bad');
     });
+
+    test('locale override can access index and error via context', () {
+      ValidatorLocale.setLocale(
+        ValidatorLocale({
+          ValidationCode.eachItem: (p) => '${p['name']}의 ${p['index']}번 항목: ${p['error']}',
+        }),
+      );
+      final result = ValidateList<int>()
+              .setLabel('목록')
+              .eachItem(
+                (item) =>
+                    item < 0
+                        ? const ValidationFailure(
+                          code: ValidationCode.custom,
+                          message: '음수 불가',
+                        )
+                        : null,
+              )
+              .validate([-1]) as ValidationFailure;
+      expect(result.message, '목록의 0번 항목: 음수 불가');
+    });
+
+    test('failure context contains innerFailure accessible by locale override', () {
+      final inner = const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'inner error',
+      );
+      final result = ValidateList<int>()
+              .eachItem((_) => inner)
+              .validate([1]) as ValidationFailure;
+      expect(result.context['innerFailure'], same(inner));
+    });
   });
 
   // ---------------------------------------------------------------------------

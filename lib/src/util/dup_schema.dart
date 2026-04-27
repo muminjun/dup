@@ -55,12 +55,12 @@ class _WhenRule {
 /// **Shared validator instances:** validator objects passed to the schema are
 /// used directly — they are not cloned. [pick], [omit], and [partial] return
 /// new [DupSchema] instances that share the same underlying validator objects.
-/// This means calling [setLabel] (done internally during validation) on a
+/// This means calling [BaseValidator.setLabel] (done internally during validation) on a
 /// shared instance affects all schemas that reference it. Do not share a single
-/// validator instance across concurrent [validate] / [validateAsync] calls on
+/// validator instance across concurrent [validate] / [BaseValidator.validateAsync] calls on
 /// different schemas.
 ///
-/// **Label mutation at construction:** the constructor calls [setLabel] on each
+/// **Label mutation at construction:** the constructor calls [BaseValidator.setLabel] on each
 /// validator immediately. If the same validator instance is passed to two schemas
 /// with different [labels] overrides, the label will reflect whichever schema was
 /// constructed last. Use a fresh validator instance per schema when different

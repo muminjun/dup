@@ -788,19 +788,19 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // mobile()
+  // koMobile()
   // ---------------------------------------------------------------------------
-  group('mobile()', () {
+  group('koMobile()', () {
     test('passes for valid 010 format', () {
       expect(
-        ValidateString().mobile().validate('010-1234-5678'),
+        ValidateString().koMobile().validate('010-1234-5678'),
         isA<ValidationSuccess>(),
       );
     });
 
     test('passes for valid 011 format', () {
       expect(
-        ValidateString().mobile().validate('011-123-4567'),
+        ValidateString().koMobile().validate('011-123-4567'),
         isA<ValidationSuccess>(),
       );
     });
@@ -808,7 +808,7 @@ void main() {
     test('fails for missing dashes', () {
       final result = ValidateString()
           .setLabel('Phone')
-          .mobile()
+          .koMobile()
           .validate('01012345678');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.mobileInvalid);
@@ -816,33 +816,33 @@ void main() {
 
     test('fails for wrong format', () {
       expect(
-        ValidateString().mobile().validate('010-12-34567'),
+        ValidateString().koMobile().validate('010-12-34567'),
         isA<ValidationFailure>(),
       );
     });
 
     test('passes for null (null-skip)', () {
       expect(
-        ValidateString().mobile().validate(null),
+        ValidateString().koMobile().validate(null),
         isA<ValidationSuccess>(),
       );
     });
 
     test('passes for empty string', () {
-      expect(ValidateString().mobile().validate(''), isA<ValidationSuccess>());
+      expect(ValidateString().koMobile().validate(''), isA<ValidationSuccess>());
     });
 
     test('uses custom regex', () {
       final customRegex = RegExp(r'^\d{10}$');
       expect(
         ValidateString()
-            .mobile(customRegex: customRegex)
+            .koMobile(customRegex: customRegex)
             .validate('0101234567'),
         isA<ValidationSuccess>(),
       );
       expect(
         ValidateString()
-            .mobile(customRegex: customRegex)
+            .koMobile(customRegex: customRegex)
             .validate('010-1234-5678'),
         isA<ValidationFailure>(),
       );
@@ -852,7 +852,7 @@ void main() {
       final result =
           ValidateString()
                   .setLabel('Mobile')
-                  .mobile(messageFactory: (label, _) => '$label 형식 오류')
+                  .koMobile(messageFactory: (label, _) => '$label 형식 오류')
                   .validate('bad')
               as ValidationFailure;
       expect(result.message, 'Mobile 형식 오류');
@@ -865,26 +865,26 @@ void main() {
         }),
       );
       final result =
-          ValidateString().setLabel('전화번호').mobile().validate('bad')
+          ValidateString().setLabel('전화번호').koMobile().validate('bad')
               as ValidationFailure;
       expect(result.message, '전화번호 번호 오류');
     });
   });
 
   // ---------------------------------------------------------------------------
-  // phone()
+  // koPhone()
   // ---------------------------------------------------------------------------
-  group('phone()', () {
+  group('koPhone()', () {
     test('passes for valid Seoul landline', () {
       expect(
-        ValidateString().phone().validate('02-1234-5678'),
+        ValidateString().koPhone().validate('02-1234-5678'),
         isA<ValidationSuccess>(),
       );
     });
 
     test('passes for valid 3-digit area code', () {
       expect(
-        ValidateString().phone().validate('031-123-4567'),
+        ValidateString().koPhone().validate('031-123-4567'),
         isA<ValidationSuccess>(),
       );
     });
@@ -892,7 +892,7 @@ void main() {
     test('fails for invalid format', () {
       final result = ValidateString()
           .setLabel('Phone')
-          .phone()
+          .koPhone()
           .validate('02-12-5678');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.phoneInvalid);
@@ -900,23 +900,23 @@ void main() {
 
     test('fails for mobile number format', () {
       expect(
-        ValidateString().phone().validate('010-1234-5678'),
+        ValidateString().koPhone().validate('010-1234-5678'),
         isA<ValidationFailure>(),
       );
     });
 
     test('passes for null (null-skip)', () {
-      expect(ValidateString().phone().validate(null), isA<ValidationSuccess>());
+      expect(ValidateString().koPhone().validate(null), isA<ValidationSuccess>());
     });
 
     test('passes for empty string', () {
-      expect(ValidateString().phone().validate(''), isA<ValidationSuccess>());
+      expect(ValidateString().koPhone().validate(''), isA<ValidationSuccess>());
     });
 
     test('uses custom regex', () {
       final customRegex = RegExp(r'^\d{3}-\d{4}$');
       expect(
-        ValidateString().phone(customRegex: customRegex).validate('010-1234'),
+        ValidateString().koPhone(customRegex: customRegex).validate('010-1234'),
         isA<ValidationSuccess>(),
       );
     });
@@ -925,7 +925,7 @@ void main() {
       final result =
           ValidateString()
                   .setLabel('Phone')
-                  .phone(messageFactory: (label, _) => '$label 유선전화 오류')
+                  .koPhone(messageFactory: (label, _) => '$label 유선전화 오류')
                   .validate('bad')
               as ValidationFailure;
       expect(result.message, 'Phone 유선전화 오류');
@@ -938,7 +938,7 @@ void main() {
         }),
       );
       final result =
-          ValidateString().setLabel('유선').phone().validate('bad')
+          ValidateString().setLabel('유선').koPhone().validate('bad')
               as ValidationFailure;
       expect(result.message, '유선 유선 번호 오류');
     });
@@ -1319,35 +1319,35 @@ void main() {
   group('real user mobile input patterns', () {
     test('010-1234-5678 — valid format', () {
       expect(
-        ValidateString().mobile().validate('010-1234-5678'),
+        ValidateString().koMobile().validate('010-1234-5678'),
         isA<ValidationSuccess>(),
       );
     });
 
     test('space-separated (010 1234 5678) — fails', () {
       expect(
-        ValidateString().mobile().validate('010 1234 5678'),
+        ValidateString().koMobile().validate('010 1234 5678'),
         isA<ValidationFailure>(),
       );
     });
 
     test('no hyphens (01012345678) — fails', () {
       expect(
-        ValidateString().mobile().validate('01012345678'),
+        ValidateString().koMobile().validate('01012345678'),
         isA<ValidationFailure>(),
       );
     });
 
     test('extra digit (010-1234-56789) — fails', () {
       expect(
-        ValidateString().mobile().validate('010-1234-56789'),
+        ValidateString().koMobile().validate('010-1234-56789'),
         isA<ValidationFailure>(),
       );
     });
 
     test('short middle segment (010-12-5678) — fails', () {
       expect(
-        ValidateString().mobile().validate('010-12-5678'),
+        ValidateString().koMobile().validate('010-12-5678'),
         isA<ValidationFailure>(),
       );
     });
@@ -1356,7 +1356,7 @@ void main() {
       'international format (+82-10-1234-5678) — fails (not in default regex)',
       () {
         expect(
-          ValidateString().mobile().validate('+82-10-1234-5678'),
+          ValidateString().koMobile().validate('+82-10-1234-5678'),
           isA<ValidationFailure>(),
         );
       },
@@ -1364,25 +1364,25 @@ void main() {
 
     test('parenthesis format (010)1234-5678 — fails', () {
       expect(
-        ValidateString().mobile().validate('010)1234-5678'),
+        ValidateString().koMobile().validate('010)1234-5678'),
         isA<ValidationFailure>(),
       );
     });
 
     test('legacy 011 number (011-123-4567) — valid', () {
       expect(
-        ValidateString().mobile().validate('011-123-4567'),
+        ValidateString().koMobile().validate('011-123-4567'),
         isA<ValidationSuccess>(),
       );
     });
 
     test('empty string — passes (not required)', () {
-      expect(ValidateString().mobile().validate(''), isA<ValidationSuccess>());
+      expect(ValidateString().koMobile().validate(''), isA<ValidationSuccess>());
     });
 
     test('null — passes (not required)', () {
       expect(
-        ValidateString().mobile().validate(null),
+        ValidateString().koMobile().validate(null),
         isA<ValidationSuccess>(),
       );
     });
@@ -1578,28 +1578,28 @@ void main() {
   group('real user landline input patterns', () {
     test('02-1234-5678 (Seoul) — passes', () {
       expect(
-        ValidateString().phone().validate('02-1234-5678'),
+        ValidateString().koPhone().validate('02-1234-5678'),
         isA<ValidationSuccess>(),
       );
     });
 
     test('031-123-4567 (Gyeonggi) — passes', () {
       expect(
-        ValidateString().phone().validate('031-123-4567'),
+        ValidateString().koPhone().validate('031-123-4567'),
         isA<ValidationSuccess>(),
       );
     });
 
     test('mobile 010-1234-5678 as landline — fails', () {
       expect(
-        ValidateString().phone().validate('010-1234-5678'),
+        ValidateString().koPhone().validate('010-1234-5678'),
         isA<ValidationFailure>(),
       );
     });
 
     test('wrong digit count (02-12-5678) — fails', () {
       expect(
-        ValidateString().phone().validate('02-12-5678'),
+        ValidateString().koPhone().validate('02-12-5678'),
         isA<ValidationFailure>(),
       );
     });
@@ -1842,9 +1842,46 @@ void main() {
         isA<ValidationSuccess>(),
       );
     });
+
+    test('passes valid Base64 with double padding', () {
+      expect(
+        ValidateString().base64().validate('Zm9v'),
+        isA<ValidationSuccess>(),
+      );
+    });
+
+    test('passes empty string (null-skip equivalent)', () {
+      expect(ValidateString().base64().validate(''), isA<ValidationSuccess>());
+    });
+
+    test('passes for null (null-skip)', () {
+      expect(ValidateString().base64().validate(null), isA<ValidationSuccess>());
+    });
+
     test('fails invalid Base64', () {
       expect(
         ValidateString().base64().validate('not base64!!!'),
+        isA<ValidationFailure>(),
+      );
+    });
+
+    test('fails Base64 with invalid character (URL-safe - not supported by default)', () {
+      expect(
+        ValidateString().base64().validate('SGVs-G8='),
+        isA<ValidationFailure>(),
+      );
+    });
+
+    test('fails Base64 with incorrect padding length', () {
+      expect(
+        ValidateString().base64().validate('SGVsbG'),
+        isA<ValidationFailure>(),
+      );
+    });
+
+    test('fails Base64 with valid chars but wrong padding position', () {
+      expect(
+        ValidateString().base64().validate('=SGVsbG8'),
         isA<ValidationFailure>(),
       );
     });

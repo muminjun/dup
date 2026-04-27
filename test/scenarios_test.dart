@@ -36,7 +36,7 @@ void main() {
         .required()
         .password(minLength: 8);
     final mobileValidator =
-        ValidateString().setLabel('휴대폰').required().mobile();
+        ValidateString().setLabel('휴대폰').required().koMobile();
     final agreeValidator = ValidateBool().setLabel('이용약관').required().isTrue();
 
     group('valid sign-up cases', () {
@@ -268,7 +268,7 @@ void main() {
     final guestCountValidator =
         ValidateNumber().setLabel('인원').required().between(1, 20).isInteger();
     final contactValidator =
-        ValidateString().setLabel('연락처').required().mobile();
+        ValidateString().setLabel('연락처').required().koMobile();
     final requestValidator = ValidateString().setLabel('요청사항').max(200);
 
     group('valid reservation cases', () {
@@ -346,7 +346,7 @@ void main() {
     final biznoValidator =
         ValidateString().setLabel('사업자등록번호').required().bizno();
     final phoneValidator =
-        ValidateString().setLabel('대표 전화').required().phone();
+        ValidateString().setLabel('대표 전화').required().koPhone();
     final foundedDateValidator =
         ValidateDateTime().setLabel('설립일').required().isInPast();
 
@@ -663,7 +663,7 @@ void main() {
       'invalid mobile format — Korean mobileInvalid message with example',
       () {
         final result =
-            ValidateString().setLabel('휴대폰').mobile().validate('01012345678')
+            ValidateString().setLabel('휴대폰').koMobile().validate('01012345678')
                 as ValidationFailure;
         expect(result.message, contains('010-1234-5678'));
       },

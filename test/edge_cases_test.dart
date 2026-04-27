@@ -122,10 +122,10 @@ void main() {
 
     test('mobile, url, and uuid enforce stricter formats', () {
       expectSuccess(
-        ValidateString().setLabel('P').mobile().validate('010-1234-5678'),
+        ValidateString().setLabel('P').koMobile().validate('010-1234-5678'),
       );
       expectFailure(
-        ValidateString().setLabel('P').mobile().validate('01012345678'),
+        ValidateString().setLabel('P').koMobile().validate('01012345678'),
       );
 
       expectSuccess(
