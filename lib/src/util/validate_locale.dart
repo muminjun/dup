@@ -41,6 +41,10 @@ class ValidatorLocale {
 
   /// The built-in English defaults as a locale instance.
   /// Use as a base for partial overrides via [merge].
+  ///
+  /// The strings here mirror the hardcoded fallback defaults in each validator
+  /// body (the third priority level). If a default message changes in a
+  /// validator, this map must be updated to stay in sync.
   static final ValidatorLocale base = ValidatorLocale({
     ValidationCode.custom: (p) => '${p['name']} is invalid.',
     ValidationCode.required: (p) => '${p['name']} is required.',

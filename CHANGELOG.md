@@ -49,7 +49,8 @@ See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
   directly usable as `TextFormField.validator`.
 - `ValidateNumber` additions: `isPositive()`, `isNegative()`, `isNonNegative()`,
   `isNonPositive()`, `isEven()`, `isOdd()`, `isMultipleOf()`, `between()`,
-  `isPrecision(digits)`, `isPort()`.
+  `isPrecision(digits)`, `isPort()`. Note: the corresponding `ValidationCode`
+  enum value is `ValidationCode.port` (noun form), not `ValidationCode.isPort`.
 - `ValidateList` additions: `hasLength()`, `all()`, `any()`, `none()`,
   `hasNoDuplicates()`, `eachItem()`, `containsAll()`.
 - `ValidateString` additions: `startsWith()`, `endsWith()`, `contains()`,

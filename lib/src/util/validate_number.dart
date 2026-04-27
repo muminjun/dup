@@ -178,9 +178,9 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   /// - non-numeric string → returns [parseErrorMessage] or a default parse error
   /// - valid number string → runs the full numeric validation chain
   ///
-  // Return type is `dynamic` rather than `String?` because Dart does not allow
+  // The parameter type is `dynamic` (not `num?`) because Dart does not allow
   // overriding `String? Function(num?)` with `String? Function(String?)` —
-  // function types are contravariant in parameters.
+  // function parameter types are contravariant.
   @override
   String? Function(dynamic) toValidator({String? parseErrorMessage}) {
     return (dynamic input) {

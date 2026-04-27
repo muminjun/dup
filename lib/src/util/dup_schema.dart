@@ -240,7 +240,8 @@ class DupSchema {
     return DupSchema(_schema, labels: _labels)
       .._isPartial = true
       .._whenRules.addAll(_whenRules)
-      .._crossValidator = _crossValidator;
+      .._crossValidator = _crossValidator
+      .._schemaKeys = _schemaKeys;
   }
 
   /// Validates all fields asynchronously and returns a [FormValidationResult].

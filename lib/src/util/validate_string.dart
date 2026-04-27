@@ -231,6 +231,9 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   }
 
   /// Phase 1: fails when the value is not a valid HTTP/HTTPS URL.
+  ///
+  /// Uses a permissive regex check (`^https?://...`), not full URI parsing.
+  /// Unusual but syntactically valid URLs (e.g. `http://a`) will pass.
   ValidateString url({MessageFactory? messageFactory}) {
     final regex = RegExp(r'^https?://[^\s/$.?#][^\s]*$');
     return addPhaseValidator(1, (value) {

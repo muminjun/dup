@@ -123,8 +123,12 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
     return null;
   }
 
-  /// Phase 0: fails when value is null or an empty string.
+  /// Phase 0: fails when value is `null` or an empty `String`.
   /// Without this, null values silently pass all other phases.
+  ///
+  /// Only `null` and empty `String` are treated as "missing" — non-null empty
+  /// collections (e.g. `[]`, `{}`) pass this check. Combine with `isNotEmpty()`
+  /// / `minLength()` when an empty collection should also be rejected.
   V required({MessageFactory? messageFactory}) {
     return addPhaseValidator(0, (value) {
       if (value == null || (value is String && value.isEmpty)) {
