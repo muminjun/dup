@@ -53,6 +53,92 @@ void main() {
     });
   });
 
+  group('DupSchema.validateParallel()', () {
+    late DupSchema schema;
+
+    setUp(() {
+      schema = DupSchema({
+        'email': ValidateString().email().required(),
+        'age': ValidateNumber().min(18).required(),
+      });
+    });
+
+    test('returns FormValidationSuccess when all fields pass', () async {
+      final result = await schema.validateParallel({
+        'email': 'a@b.com',
+        'age': 20,
+      });
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('collects errors from all failing fields', () async {
+      final result = await schema.validateParallel({
+        'email': 'bad',
+        'age': 10,
+      });
+      expect(result, isA<FormValidationFailure>());
+      final failure = result as FormValidationFailure;
+      expect(failure.hasError('email'), isTrue);
+      expect(failure.hasError('age'), isTrue);
+    });
+
+    test('missing field treated as null', () async {
+      final result = await schema.validateParallel({});
+      expect((result as FormValidationFailure).hasError('email'), isTrue);
+    });
+
+    test('runs cross-validator on success', () async {
+      var crossCalled = false;
+      final s = DupSchema({
+        'a': ValidateString().required(),
+        'b': ValidateString().required(),
+      }).crossValidate((data) {
+        crossCalled = true;
+        return null;
+      });
+      await s.validateParallel({'a': 'x', 'b': 'y'});
+      expect(crossCalled, isTrue);
+    });
+
+    test('skips cross-validator when a field fails', () async {
+      var crossCalled = false;
+      final s = DupSchema({
+        'a': ValidateString().required(),
+      }).crossValidate((data) {
+        crossCalled = true;
+        return null;
+      });
+      await s.validateParallel({'a': null});
+      expect(crossCalled, isFalse);
+    });
+
+    test('respects skipPresence flag', () async {
+      final result = await schema.validateParallel(
+        {'email': null, 'age': null},
+        skipPresence: true,
+      );
+      expect(result, isA<FormValidationSuccess>());
+    });
+
+    test('runs async validators concurrently', () async {
+      final log = <String>[];
+      final s = DupSchema({
+        'a': ValidateString().addAsyncValidator((v) async {
+          await Future.delayed(Duration(milliseconds: 20));
+          log.add('a');
+          return null;
+        }),
+        'b': ValidateString().addAsyncValidator((v) async {
+          log.add('b');
+          return null;
+        }),
+      });
+      await s.validateParallel({'a': 'x', 'b': 'y'});
+      // Both validators ran (order may vary with concurrent execution).
+      expect(log, containsAll(['a', 'b']));
+    });
+  });
+
   group('DupSchema.validateSync()', () {
     test('returns success for valid data', () {
       final schema = DupSchema({'name': ValidateString().required()});

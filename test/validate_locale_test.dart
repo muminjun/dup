@@ -55,6 +55,20 @@ void main() {
       });
       expect(msg, contains('Email'));
     });
+
+    test('base covers every ValidationCode value', () {
+      final missing =
+          ValidationCode.values
+              .where((c) => !ValidatorLocale.base.messages.containsKey(c))
+              .toList();
+      expect(
+        missing,
+        isEmpty,
+        reason:
+            'ValidatorLocale.base is missing entries for: '
+            '${missing.map((c) => c.name).join(', ')}',
+      );
+    });
   });
 
   group('ValidatorLocale.merge()', () {

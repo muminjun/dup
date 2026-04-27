@@ -42,7 +42,10 @@ class _WhenRule {
 /// )
 /// ```
 ///
-/// **Cross-field validation** runs only when all individual fields pass:
+/// **Cross-field validation** runs only when all individual fields pass.
+/// The cross-validator receives a map containing only the schema's own fields.
+/// When a schema is derived via [pick] or [omit], the cross-validator is
+/// carried over and will only see the fields that remain in the derived schema:
 /// ```dart
 /// schema.crossValidate((data) {
 ///   if (data['password'] != data['passwordConfirm']) {
@@ -74,10 +77,15 @@ class DupSchema {
   final Map<String, String> _labels;
 
   /// Optional cross-field validator, set via [crossValidate].
-  /// Receives the full data map; returns field-level errors or null if everything passes.
+  /// Receives a data map filtered to only the fields present in this schema.
   /// Not called when any individual field has already failed.
   Map<String, ValidationFailure>? Function(Map<String, dynamic>)?
   _crossValidator;
+
+  /// Keys present in this schema. Used to filter the data map before passing
+  /// it to [_crossValidator], so derived schemas (pick/omit) never expose
+  /// removed fields to the cross-validator.
+  Set<String>? _schemaKeys;
 
   bool _isPartial = false;
   final List<_WhenRule> _whenRules = [];
@@ -105,7 +113,8 @@ class DupSchema {
 
   /// Registers a cross-field validation function and returns this schema for chaining.
   ///
-  /// [fn] receives the raw data map and returns a field-error map or null.
+  /// [fn] receives a data map containing only the fields present in this
+  /// schema (not the full raw input). It returns a field-error map or null.
   /// It is only called when all individual fields pass their own validators.
   DupSchema crossValidate(
     Map<String, ValidationFailure>? Function(Map<String, dynamic>) fn,
@@ -145,6 +154,14 @@ class DupSchema {
     }
   }
 
+  /// Returns a view of [data] containing only the keys present in this schema.
+  /// Passed to [_crossValidator] so derived schemas (pick/omit) never expose
+  /// removed fields to the cross-validator.
+  Map<String, dynamic> _filterData(Map<String, dynamic> data) {
+    final keys = _schemaKeys ?? _schema.keys.toSet();
+    return {for (final k in keys) k: data[k]};
+  }
+
   Map<String, BaseValidator> _buildEffective(Map<String, dynamic> data) {
     final effective = Map<String, BaseValidator>.from(_schema);
     for (final rule in _whenRules) {
@@ -181,18 +198,20 @@ class DupSchema {
             })
             .whereType<_WhenRule>()
             .toList();
+
     return DupSchema(kept, labels: derivedLabels)
       .._whenRules.addAll(keptRules)
       .._isPartial = _isPartial
-      .._crossValidator = _crossValidator;
+      .._crossValidator = _crossValidator
+      .._schemaKeys = kept.keys.toSet();
   }
 
   /// Returns a new [DupSchema] containing only [fields]. Unknown names ignored.
   ///
   /// The [crossValidate] function is carried over to the derived schema.
-  /// If your cross-validator accesses fields that were not included in [fields],
-  /// those values will be `null` at validation time — guard against this in your
-  /// cross-validator if necessary.
+  /// The cross-validator receives a data map filtered to the schema's own
+  /// fields — fields not included in [fields] will appear as `null` even if
+  /// the caller supplies them in the data map.
   DupSchema pick(List<String> fields) {
     final kept = Map.fromEntries(
       _schema.entries.where((e) => fields.contains(e.key)),
@@ -203,9 +222,9 @@ class DupSchema {
   /// Returns a new [DupSchema] with [fields] removed. Unknown names ignored.
   ///
   /// The [crossValidate] function is carried over to the derived schema.
-  /// If your cross-validator accesses fields that were removed via [fields],
-  /// those values will be `null` at validation time — guard against this in your
-  /// cross-validator if necessary.
+  /// The cross-validator receives a data map filtered to the schema's own
+  /// fields — removed fields will appear as `null` even if the caller
+  /// supplies them in the data map.
   DupSchema omit(List<String> fields) {
     final kept = Map.fromEntries(
       _schema.entries.where((e) => !fields.contains(e.key)),
@@ -226,10 +245,14 @@ class DupSchema {
 
   /// Validates all fields asynchronously and returns a [FormValidationResult].
   ///
-  /// Each field's [BaseValidator.validateAsync] is awaited in schema-key order.
+  /// Fields are validated **sequentially** in schema-key insertion order.
   /// All fields are validated before returning; [FormValidationFailure] contains
   /// errors for every field that failed. [crossValidate] is only called when
   /// all individual fields pass.
+  ///
+  /// When the schema contains multiple I/O-bound async validators (e.g.
+  /// uniqueness checks), consider [validateParallel] to run all fields
+  /// concurrently instead.
   Future<FormValidationResult> validate(
     Map<String, dynamic> data, {
     bool skipPresence = false,
@@ -255,7 +278,59 @@ class DupSchema {
     }
     if (errors.isNotEmpty) return FormValidationFailure(errors);
     if (_crossValidator != null) {
-      final crossErrors = _crossValidator!(data);
+      final crossErrors = _crossValidator!(_filterData(data));
+      if (crossErrors != null && crossErrors.isNotEmpty) {
+        return FormValidationFailure(crossErrors);
+      }
+    }
+    return const FormValidationSuccess();
+  }
+
+  /// Validates all fields **concurrently** and returns a [FormValidationResult].
+  ///
+  /// All field validators are launched at the same time via [Future.wait],
+  /// reducing total latency when multiple fields have I/O-bound async
+  /// validators (e.g. database uniqueness checks). Unlike [validate], field
+  /// execution order is not guaranteed.
+  ///
+  /// [crossValidate] is only called when all individual fields pass.
+  Future<FormValidationResult> validateParallel(
+    Map<String, dynamic> data, {
+    bool skipPresence = false,
+  }) async {
+    final effectiveSkip = _isPartial || skipPresence;
+    final effective = _buildEffective(data);
+    final fields = effective.keys.toList();
+
+    // Run every field validator concurrently. Each future resolves to a
+    // Map<String, ValidationFailure> (possibly empty) for that field.
+    final perFieldErrors = await Future.wait(
+      fields.map((field) async {
+        final partial = <String, ValidationFailure>{};
+        final validator = effective[field]!;
+        if (validator is NestedValidator) {
+          final result = await (validator as NestedValidator).validateNested(
+            data[field],
+            skipPresence: effectiveSkip,
+          );
+          _applyNestedResult(field, result, partial);
+        } else {
+          final result = await validator.validateAsync(
+            data[field],
+            skipPresence: effectiveSkip,
+          );
+          if (result is ValidationFailure) partial[field] = result;
+        }
+        return partial;
+      }),
+    );
+
+    final errors = <String, ValidationFailure>{
+      for (final m in perFieldErrors) ...m,
+    };
+    if (errors.isNotEmpty) return FormValidationFailure(errors);
+    if (_crossValidator != null) {
+      final crossErrors = _crossValidator!(_filterData(data));
       if (crossErrors != null && crossErrors.isNotEmpty) {
         return FormValidationFailure(crossErrors);
       }
@@ -298,7 +373,7 @@ class DupSchema {
     }
     if (errors.isNotEmpty) return FormValidationFailure(errors);
     if (_crossValidator != null) {
-      final crossErrors = _crossValidator!(data);
+      final crossErrors = _crossValidator!(_filterData(data));
       if (crossErrors != null && crossErrors.isNotEmpty) {
         return FormValidationFailure(crossErrors);
       }

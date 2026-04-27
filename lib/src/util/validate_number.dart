@@ -247,7 +247,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   ValidateNumber isPort({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
-      if (value != value.truncate() || value < 0 || value > 65535) {
+      if (value % 1 != 0 || value < 0 || value > 65535) {
         return getFailure(
           messageFactory,
           ValidationCode.port,

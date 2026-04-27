@@ -249,6 +249,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
               'index': i,
               'innerFailure': failure,
               'innerMessage': failure.message,
+              'error': failure.message,
             },
           );
         }

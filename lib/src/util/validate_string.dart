@@ -86,6 +86,10 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   /// Phase 1: fails when the trimmed length is less than [minLength].
   /// Default minimum length is 4. Null, empty string, and whitespace-only
   /// values pass (null-skip). Add [notBlank] to also reject whitespace-only.
+  ///
+  /// This validator only enforces minimum length. It does not check complexity
+  /// (uppercase, digits, special characters). Use [addValidator] or [satisfy]
+  /// to add complexity rules on top of this.
   ValidateString password({int minLength = 4, MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null || value.trim().isEmpty) return null;
@@ -337,12 +341,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   }
 
   bool _isValidIpv6(String s) {
-    try {
-      final uri = Uri.tryParse('http://[$s]');
-      return uri != null && uri.host == s;
-    } catch (_) {
-      return false;
-    }
+    final uri = Uri.tryParse('http://[$s]');
+    return uri != null && uri.host == s;
   }
 
   /// Phase 1: fails when value is not a valid hex color (#RGB or #RRGGBB).
