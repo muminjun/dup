@@ -28,9 +28,13 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.isEmpty) {
-        return getFailure(messageFactory, ValidationCode.listNotEmpty, {
-          'name': label,
-        }, '$label cannot be empty.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.listNotEmpty,
+            {
+              'name': label,
+            },
+            '$label cannot be empty.');
       }
       return null;
     });
@@ -41,9 +45,13 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.isNotEmpty) {
-        return getFailure(messageFactory, ValidationCode.listEmpty, {
-          'name': label,
-        }, '$label must be empty.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.listEmpty,
+            {
+              'name': label,
+            },
+            '$label must be empty.');
       }
       return null;
     });
@@ -124,10 +132,14 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (!value.contains(item)) {
-        return getFailure(messageFactory, ValidationCode.contains, {
-          'name': label,
-          'item': item,
-        }, '$label must contain $item.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.contains,
+            {
+              'name': label,
+              'item': item,
+            },
+            '$label must contain $item.');
       }
       return null;
     });
@@ -236,8 +248,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
         final failure = itemValidator(value[i]);
         if (failure != null) {
           final ctx = {'name': label, 'index': i, 'error': failure.message};
-          final msg =
-              messageFactory?.call(label, ctx) ??
+          final msg = messageFactory?.call(label, ctx) ??
               ValidatorLocale.current?.messages[ValidationCode.eachItem]
                   ?.call(ctx) ??
               'Item at index $i in $label: ${failure.message}';

@@ -464,6 +464,26 @@ switch (result) {
 
 ---
 
+## Migrating from v1
+
+See [MIGRATING.md](MIGRATING.md) for the full before/after guide.
+
+### Breaking changes at a glance
+
+| Area | v1 | v2 |
+|---|---|---|
+| Schema class | `BaseValidatorSchema` | `DupSchema` |
+| Validation call | `useUiForm.validate(schema, data)` | `schema.validate(data)` |
+| Validation result | throws `FormValidationException` | returns `FormValidationResult` |
+| Custom validator return | `String?` | `ValidationFailure?` |
+| Locale constructor | named params + plain string keys | `Map<ValidationCode, fn>` |
+| `ValidateNumber.moreThan(n)` | removed | use `min(n)` |
+| `ValidateNumber.lessThan(n)` | removed | use `max(n)` |
+| `ValidateString.mobile()` | renamed | `koMobile()` |
+| `ValidateString.phone()` | renamed | `koPhone()` |
+
+---
+
 ## License
 
 MIT

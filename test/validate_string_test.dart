@@ -46,15 +46,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('이름')
-                  .min(
-                    3,
-                    messageFactory: (label, p) => '$label 최소 ${p['min']}자',
-                  )
-                  .validate('ab')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('이름')
+          .min(
+            3,
+            messageFactory: (label, p) => '$label 최소 ${p['min']}자',
+          )
+          .validate('ab') as ValidationFailure;
       expect(result.message, '이름 최소 3자');
     });
 
@@ -62,16 +60,14 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.stringMin: (p) => '${p['name']} 짧음'}),
       );
-      final result =
-          ValidateString().setLabel('비번').min(8).validate('abc')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('비번').min(8).validate('abc')
+          as ValidationFailure;
       expect(result.message, '비번 짧음');
     });
 
     test('default message contains label and min', () {
-      final result =
-          ValidateString().setLabel('Password').min(8).validate('hi')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('Password').min(8).validate('hi')
+          as ValidationFailure;
       expect(result.message, contains('Password'));
       expect(result.message, contains('8'));
     });
@@ -116,15 +112,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Tag')
-                  .max(
-                    3,
-                    messageFactory: (label, p) => '$label 최대 ${p['max']}자',
-                  )
-                  .validate('toolong')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Tag')
+          .max(
+            3,
+            messageFactory: (label, p) => '$label 최대 ${p['max']}자',
+          )
+          .validate('toolong') as ValidationFailure;
       expect(result.message, 'Tag 최대 3자');
     });
 
@@ -132,9 +126,8 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.stringMax: (p) => '${p['name']} 너무 김'}),
       );
-      final result =
-          ValidateString().setLabel('제목').max(5).validate('toolong')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('제목').max(5).validate('toolong')
+          as ValidationFailure;
       expect(result.message, '제목 너무 김');
     });
   });
@@ -188,15 +181,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Code')
-                  .matches(
-                    RegExp(r'^\d+$'),
-                    messageFactory: (label, _) => '$label 형식 오류',
-                  )
-                  .validate('abc')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Code')
+          .matches(
+            RegExp(r'^\d+$'),
+            messageFactory: (label, _) => '$label 형식 오류',
+          )
+          .validate('abc') as ValidationFailure;
       expect(result.message, 'Code 형식 오류');
     });
 
@@ -204,12 +195,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.matches: (p) => '${p['name']} 패턴 불일치'}),
       );
-      final result =
-          ValidateString()
-                  .setLabel('코드')
-                  .matches(RegExp(r'^\d+$'))
-                  .validate('abc')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('코드')
+          .matches(RegExp(r'^\d+$'))
+          .validate('abc') as ValidationFailure;
       expect(result.message, '코드 패턴 불일치');
     });
   });
@@ -289,12 +278,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Email')
-                  .email(messageFactory: (label, _) => '$label 이메일 오류')
-                  .validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Email')
+          .email(messageFactory: (label, _) => '$label 이메일 오류')
+          .validate('bad') as ValidationFailure;
       expect(result.message, 'Email 이메일 오류');
     });
 
@@ -304,9 +291,8 @@ void main() {
           ValidationCode.emailInvalid: (p) => '${p['name']} 유효하지 않은 이메일',
         }),
       );
-      final result =
-          ValidateString().setLabel('이메일').email().validate('bad')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('이메일').email().validate('bad')
+          as ValidationFailure;
       expect(result.message, '이메일 유효하지 않은 이메일');
     });
   });
@@ -368,16 +354,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('PW')
-                  .password(
-                    minLength: 8,
-                    messageFactory:
-                        (label, p) => '$label 최소 ${p['minLength']}자 필요',
-                  )
-                  .validate('short')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('PW')
+          .password(
+            minLength: 8,
+            messageFactory: (label, p) => '$label 최소 ${p['minLength']}자 필요',
+          )
+          .validate('short') as ValidationFailure;
       expect(result.message, 'PW 최소 8자 필요');
     });
 
@@ -387,9 +370,10 @@ void main() {
           ValidationCode.passwordMin: (p) => '${p['name']} 비밀번호 짧음',
         }),
       );
-      final result =
-          ValidateString().setLabel('비번').password(minLength: 8).validate('hi')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('비번')
+          .password(minLength: 8)
+          .validate('hi') as ValidationFailure;
       expect(result.message, '비번 비밀번호 짧음');
     });
   });
@@ -420,10 +404,8 @@ void main() {
     });
 
     test('fails when text contains emoji', () {
-      final result = ValidateString()
-          .setLabel('Name')
-          .emoji()
-          .validate('hello😀');
+      final result =
+          ValidateString().setLabel('Name').emoji().validate('hello😀');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.emoji);
     });
@@ -448,12 +430,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Bio')
-                  .emoji(messageFactory: (label, _) => '$label 이모지 불가')
-                  .validate('hi😀')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Bio')
+          .emoji(messageFactory: (label, _) => '$label 이모지 불가')
+          .validate('hi😀') as ValidationFailure;
       expect(result.message, 'Bio 이모지 불가');
     });
 
@@ -463,9 +443,8 @@ void main() {
           ValidationCode.emoji: (p) => '${p['name']} 이모지 포함 불가',
         }),
       );
-      final result =
-          ValidateString().setLabel('닉네임').emoji().validate('hi😊')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('닉네임').emoji().validate('hi😊')
+          as ValidationFailure;
       expect(result.message, '닉네임 이모지 포함 불가');
     });
   });
@@ -489,10 +468,8 @@ void main() {
     });
 
     test('fails for whitespace-only string (spaces)', () {
-      final result = ValidateString()
-          .setLabel('Name')
-          .notBlank()
-          .validate('   ');
+      final result =
+          ValidateString().setLabel('Name').notBlank().validate('   ');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.notBlank);
     });
@@ -526,12 +503,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Field')
-                  .notBlank(messageFactory: (label, _) => '$label 공백 불가')
-                  .validate('   ')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Field')
+          .notBlank(messageFactory: (label, _) => '$label 공백 불가')
+          .validate('   ') as ValidationFailure;
       expect(result.message, 'Field 공백 불가');
     });
 
@@ -541,9 +516,8 @@ void main() {
           ValidationCode.notBlank: (p) => '${p['name']} 빈 값 불가',
         }),
       );
-      final result =
-          ValidateString().setLabel('내용').notBlank().validate('  ')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('내용').notBlank().validate('  ')
+          as ValidationFailure;
       expect(result.message, '내용 빈 값 불가');
     });
   });
@@ -564,10 +538,8 @@ void main() {
     });
 
     test('fails when string contains digits', () {
-      final result = ValidateString()
-          .setLabel('Name')
-          .alpha()
-          .validate('Hello1');
+      final result =
+          ValidateString().setLabel('Name').alpha().validate('Hello1');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.alpha);
     });
@@ -602,12 +574,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Name')
-                  .alpha(messageFactory: (label, _) => '$label 알파벳만 가능')
-                  .validate('abc123')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Name')
+          .alpha(messageFactory: (label, _) => '$label 알파벳만 가능')
+          .validate('abc123') as ValidationFailure;
       expect(result.message, 'Name 알파벳만 가능');
     });
 
@@ -615,9 +585,8 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.alpha: (p) => '${p['name']} 문자만 입력'}),
       );
-      final result =
-          ValidateString().setLabel('이름').alpha().validate('abc1')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('이름').alpha().validate('abc1')
+          as ValidationFailure;
       expect(result.message, '이름 문자만 입력');
     });
   });
@@ -692,12 +661,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('ID')
-                  .alphanumeric(messageFactory: (label, _) => '$label 영숫자만 가능')
-                  .validate('hello!')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('ID')
+          .alphanumeric(messageFactory: (label, _) => '$label 영숫자만 가능')
+          .validate('hello!') as ValidationFailure;
       expect(result.message, 'ID 영숫자만 가능');
     });
 
@@ -707,9 +674,10 @@ void main() {
           ValidationCode.alphanumeric: (p) => '${p['name']} 영숫자 오류',
         }),
       );
-      final result =
-          ValidateString().setLabel('아이디').alphanumeric().validate('hello!')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('아이디')
+          .alphanumeric()
+          .validate('hello!') as ValidationFailure;
       expect(result.message, '아이디 영숫자 오류');
     });
   });
@@ -726,10 +694,8 @@ void main() {
     });
 
     test('fails for string with letters', () {
-      final result = ValidateString()
-          .setLabel('Zip')
-          .numeric()
-          .validate('123ab');
+      final result =
+          ValidateString().setLabel('Zip').numeric().validate('123ab');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.numeric);
     });
@@ -767,12 +733,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Zip')
-                  .numeric(messageFactory: (label, _) => '$label 숫자만 가능')
-                  .validate('abc')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Zip')
+          .numeric(messageFactory: (label, _) => '$label 숫자만 가능')
+          .validate('abc') as ValidationFailure;
       expect(result.message, 'Zip 숫자만 가능');
     });
 
@@ -780,9 +744,8 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.numeric: (p) => '${p['name']} 숫자 오류'}),
       );
-      final result =
-          ValidateString().setLabel('우편번호').numeric().validate('abc')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('우편번호').numeric().validate('abc')
+          as ValidationFailure;
       expect(result.message, '우편번호 숫자 오류');
     });
   });
@@ -806,10 +769,8 @@ void main() {
     });
 
     test('fails for missing dashes', () {
-      final result = ValidateString()
-          .setLabel('Phone')
-          .koMobile()
-          .validate('01012345678');
+      final result =
+          ValidateString().setLabel('Phone').koMobile().validate('01012345678');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.mobileInvalid);
     });
@@ -829,7 +790,8 @@ void main() {
     });
 
     test('passes for empty string', () {
-      expect(ValidateString().koMobile().validate(''), isA<ValidationSuccess>());
+      expect(
+          ValidateString().koMobile().validate(''), isA<ValidationSuccess>());
     });
 
     test('uses custom regex', () {
@@ -849,12 +811,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Mobile')
-                  .koMobile(messageFactory: (label, _) => '$label 형식 오류')
-                  .validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Mobile')
+          .koMobile(messageFactory: (label, _) => '$label 형식 오류')
+          .validate('bad') as ValidationFailure;
       expect(result.message, 'Mobile 형식 오류');
     });
 
@@ -864,9 +824,10 @@ void main() {
           ValidationCode.mobileInvalid: (p) => '${p['name']} 번호 오류',
         }),
       );
-      final result =
-          ValidateString().setLabel('전화번호').koMobile().validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('전화번호')
+          .koMobile()
+          .validate('bad') as ValidationFailure;
       expect(result.message, '전화번호 번호 오류');
     });
   });
@@ -890,10 +851,8 @@ void main() {
     });
 
     test('fails for invalid format', () {
-      final result = ValidateString()
-          .setLabel('Phone')
-          .koPhone()
-          .validate('02-12-5678');
+      final result =
+          ValidateString().setLabel('Phone').koPhone().validate('02-12-5678');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.phoneInvalid);
     });
@@ -906,7 +865,8 @@ void main() {
     });
 
     test('passes for null (null-skip)', () {
-      expect(ValidateString().koPhone().validate(null), isA<ValidationSuccess>());
+      expect(
+          ValidateString().koPhone().validate(null), isA<ValidationSuccess>());
     });
 
     test('passes for empty string', () {
@@ -922,12 +882,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Phone')
-                  .koPhone(messageFactory: (label, _) => '$label 유선전화 오류')
-                  .validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Phone')
+          .koPhone(messageFactory: (label, _) => '$label 유선전화 오류')
+          .validate('bad') as ValidationFailure;
       expect(result.message, 'Phone 유선전화 오류');
     });
 
@@ -937,9 +895,8 @@ void main() {
           ValidationCode.phoneInvalid: (p) => '${p['name']} 유선 번호 오류',
         }),
       );
-      final result =
-          ValidateString().setLabel('유선').koPhone().validate('bad')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('유선').koPhone().validate('bad')
+          as ValidationFailure;
       expect(result.message, '유선 유선 번호 오류');
     });
   });
@@ -956,10 +913,8 @@ void main() {
     });
 
     test('fails for invalid format', () {
-      final result = ValidateString()
-          .setLabel('Bizno')
-          .bizno()
-          .validate('1234567890');
+      final result =
+          ValidateString().setLabel('Bizno').bizno().validate('1234567890');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.biznoInvalid);
     });
@@ -988,12 +943,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('Bizno')
-                  .bizno(messageFactory: (label, _) => '$label 사업자번호 오류')
-                  .validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('Bizno')
+          .bizno(messageFactory: (label, _) => '$label 사업자번호 오류')
+          .validate('bad') as ValidationFailure;
       expect(result.message, 'Bizno 사업자번호 오류');
     });
 
@@ -1003,9 +956,8 @@ void main() {
           ValidationCode.biznoInvalid: (p) => '${p['name']} 사업자 오류',
         }),
       );
-      final result =
-          ValidateString().setLabel('사업자번호').bizno().validate('bad')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('사업자번호').bizno().validate('bad')
+          as ValidationFailure;
       expect(result.message, '사업자번호 사업자 오류');
     });
   });
@@ -1050,10 +1002,8 @@ void main() {
     });
 
     test('fails for ftp protocol', () {
-      final result = ValidateString()
-          .setLabel('URL')
-          .url()
-          .validate('ftp://example.com');
+      final result =
+          ValidateString().setLabel('URL').url().validate('ftp://example.com');
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.url);
     });
@@ -1081,12 +1031,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('URL')
-                  .url(messageFactory: (label, _) => '$label URL 오류')
-                  .validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('URL')
+          .url(messageFactory: (label, _) => '$label URL 오류')
+          .validate('bad') as ValidationFailure;
       expect(result.message, 'URL URL 오류');
     });
 
@@ -1094,9 +1042,8 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.url: (p) => '${p['name']} 주소 오류'}),
       );
-      final result =
-          ValidateString().setLabel('웹주소').url().validate('bad')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('웹주소').url().validate('bad')
+          as ValidationFailure;
       expect(result.message, '웹주소 주소 오류');
     });
   });
@@ -1108,8 +1055,8 @@ void main() {
     test('passes for valid UUID v4', () {
       expect(
         ValidateString().uuid().validate(
-          '550e8400-e29b-41d4-a716-446655440000',
-        ),
+              '550e8400-e29b-41d4-a716-446655440000',
+            ),
         isA<ValidationSuccess>(),
       );
     });
@@ -1117,8 +1064,8 @@ void main() {
     test('passes for uppercase UUID v4 (case-insensitive)', () {
       expect(
         ValidateString().uuid().validate(
-          '550E8400-E29B-41D4-A716-446655440000',
-        ),
+              '550E8400-E29B-41D4-A716-446655440000',
+            ),
         isA<ValidationSuccess>(),
       );
     });
@@ -1126,8 +1073,8 @@ void main() {
     test('passes for mixed-case UUID v4', () {
       expect(
         ValidateString().uuid().validate(
-          '550e8400-E29B-41d4-A716-446655440000',
-        ),
+              '550e8400-E29B-41d4-A716-446655440000',
+            ),
         isA<ValidationSuccess>(),
       );
     });
@@ -1164,12 +1111,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateString()
-                  .setLabel('ID')
-                  .uuid(messageFactory: (label, _) => '$label UUID 오류')
-                  .validate('bad')
-              as ValidationFailure;
+      final result = ValidateString()
+          .setLabel('ID')
+          .uuid(messageFactory: (label, _) => '$label UUID 오류')
+          .validate('bad') as ValidationFailure;
       expect(result.message, 'ID UUID 오류');
     });
 
@@ -1177,9 +1122,8 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.uuid: (p) => '${p['name']} 식별자 오류'}),
       );
-      final result =
-          ValidateString().setLabel('식별자').uuid().validate('bad')
-              as ValidationFailure;
+      final result = ValidateString().setLabel('식별자').uuid().validate('bad')
+          as ValidationFailure;
       expect(result.message, '식별자 식별자 오류');
     });
   });
@@ -1377,7 +1321,8 @@ void main() {
     });
 
     test('empty string — passes (not required)', () {
-      expect(ValidateString().koMobile().validate(''), isA<ValidationSuccess>());
+      expect(
+          ValidateString().koMobile().validate(''), isA<ValidationSuccess>());
     });
 
     test('null — passes (not required)', () {
@@ -1512,8 +1457,8 @@ void main() {
     test('URL with query string — passes', () {
       expect(
         ValidateString().url().validate(
-          'https://search.naver.com/search.naver?query=dart',
-        ),
+              'https://search.naver.com/search.naver?query=dart',
+            ),
         isA<ValidationSuccess>(),
       );
     });
@@ -1855,7 +1800,8 @@ void main() {
     });
 
     test('passes for null (null-skip)', () {
-      expect(ValidateString().base64().validate(null), isA<ValidationSuccess>());
+      expect(
+          ValidateString().base64().validate(null), isA<ValidationSuccess>());
     });
 
     test('fails invalid Base64', () {
@@ -1865,7 +1811,9 @@ void main() {
       );
     });
 
-    test('fails Base64 with invalid character (URL-safe - not supported by default)', () {
+    test(
+        'fails Base64 with invalid character (URL-safe - not supported by default)',
+        () {
       expect(
         ValidateString().base64().validate('SGVs-G8='),
         isA<ValidationFailure>(),

@@ -146,8 +146,7 @@ class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
     final firstField = innerResult.firstField ?? '(unknown)';
     return ValidationFailure(
       code: ValidationCode.nestedFailed,
-      message:
-          'Nested validation failed: $firstField — '
+      message: 'Nested validation failed: $firstField — '
           '${innerResult(firstField)?.message ?? ''}',
       context: {'name': label, 'firstField': firstField},
     );

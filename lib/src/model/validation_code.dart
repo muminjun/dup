@@ -43,7 +43,7 @@ enum ValidationCode {
   multipleOf, // isMultipleOf() — value is not a multiple
   // List (ValidateList)
   listNotEmpty, // isNotEmpty() — list is empty
-  listEmpty, // isEmpty() — list is not empty
+  listEmpty, // mustBeEmpty() — list is not empty
   listMin, // minLength() — too few items
   listMax, // maxLength() — too many items
   listLengthBetween, // lengthBetween() — item count outside range

@@ -15,6 +15,8 @@
   named parameters with plain-string keys.
 - **`ValidateNumber.moreThan()` / `lessThan()` removed** — use `min()` / `max()` or
   `satisfy()` for strict comparisons.
+- **`ValidateString.mobile()` renamed to `koMobile()`** — reflects Korean-specific scope.
+- **`ValidateString.phone()` renamed to `koPhone()`** — reflects Korean-specific scope.
 
 See [MIGRATING.md](MIGRATING.md) for a complete before/after guide.
 

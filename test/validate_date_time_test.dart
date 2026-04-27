@@ -28,10 +28,8 @@ void main() {
     });
 
     test('fails when value is after target', () {
-      final result = ValidateDateTime()
-          .setLabel('Date')
-          .isBefore(past)
-          .validate(now);
+      final result =
+          ValidateDateTime().setLabel('Date').isBefore(past).validate(now);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.dateBefore);
     });
@@ -69,15 +67,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .isBefore(
-                    past,
-                    messageFactory: (label, _) => '$label 이전 날짜여야 함',
-                  )
-                  .validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .isBefore(
+            past,
+            messageFactory: (label, _) => '$label 이전 날짜여야 함',
+          )
+          .validate(now) as ValidationFailure;
       expect(result.message, 'Date 이전 날짜여야 함');
     });
 
@@ -87,9 +83,10 @@ void main() {
           ValidationCode.dateBefore: (p) => '${p['name']} 날짜 오류',
         }),
       );
-      final result =
-          ValidateDateTime().setLabel('날짜').isBefore(past).validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('날짜')
+          .isBefore(past)
+          .validate(now) as ValidationFailure;
       expect(result.message, '날짜 날짜 오류');
     });
   });
@@ -113,10 +110,8 @@ void main() {
     });
 
     test('fails when value is before target', () {
-      final result = ValidateDateTime()
-          .setLabel('Date')
-          .isAfter(future)
-          .validate(now);
+      final result =
+          ValidateDateTime().setLabel('Date').isAfter(future).validate(now);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.dateAfter);
     });
@@ -145,15 +140,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .isAfter(
-                    future,
-                    messageFactory: (label, _) => '$label 이후 날짜여야 함',
-                  )
-                  .validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .isAfter(
+            future,
+            messageFactory: (label, _) => '$label 이후 날짜여야 함',
+          )
+          .validate(now) as ValidationFailure;
       expect(result.message, 'Date 이후 날짜여야 함');
     });
 
@@ -163,9 +156,10 @@ void main() {
           ValidationCode.dateAfter: (p) => '${p['name']} 이후 오류',
         }),
       );
-      final result =
-          ValidateDateTime().setLabel('날짜').isAfter(future).validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('날짜')
+          .isAfter(future)
+          .validate(now) as ValidationFailure;
       expect(result.message, '날짜 이후 오류');
     });
   });
@@ -189,10 +183,8 @@ void main() {
     });
 
     test('fails when value is before min', () {
-      final result = ValidateDateTime()
-          .setLabel('Date')
-          .min(future)
-          .validate(now);
+      final result =
+          ValidateDateTime().setLabel('Date').min(future).validate(now);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.dateMin);
     });
@@ -213,12 +205,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .min(future, messageFactory: (label, _) => '$label 최소 날짜 오류')
-                  .validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .min(future, messageFactory: (label, _) => '$label 최소 날짜 오류')
+          .validate(now) as ValidationFailure;
       expect(result.message, 'Date 최소 날짜 오류');
     });
 
@@ -228,9 +218,8 @@ void main() {
           ValidationCode.dateMin: (p) => '${p['name']} 날짜 하한 오류',
         }),
       );
-      final result =
-          ValidateDateTime().setLabel('날짜').min(future).validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime().setLabel('날짜').min(future).validate(now)
+          as ValidationFailure;
       expect(result.message, '날짜 날짜 하한 오류');
     });
   });
@@ -254,10 +243,8 @@ void main() {
     });
 
     test('fails when value is after max', () {
-      final result = ValidateDateTime()
-          .setLabel('Date')
-          .max(past)
-          .validate(now);
+      final result =
+          ValidateDateTime().setLabel('Date').max(past).validate(now);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.dateMax);
     });
@@ -278,12 +265,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .max(past, messageFactory: (label, _) => '$label 최대 날짜 오류')
-                  .validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .max(past, messageFactory: (label, _) => '$label 최대 날짜 오류')
+          .validate(now) as ValidationFailure;
       expect(result.message, 'Date 최대 날짜 오류');
     });
 
@@ -293,9 +278,8 @@ void main() {
           ValidationCode.dateMax: (p) => '${p['name']} 날짜 상한 오류',
         }),
       );
-      final result =
-          ValidateDateTime().setLabel('날짜').max(past).validate(now)
-              as ValidationFailure;
+      final result = ValidateDateTime().setLabel('날짜').max(past).validate(now)
+          as ValidationFailure;
       expect(result.message, '날짜 날짜 상한 오류');
     });
   });
@@ -355,16 +339,14 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .between(
-                    rangeStart,
-                    rangeEnd,
-                    messageFactory: (label, _) => '$label 날짜 범위 오류',
-                  )
-                  .validate(beforeRange)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .between(
+            rangeStart,
+            rangeEnd,
+            messageFactory: (label, _) => '$label 날짜 범위 오류',
+          )
+          .validate(beforeRange) as ValidationFailure;
       expect(result.message, 'Date 날짜 범위 오류');
     });
 
@@ -374,12 +356,10 @@ void main() {
           ValidationCode.dateBetween: (p) => '${p['name']} 범위 오류',
         }),
       );
-      final result =
-          ValidateDateTime()
-                  .setLabel('날짜')
-                  .between(rangeStart, rangeEnd)
-                  .validate(beforeRange)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('날짜')
+          .between(rangeStart, rangeEnd)
+          .validate(beforeRange) as ValidationFailure;
       expect(result.message, '날짜 범위 오류');
     });
   });
@@ -404,10 +384,8 @@ void main() {
     });
 
     test('fails for a date in the past', () {
-      final result = ValidateDateTime()
-          .setLabel('Date')
-          .isInFuture()
-          .validate(past);
+      final result =
+          ValidateDateTime().setLabel('Date').isInFuture().validate(past);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.dateInFuture);
     });
@@ -428,12 +406,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .isInFuture(messageFactory: (label, _) => '$label 미래여야 함')
-                  .validate(past)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .isInFuture(messageFactory: (label, _) => '$label 미래여야 함')
+          .validate(past) as ValidationFailure;
       expect(result.message, 'Date 미래여야 함');
     });
 
@@ -443,9 +419,10 @@ void main() {
           ValidationCode.dateInFuture: (p) => '${p['name']} 미래 날짜 오류',
         }),
       );
-      final result =
-          ValidateDateTime().setLabel('날짜').isInFuture().validate(past)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('날짜')
+          .isInFuture()
+          .validate(past) as ValidationFailure;
       expect(result.message, '날짜 미래 날짜 오류');
     });
   });
@@ -470,10 +447,8 @@ void main() {
     });
 
     test('fails for a date far in the future', () {
-      final result = ValidateDateTime()
-          .setLabel('Date')
-          .isInPast()
-          .validate(future);
+      final result =
+          ValidateDateTime().setLabel('Date').isInPast().validate(future);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.dateInPast);
     });
@@ -494,12 +469,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateDateTime()
-                  .setLabel('Date')
-                  .isInPast(messageFactory: (label, _) => '$label 과거여야 함')
-                  .validate(future)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('Date')
+          .isInPast(messageFactory: (label, _) => '$label 과거여야 함')
+          .validate(future) as ValidationFailure;
       expect(result.message, 'Date 과거여야 함');
     });
 
@@ -509,9 +482,10 @@ void main() {
           ValidationCode.dateInPast: (p) => '${p['name']} 과거 날짜 오류',
         }),
       );
-      final result =
-          ValidateDateTime().setLabel('날짜').isInPast().validate(future)
-              as ValidationFailure;
+      final result = ValidateDateTime()
+          .setLabel('날짜')
+          .isInPast()
+          .validate(future) as ValidationFailure;
       expect(result.message, '날짜 과거 날짜 오류');
     });
   });
@@ -774,9 +748,8 @@ void main() {
     test('fails when outside duration', () {
       final now = DateTime.now();
       final old = now.subtract(const Duration(days: 10));
-      final r = ValidateDateTime()
-          .isWithin(const Duration(days: 7))
-          .validate(old);
+      final r =
+          ValidateDateTime().isWithin(const Duration(days: 7)).validate(old);
       expect(r, isA<ValidationFailure>());
       expect((r as ValidationFailure).code, ValidationCode.isWithin);
     });

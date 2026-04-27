@@ -186,7 +186,8 @@ void main() {
       );
     });
 
-    test('applies when() then-validator when data triggers condition', () async {
+    test('applies when() then-validator when data triggers condition',
+        () async {
       final schema = DupSchema({
         'role': ValidateString(),
         'adminCode': ValidateString(),
@@ -451,23 +452,21 @@ void main() {
 
     setUp(() {
       schema = DupSchema({
-            'paymentType': ValidateString().required().includedIn([
-              'card',
-              'bank',
-            ]),
-            'cardNumber': ValidateString(),
-            'bankAccount': ValidateString(),
-          })
-          .when(
-            field: 'paymentType',
-            condition: (dynamic v) => v == 'card',
-            then: {'cardNumber': ValidateString().required().min(16)},
-          )
-          .when(
-            field: 'paymentType',
-            condition: (dynamic v) => v == 'bank',
-            then: {'bankAccount': ValidateString().required()},
-          );
+        'paymentType': ValidateString().required().includedIn([
+          'card',
+          'bank',
+        ]),
+        'cardNumber': ValidateString(),
+        'bankAccount': ValidateString(),
+      }).when(
+        field: 'paymentType',
+        condition: (dynamic v) => v == 'card',
+        then: {'cardNumber': ValidateString().required().min(16)},
+      ).when(
+        field: 'paymentType',
+        condition: (dynamic v) => v == 'bank',
+        then: {'bankAccount': ValidateString().required()},
+      );
     });
 
     test('then validators apply when condition matches', () async {

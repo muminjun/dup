@@ -36,10 +36,14 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (!value.isAfter(target)) {
-        return getFailure(messageFactory, ValidationCode.dateAfter, {
-          'name': label,
-          'target': target,
-        }, '$label must be after $target.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.dateAfter,
+            {
+              'name': label,
+              'target': target,
+            },
+            '$label must be after $target.');
       }
       return null;
     });
@@ -119,9 +123,13 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (!value.isBefore(DateTime.now())) {
-        return getFailure(messageFactory, ValidationCode.dateInPast, {
-          'name': label,
-        }, '$label must be in the past.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.dateInPast,
+            {
+              'name': label,
+            },
+            '$label must be in the past.');
       }
       return null;
     });
@@ -132,9 +140,13 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.weekday >= DateTime.saturday) {
-        return getFailure(messageFactory, ValidationCode.isWeekday, {
-          'name': label,
-        }, '$label must be a weekday.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.isWeekday,
+            {
+              'name': label,
+            },
+            '$label must be a weekday.');
       }
       return null;
     });
@@ -145,9 +157,13 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value.weekday < DateTime.saturday) {
-        return getFailure(messageFactory, ValidationCode.isWeekend, {
-          'name': label,
-        }, '$label must be a weekend day.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.isWeekend,
+            {
+              'name': label,
+            },
+            '$label must be a weekend day.');
       }
       return null;
     });
@@ -165,11 +181,15 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
           value.day != target.day) {
         final formatted =
             '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
-        return getFailure(messageFactory, ValidationCode.isSameDay, {
-          'name': label,
-          'target': target,
-          'targetFormatted': formatted,
-        }, '$label must be on $formatted.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.isSameDay,
+            {
+              'name': label,
+              'target': target,
+              'targetFormatted': formatted,
+            },
+            '$label must be on $formatted.');
       }
       return null;
     });
@@ -183,9 +203,13 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
       if (value.year != now.year ||
           value.month != now.month ||
           value.day != now.day) {
-        return getFailure(messageFactory, ValidationCode.isToday, {
-          'name': label,
-        }, '$label must be today.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.isToday,
+            {
+              'name': label,
+            },
+            '$label must be today.');
       }
       return null;
     });

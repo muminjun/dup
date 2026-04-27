@@ -219,7 +219,9 @@ ValidatorLocale.setLocale(
 
 ---
 
-## 5. Removed methods
+## 5. Removed / renamed methods
+
+### Removed
 
 | v1 method | Replacement |
 |---|---|
@@ -229,8 +231,15 @@ ValidatorLocale.setLocale(
 If you relied on strict `>` / `<` semantics, use `satisfy()`:
 
 ```dart
-ValidateNumber().satisfy((v) => v! > 0, message: 'Must be greater than 0.');
+ValidateNumber().satisfy((v) => v! > 0, messageFactory: (_, __) => 'Must be greater than 0.');
 ```
+
+### Renamed
+
+| v1 method | v2 method |
+|---|---|
+| `ValidateString().mobile()` | `ValidateString().koMobile()` |
+| `ValidateString().phone()` | `ValidateString().koPhone()` |
 
 ---
 

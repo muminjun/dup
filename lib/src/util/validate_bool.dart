@@ -19,9 +19,13 @@ class ValidateBool extends BaseValidator<bool, ValidateBool> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value != true) {
-        return getFailure(messageFactory, ValidationCode.boolTrue, {
-          'name': label,
-        }, '$label must be true.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.boolTrue,
+            {
+              'name': label,
+            },
+            '$label must be true.');
       }
       return null;
     });
@@ -32,9 +36,13 @@ class ValidateBool extends BaseValidator<bool, ValidateBool> {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
       if (value != false) {
-        return getFailure(messageFactory, ValidationCode.boolFalse, {
-          'name': label,
-        }, '$label must be false.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.boolFalse,
+            {
+              'name': label,
+            },
+            '$label must be false.');
       }
       return null;
     });

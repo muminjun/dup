@@ -84,14 +84,17 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     bool skipPresence = false,
   }) {
     // Phase 0–1 first (required + format checks including keyValidator/valueValidator).
-    final phase01 = runPhaseChain(value, skipPresence: skipPresence, toPhase: 1);
+    final phase01 =
+        runPhaseChain(value, skipPresence: skipPresence, toPhase: 1);
     if (phase01 is ValidationFailure) return phase01;
     if (value != null) {
-      final entryErrors = _validateEntriesSync(value, skipPresence: skipPresence);
+      final entryErrors =
+          _validateEntriesSync(value, skipPresence: skipPresence);
       if (entryErrors.isNotEmpty) return _entrySummary(entryErrors);
     }
     // Phase 2+ (size constraints) run after entry validation.
-    final phase2 = runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
+    final phase2 =
+        runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
     if (phase2 is ValidationFailure) return phase2;
     return const ValidationSuccess();
   }
@@ -102,14 +105,17 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     bool skipPresence = false,
   }) async {
     // Phase 0–1 first (required + format checks including keyValidator/valueValidator).
-    final phase01 = runPhaseChain(value, skipPresence: skipPresence, toPhase: 1);
+    final phase01 =
+        runPhaseChain(value, skipPresence: skipPresence, toPhase: 1);
     if (phase01 is ValidationFailure) return phase01;
     if (value != null) {
-      final entryErrors = await _validateEntries(value, skipPresence: skipPresence);
+      final entryErrors =
+          await _validateEntries(value, skipPresence: skipPresence);
       if (entryErrors.isNotEmpty) return _entrySummary(entryErrors);
     }
     // Phase 2+ (size constraints) run after entry validation.
-    final phase2 = runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
+    final phase2 =
+        runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
     if (phase2 is ValidationFailure) return phase2;
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return asyncFailure;
@@ -147,13 +153,15 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     );
     if (phase01 is ValidationFailure) return NestedNormalFailure(phase01);
     if (value != null) {
-      final entryErrors = await _validateEntries(value, skipPresence: skipPresence);
+      final entryErrors =
+          await _validateEntries(value, skipPresence: skipPresence);
       if (entryErrors.isNotEmpty) {
         return NestedInnerFailure(entryErrors, separator: '');
       }
     }
     // Phase 2+ (size constraints) run after entry validation.
-    final phase2 = runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
+    final phase2 =
+        runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
     if (phase2 is ValidationFailure) return NestedNormalFailure(phase2);
     final asyncFailure = await runAsyncChain(value);
     if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
@@ -181,13 +189,15 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
     );
     if (phase01 is ValidationFailure) return NestedNormalFailure(phase01);
     if (value != null) {
-      final entryErrors = _validateEntriesSync(value, skipPresence: skipPresence);
+      final entryErrors =
+          _validateEntriesSync(value, skipPresence: skipPresence);
       if (entryErrors.isNotEmpty) {
         return NestedInnerFailure(entryErrors, separator: '');
       }
     }
     // Phase 2+ (size constraints) run after entry validation.
-    final phase2 = runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
+    final phase2 =
+        runPhaseChain(value, skipPresence: skipPresence, fromPhase: 2);
     if (phase2 is ValidationFailure) return NestedNormalFailure(phase2);
     return null;
   }

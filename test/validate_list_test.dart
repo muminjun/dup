@@ -23,10 +23,8 @@ void main() {
     });
 
     test('fails for empty list', () {
-      final result = ValidateList<int>()
-          .setLabel('Items')
-          .isNotEmpty()
-          .validate([]);
+      final result =
+          ValidateList<int>().setLabel('Items').isNotEmpty().validate([]);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.listNotEmpty);
     });
@@ -39,12 +37,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .isNotEmpty(messageFactory: (label, _) => '$label 비어있음')
-                  .validate([])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .isNotEmpty(messageFactory: (label, _) => '$label 비어있음')
+          .validate([]) as ValidationFailure;
       expect(result.message, 'List 비어있음');
     });
 
@@ -54,9 +50,10 @@ void main() {
           ValidationCode.listNotEmpty: (p) => '${p['name']} 비어있으면 안됨',
         }),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').isNotEmpty().validate([])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .isNotEmpty()
+          .validate([]) as ValidationFailure;
       expect(result.message, '목록 비어있으면 안됨');
     });
   });
@@ -94,12 +91,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .mustBeEmpty(messageFactory: (label, _) => '$label 비어야 함')
-                  .validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .mustBeEmpty(messageFactory: (label, _) => '$label 비어야 함')
+          .validate([1]) as ValidationFailure;
       expect(result.message, 'List 비어야 함');
     });
 
@@ -109,9 +104,10 @@ void main() {
           ValidationCode.listEmpty: (p) => '${p['name']} 비어야 함',
         }),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').mustBeEmpty().validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .mustBeEmpty()
+          .validate([1]) as ValidationFailure;
       expect(result.message, '목록 비어야 함');
     });
   });
@@ -158,15 +154,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('Tags')
-                  .minLength(
-                    3,
-                    messageFactory: (label, p) => '$label 최소 ${p['min']}개',
-                  )
-                  .validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('Tags')
+          .minLength(
+            3,
+            messageFactory: (label, p) => '$label 최소 ${p['min']}개',
+          )
+          .validate([1]) as ValidationFailure;
       expect(result.message, 'Tags 최소 3개');
     });
 
@@ -174,9 +168,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.listMin: (p) => '${p['name']} 아이템 부족'}),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').minLength(3).validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .minLength(3)
+          .validate([1]) as ValidationFailure;
       expect(result.message, '목록 아이템 부족');
     });
   });
@@ -223,15 +218,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('Tags')
-                  .maxLength(
-                    2,
-                    messageFactory: (label, p) => '$label 최대 ${p['max']}개',
-                  )
-                  .validate([1, 2, 3])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('Tags')
+          .maxLength(
+            2,
+            messageFactory: (label, p) => '$label 최대 ${p['max']}개',
+          )
+          .validate([1, 2, 3]) as ValidationFailure;
       expect(result.message, 'Tags 최대 2개');
     });
 
@@ -239,9 +232,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.listMax: (p) => '${p['name']} 아이템 초과'}),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').maxLength(2).validate([1, 2, 3])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .maxLength(2)
+          .validate([1, 2, 3]) as ValidationFailure;
       expect(result.message, '목록 아이템 초과');
     });
   });
@@ -298,17 +292,14 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .lengthBetween(
-                    2,
-                    4,
-                    messageFactory:
-                        (label, p) => '$label ${p['min']}~${p['max']}개',
-                  )
-                  .validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .lengthBetween(
+            2,
+            4,
+            messageFactory: (label, p) => '$label ${p['min']}~${p['max']}개',
+          )
+          .validate([1]) as ValidationFailure;
       expect(result.message, 'List 2~4개');
     });
 
@@ -318,9 +309,10 @@ void main() {
           ValidationCode.listLengthBetween: (p) => '${p['name']} 길이 범위 오류',
         }),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').lengthBetween(2, 4).validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .lengthBetween(2, 4)
+          .validate([1]) as ValidationFailure;
       expect(result.message, '목록 길이 범위 오류');
     });
   });
@@ -378,15 +370,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('OTP')
-                  .hasLength(
-                    6,
-                    messageFactory: (label, p) => '$label 정확히 ${p['length']}개',
-                  )
-                  .validate([1, 2])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('OTP')
+          .hasLength(
+            6,
+            messageFactory: (label, p) => '$label 정확히 ${p['length']}개',
+          )
+          .validate([1, 2]) as ValidationFailure;
       expect(result.message, 'OTP 정확히 6개');
     });
 
@@ -396,9 +386,10 @@ void main() {
           ValidationCode.listExactLength: (p) => '${p['name']} 정확한 길이 오류',
         }),
       );
-      final result =
-          ValidateList<int>().setLabel('OTP').hasLength(6).validate([1, 2])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('OTP')
+          .hasLength(6)
+          .validate([1, 2]) as ValidationFailure;
       expect(result.message, 'OTP 정확한 길이 오류');
     });
   });
@@ -457,12 +448,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .contains(5, messageFactory: (label, _) => '$label 항목 없음')
-                  .validate([1, 2])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .contains(5, messageFactory: (label, _) => '$label 항목 없음')
+          .validate([1, 2]) as ValidationFailure;
       expect(result.message, 'List 항목 없음');
     });
 
@@ -470,9 +459,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.contains: (p) => '${p['name']} 포함 오류'}),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').contains(5).validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .contains(5)
+          .validate([1]) as ValidationFailure;
       expect(result.message, '목록 포함 오류');
     });
   });
@@ -519,15 +509,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .doesNotContain(
-                    1,
-                    messageFactory: (label, _) => '$label 금지된 항목',
-                  )
-                  .validate([1, 2])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .doesNotContain(
+            1,
+            messageFactory: (label, _) => '$label 금지된 항목',
+          )
+          .validate([1, 2]) as ValidationFailure;
       expect(result.message, 'List 금지된 항목');
     });
 
@@ -537,9 +525,10 @@ void main() {
           ValidationCode.doesNotContain: (p) => '${p['name']} 포함 금지 오류',
         }),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').doesNotContain(1).validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .doesNotContain(1)
+          .validate([1]) as ValidationFailure;
       expect(result.message, '목록 포함 금지 오류');
     });
   });
@@ -593,15 +582,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('Scores')
-                  .all(
-                    (x) => x >= 0,
-                    messageFactory: (label, _) => '$label 모두 양수여야 함',
-                  )
-                  .validate([-1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('Scores')
+          .all(
+            (x) => x >= 0,
+            messageFactory: (label, _) => '$label 모두 양수여야 함',
+          )
+          .validate([-1]) as ValidationFailure;
       expect(result.message, 'Scores 모두 양수여야 함');
     });
 
@@ -609,9 +596,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.all: (p) => '${p['name']} 전체 조건 오류'}),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').all((x) => x > 0).validate([-1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .all((x) => x > 0)
+          .validate([-1]) as ValidationFailure;
       expect(result.message, '목록 전체 조건 오류');
     });
   });
@@ -635,10 +623,8 @@ void main() {
     });
 
     test('fails for empty list (no items satisfy)', () {
-      final result = ValidateList<int>()
-          .setLabel('List')
-          .any((x) => x > 0)
-          .validate([]);
+      final result =
+          ValidateList<int>().setLabel('List').any((x) => x > 0).validate([]);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.any);
     });
@@ -658,15 +644,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .any(
-                    (x) => x > 0,
-                    messageFactory: (label, _) => '$label 하나 이상 양수',
-                  )
-                  .validate([-1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .any(
+            (x) => x > 0,
+            messageFactory: (label, _) => '$label 하나 이상 양수',
+          )
+          .validate([-1]) as ValidationFailure;
       expect(result.message, 'List 하나 이상 양수');
     });
 
@@ -674,9 +658,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.any: (p) => '${p['name']} 하나 조건 오류'}),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').any((x) => x > 0).validate([-1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .any((x) => x > 0)
+          .validate([-1]) as ValidationFailure;
       expect(result.message, '목록 하나 조건 오류');
     });
   });
@@ -723,15 +708,13 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('List')
-                  .none(
-                    (x) => x < 0,
-                    messageFactory: (label, _) => '$label 음수 불가',
-                  )
-                  .validate([-1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('List')
+          .none(
+            (x) => x < 0,
+            messageFactory: (label, _) => '$label 음수 불가',
+          )
+          .validate([-1]) as ValidationFailure;
       expect(result.message, 'List 음수 불가');
     });
 
@@ -739,9 +722,10 @@ void main() {
       ValidatorLocale.setLocale(
         ValidatorLocale({ValidationCode.none: (p) => '${p['name']} 없음 조건 오류'}),
       );
-      final result =
-          ValidateList<int>().setLabel('목록').none((x) => x < 0).validate([-1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('목록')
+          .none((x) => x < 0)
+          .validate([-1]) as ValidationFailure;
       expect(result.message, '목록 없음 조건 오류');
     });
   });
@@ -802,12 +786,10 @@ void main() {
     });
 
     test('uses messageFactory', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('IDs')
-                  .hasNoDuplicates(messageFactory: (label, _) => '$label 중복 금지')
-                  .validate([1, 1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('IDs')
+          .hasNoDuplicates(messageFactory: (label, _) => '$label 중복 금지')
+          .validate([1, 1]) as ValidationFailure;
       expect(result.message, 'IDs 중복 금지');
     });
 
@@ -817,9 +799,10 @@ void main() {
           ValidationCode.noDuplicates: (p) => '${p['name']} 중복 오류',
         }),
       );
-      final result =
-          ValidateList<int>().setLabel('아이디').hasNoDuplicates().validate([1, 1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('아이디')
+          .hasNoDuplicates()
+          .validate([1, 1]) as ValidationFailure;
       expect(result.message, '아이디 중복 오류');
     });
   });
@@ -831,14 +814,13 @@ void main() {
     test('passes when all items pass', () {
       final result = ValidateList<int>()
           .eachItem(
-            (item) =>
-                item < 0
-                    ? const ValidationFailure(
-                      code: ValidationCode.custom,
-                      message: 'neg',
-                    )
-                    : null,
-          )
+        (item) => item < 0
+            ? const ValidationFailure(
+                code: ValidationCode.custom,
+                message: 'neg',
+              )
+            : null,
+      )
           .validate([1, 2, 3]);
       expect(result, isA<ValidationSuccess>());
     });
@@ -852,13 +834,12 @@ void main() {
       final result = ValidateList<int>()
           .setLabel('List')
           .eachItem(
-            (item) =>
-                item < 0
-                    ? const ValidationFailure(
-                      code: ValidationCode.custom,
-                      message: 'negative',
-                    )
-                    : null,
+            (item) => item < 0
+                ? const ValidationFailure(
+                    code: ValidationCode.custom,
+                    message: 'negative',
+                  )
+                : null,
           )
           .validate([-1, 2, 3]);
       expect(result, isA<ValidationFailure>());
@@ -869,14 +850,13 @@ void main() {
     test('fails at correct index for middle item failure', () {
       final result = ValidateList<int>()
           .eachItem(
-            (item) =>
-                item < 0
-                    ? const ValidationFailure(
-                      code: ValidationCode.custom,
-                      message: 'neg',
-                    )
-                    : null,
-          )
+        (item) => item < 0
+            ? const ValidationFailure(
+                code: ValidationCode.custom,
+                message: 'neg',
+              )
+            : null,
+      )
           .validate([1, -1, 2]);
       expect((result as ValidationFailure).context['index'], 1);
     });
@@ -885,35 +865,30 @@ void main() {
       'stops at first failure (does not continue after first failed item)',
       () {
         var callCount = 0;
-        ValidateList<int>()
-            .eachItem((item) {
-              callCount++;
-              return item < 0
-                  ? const ValidationFailure(
-                    code: ValidationCode.custom,
-                    message: 'neg',
-                  )
-                  : null;
-            })
-            .validate([-1, -2, -3]);
+        ValidateList<int>().eachItem((item) {
+          callCount++;
+          return item < 0
+              ? const ValidationFailure(
+                  code: ValidationCode.custom,
+                  message: 'neg',
+                )
+              : null;
+        }).validate([-1, -2, -3]);
         expect(callCount, 1);
       },
     );
 
     test('failure context contains innerFailure', () {
-      final result =
-          ValidateList<int>()
-                  .eachItem(
-                    (item) =>
-                        item < 0
-                            ? const ValidationFailure(
-                              code: ValidationCode.custom,
-                              message: 'negative item',
-                            )
-                            : null,
-                  )
-                  .validate([1, -1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .eachItem(
+        (item) => item < 0
+            ? const ValidationFailure(
+                code: ValidationCode.custom,
+                message: 'negative item',
+              )
+            : null,
+      )
+          .validate([1, -1]) as ValidationFailure;
       final inner = result.context['innerFailure'] as ValidationFailure;
       expect(inner.message, 'negative item');
     });
@@ -926,51 +901,49 @@ void main() {
     });
 
     test('uses messageFactory override', () {
-      final result =
-          ValidateList<int>()
-                  .setLabel('Items')
-                  .eachItem(
-                    (_) => const ValidationFailure(
-                      code: ValidationCode.custom,
-                      message: 'bad',
-                    ),
-                    messageFactory:
-                        (label, p) => '$label[${p['index']}]: ${p['error']}',
-                  )
-                  .validate([1])
-              as ValidationFailure;
+      final result = ValidateList<int>()
+          .setLabel('Items')
+          .eachItem(
+            (_) => const ValidationFailure(
+              code: ValidationCode.custom,
+              message: 'bad',
+            ),
+            messageFactory: (label, p) =>
+                '$label[${p['index']}]: ${p['error']}',
+          )
+          .validate([1]) as ValidationFailure;
       expect(result.message, 'Items[0]: bad');
     });
 
     test('locale override can access index and error via context', () {
       ValidatorLocale.setLocale(
         ValidatorLocale({
-          ValidationCode.eachItem: (p) => '${p['name']}의 ${p['index']}번 항목: ${p['error']}',
+          ValidationCode.eachItem: (p) =>
+              '${p['name']}의 ${p['index']}번 항목: ${p['error']}',
         }),
       );
       final result = ValidateList<int>()
-              .setLabel('목록')
-              .eachItem(
-                (item) =>
-                    item < 0
-                        ? const ValidationFailure(
-                          code: ValidationCode.custom,
-                          message: '음수 불가',
-                        )
-                        : null,
-              )
-              .validate([-1]) as ValidationFailure;
+          .setLabel('목록')
+          .eachItem(
+            (item) => item < 0
+                ? const ValidationFailure(
+                    code: ValidationCode.custom,
+                    message: '음수 불가',
+                  )
+                : null,
+          )
+          .validate([-1]) as ValidationFailure;
       expect(result.message, '목록의 0번 항목: 음수 불가');
     });
 
-    test('failure context contains innerFailure accessible by locale override', () {
+    test('failure context contains innerFailure accessible by locale override',
+        () {
       final inner = const ValidationFailure(
         code: ValidationCode.custom,
         message: 'inner error',
       );
-      final result = ValidateList<int>()
-              .eachItem((_) => inner)
-              .validate([1]) as ValidationFailure;
+      final result = ValidateList<int>().eachItem((_) => inner).validate([1])
+          as ValidationFailure;
       expect(result.context['innerFailure'], same(inner));
     });
   });
@@ -979,12 +952,11 @@ void main() {
   // Real user input pattern — tag selection (blog/post)
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 태그 선택', () {
-    final tagValidator =
-        ValidateList<String>()
-            .setLabel('태그')
-            .minLength(1)
-            .maxLength(5)
-            .hasNoDuplicates();
+    final tagValidator = ValidateList<String>()
+        .setLabel('태그')
+        .minLength(1)
+        .maxLength(5)
+        .hasNoDuplicates();
 
     test('태그 1개 선택 통과', () {
       expect(tagValidator.validate(['dart']), isA<ValidationSuccess>());
@@ -1024,10 +996,8 @@ void main() {
   // Real user input pattern — interest selection (min 1, max 3)
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 관심사 선택 (체크박스)', () {
-    final interestValidator = ValidateList<String>()
-        .setLabel('관심사')
-        .minLength(1)
-        .maxLength(3);
+    final interestValidator =
+        ValidateList<String>().setLabel('관심사').minLength(1).maxLength(3);
 
     test('관심사 1개 선택 통과', () {
       expect(interestValidator.validate(['스포츠']), isA<ValidationSuccess>());
@@ -1094,18 +1064,15 @@ void main() {
   // Real user input pattern — required consent items (eachItem)
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 필수 동의 목록 (eachItem)', () {
-    final termsValidator = ValidateList<bool>()
-        .setLabel('동의 항목')
-        .hasLength(3)
-        .eachItem(
-          (agreed) =>
-              agreed
+    final termsValidator =
+        ValidateList<bool>().setLabel('동의 항목').hasLength(3).eachItem(
+              (agreed) => agreed
                   ? null
                   : const ValidationFailure(
-                    code: ValidationCode.custom,
-                    message: '필수 동의 항목입니다.',
-                  ),
-        );
+                      code: ValidationCode.custom,
+                      message: '필수 동의 항목입니다.',
+                    ),
+            );
 
     test('3개 모두 동의하면 통과', () {
       expect(
@@ -1189,8 +1156,7 @@ void main() {
     test('fails when one required item missing', () {
       final r = ValidateList<int>()
           .setLabel('Roles')
-          .containsAll([1, 2, 3])
-          .validate([1, 2]);
+          .containsAll([1, 2, 3]).validate([1, 2]);
       expect(r, isA<ValidationFailure>());
       expect((r as ValidationFailure).code, ValidationCode.listContainsAll);
       expect(r.context['missing'], contains(3));

@@ -136,7 +136,9 @@ void main() {
   });
 
   group('ValidateObject — sync path with async inner schema throws', () {
-    test('validate() throws clear StateError when inner schema has async validators', () {
+    test(
+        'validate() throws clear StateError when inner schema has async validators',
+        () {
       final asyncSchema = DupSchema({
         'x': ValidateString().addAsyncValidator((_) async => null),
       });
@@ -153,7 +155,9 @@ void main() {
       );
     });
 
-    test('validateNestedSync() throws clear StateError when inner schema has async validators', () {
+    test(
+        'validateNestedSync() throws clear StateError when inner schema has async validators',
+        () {
       final asyncSchema = DupSchema({
         'x': ValidateString().addAsyncValidator((_) async => null),
       });

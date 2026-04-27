@@ -293,9 +293,9 @@ void main() {
       final validator = ValidateList<String>().setLabel('L').eachItem((s) {
         return s.isEmpty
             ? const ValidationFailure(
-              code: ValidationCode.custom,
-              message: 'empty',
-            )
+                code: ValidationCode.custom,
+                message: 'empty',
+              )
             : null;
       });
       expectSuccess(validator.validate([]));
@@ -339,11 +339,8 @@ void main() {
     });
 
     test('first-failure semantics are preserved', () {
-      final validator = ValidateString()
-          .setLabel('Email')
-          .required()
-          .email()
-          .min(20);
+      final validator =
+          ValidateString().setLabel('Email').required().email().min(20);
       expect(
         expectFailure(validator.validate(null)).message,
         contains('required'),
@@ -357,18 +354,15 @@ void main() {
     test(
       'custom sync and async validators now return ValidationFailure',
       () async {
-        final syncValidator = ValidateString()
-            .setLabel('X')
-            .min(3)
-            .addValidator(
-              (s) =>
-                  s == 'reserved'
+        final syncValidator =
+            ValidateString().setLabel('X').min(3).addValidator(
+                  (s) => s == 'reserved'
                       ? const ValidationFailure(
-                        code: ValidationCode.custom,
-                        message: 'That value is reserved.',
-                      )
+                          code: ValidationCode.custom,
+                          message: 'That value is reserved.',
+                        )
                       : null,
-            );
+                );
         expectFailure(syncValidator.validate('ok'));
         expect(
           expectFailure(syncValidator.validate('reserved')).message,
@@ -380,19 +374,20 @@ void main() {
             .setLabel('X')
             .required()
             .addAsyncValidator((s) async {
-              await Future<void>.delayed(Duration.zero);
-              return s == 'taken'
-                  ? const ValidationFailure(
-                    code: ValidationCode.custom,
-                    message: 'Username is already taken.',
-                  )
-                  : null;
-            });
+          await Future<void>.delayed(Duration.zero);
+          return s == 'taken'
+              ? const ValidationFailure(
+                  code: ValidationCode.custom,
+                  message: 'Username is already taken.',
+                )
+              : null;
+        });
         await expectAsyncFailure(asyncValidator.validateAsync(null));
         expect(
           (await expectAsyncFailure(
             asyncValidator.validateAsync('taken'),
-          )).message,
+          ))
+              .message,
           'Username is already taken.',
         );
         await expectAsyncSuccess(asyncValidator.validateAsync('available'));

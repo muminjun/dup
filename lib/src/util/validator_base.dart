@@ -132,9 +132,13 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   V required({MessageFactory? messageFactory}) {
     return addPhaseValidator(0, (value) {
       if (value == null || (value is String && value.isEmpty)) {
-        return getFailure(messageFactory, ValidationCode.required, {
-          'name': label,
-        }, '$label is required.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.required,
+            {
+              'name': label,
+            },
+            '$label is required.');
       }
       return null;
     }, isPresence: true);
@@ -144,9 +148,13 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   V equalTo(T target, {MessageFactory? messageFactory}) {
     return addPhaseValidator(3, (value) {
       if (value != null && value != target) {
-        return getFailure(messageFactory, ValidationCode.equal, {
-          'name': label,
-        }, '$label does not match.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.equal,
+            {
+              'name': label,
+            },
+            '$label does not match.');
       }
       return null;
     });
@@ -156,9 +164,13 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   V notEqualTo(T target, {MessageFactory? messageFactory}) {
     return addPhaseValidator(3, (value) {
       if (value != null && value == target) {
-        return getFailure(messageFactory, ValidationCode.notEqual, {
-          'name': label,
-        }, '$label is not allowed.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.notEqual,
+            {
+              'name': label,
+            },
+            '$label is not allowed.');
       }
       return null;
     });
@@ -260,8 +272,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
     Map<String, dynamic> context,
     String defaultMessage,
   ) {
-    final message =
-        customFactory?.call(label, context) ??
+    final message = customFactory?.call(label, context) ??
         ValidatorLocale.current?.messages[code]?.call(context) ??
         defaultMessage;
     return ValidationFailure(code: code, message: message, context: context);

@@ -110,9 +110,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     final emojiRegex = RegExp(r'\p{Emoji_Presentation}', unicode: true);
     return addPhaseValidator(1, (value) {
       if (value != null && value.isNotEmpty && emojiRegex.hasMatch(value)) {
-        return getFailure(messageFactory, ValidationCode.emoji, {
-          'name': label,
-        }, '$label cannot contain emoji.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.emoji,
+            {
+              'name': label,
+            },
+            '$label cannot contain emoji.');
       }
       return null;
     });
@@ -123,9 +127,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   ValidateString notBlank({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value != null && value.trim().isEmpty) {
-        return getFailure(messageFactory, ValidationCode.notBlank, {
-          'name': label,
-        }, '$label cannot be blank.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.notBlank,
+            {
+              'name': label,
+            },
+            '$label cannot be blank.');
       }
       return null;
     });
@@ -136,9 +144,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.trim().isEmpty) return null;
       if (!RegExp(r'^[a-zA-Z]+$').hasMatch(value.trim())) {
-        return getFailure(messageFactory, ValidationCode.alpha, {
-          'name': label,
-        }, '$label must contain only letters.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.alpha,
+            {
+              'name': label,
+            },
+            '$label must contain only letters.');
       }
       return null;
     });
@@ -178,7 +190,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
 
   /// Phase 1: validates Korean mobile phone number format.
   /// Default pattern: `010-1234-5678`. Override with [customRegex].
-  ValidateString koMobile({RegExp? customRegex, MessageFactory? messageFactory}) {
+  ValidateString koMobile(
+      {RegExp? customRegex, MessageFactory? messageFactory}) {
     final regex = customRegex ?? RegExp(r'^\d{2,3}-\d{3,4}-\d{4}$');
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
@@ -196,7 +209,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
 
   /// Phase 1: validates Korean landline phone number format.
   /// Default pattern: `02-1234-5678`. Override with [customRegex].
-  ValidateString koPhone({RegExp? customRegex, MessageFactory? messageFactory}) {
+  ValidateString koPhone(
+      {RegExp? customRegex, MessageFactory? messageFactory}) {
     final regex = customRegex ?? RegExp(r'^(0[2-9]{1}\d?)-\d{3,4}-\d{4}$');
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
@@ -239,9 +253,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        return getFailure(messageFactory, ValidationCode.url, {
-          'name': label,
-        }, '$label is not a valid URL.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.url,
+            {
+              'name': label,
+            },
+            '$label is not a valid URL.');
       }
       return null;
     });
@@ -256,9 +274,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
     return addPhaseValidator(1, (value) {
       if (value == null || value.isEmpty) return null;
       if (!regex.hasMatch(value)) {
-        return getFailure(messageFactory, ValidationCode.uuid, {
-          'name': label,
-        }, '$label is not a valid UUID.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.uuid,
+            {
+              'name': label,
+            },
+            '$label is not a valid UUID.');
       }
       return null;
     });
@@ -374,9 +396,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
       if (value == null || value.trim().isEmpty) return null;
       final trimmed = value.trim();
       if (!regex.hasMatch(trimmed) || trimmed.length % 4 != 0) {
-        return getFailure(messageFactory, ValidationCode.base64, {
-          'name': label,
-        }, '$label is not valid Base64.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.base64,
+            {
+              'name': label,
+            },
+            '$label is not valid Base64.');
       }
       return null;
     });
@@ -391,9 +417,13 @@ class ValidateString extends BaseValidator<String, ValidateString> {
         jsonDecode(value.trim());
         return null;
       } catch (_) {
-        return getFailure(messageFactory, ValidationCode.json, {
-          'name': label,
-        }, '$label is not valid JSON.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.json,
+            {
+              'name': label,
+            },
+            '$label is not valid JSON.');
       }
     });
   }
