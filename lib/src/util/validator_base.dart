@@ -1,132 +1,280 @@
-import 'package:dup/src/util/validate_locale.dart';
+import 'package:meta/meta.dart';
+
 import '../model/message_factory.dart';
+import '../model/validation_code.dart';
+import '../model/validation_result.dart';
+import 'validate_locale.dart';
 
-/// Base abstract class for building validation rules with chainable methods.
-/// [T] - Type of value being validated
-/// [V] - Validator subclass type for method chaining
+/// Internal pairing of a phase number and a validator function.
+/// Lower phase numbers execute first (0 = required, 1 = format, 2 = range,
+/// 3 = custom, 4 = async).
+class _ValidatorEntry<T> {
+  final int phase;
+  final int sortIndex;
+  final ValidationFailure? Function(T?) fn;
+  final bool isPresence;
+  const _ValidatorEntry(
+    this.phase,
+    this.sortIndex,
+    this.fn, {
+    this.isPresence = false,
+  });
+}
+
+/// Base class for all validators.
+///
+/// Uses F-bounded polymorphism (`V extends BaseValidator<T, V>`) so subclass
+/// methods return the concrete subclass type, enabling fluent chaining without
+/// manual casts.
+///
+/// **Execution order:**
+/// 1. [validate] — runs sync phases 0–3 in phase order; stops at first failure.
+/// 2. [validateAsync] — runs all sync phases first, then async entries in order.
+///
+/// **Null contract:** Phase 1+ validators must return null (pass) when value is
+/// null. Null handling is the sole responsibility of phase 0 (`required`).
+///
+/// **Message priority:** messageFactory → [ValidatorLocale.current] → hardcoded default.
 abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
-  /// List of validation functions that return error messages
-  final List<String? Function(T? value)> validators = [];
+  final List<_ValidatorEntry<T>> _entries = [];
+  final List<Future<ValidationFailure?> Function(T?)> _asyncEntries = [];
+  // Not safe for concurrent modification: do not call addPhaseValidator while
+  // validate or validateAsync is executing on the same instance.
+  bool _sorted = false;
 
-  /// Field label used in error messages
+  /// Display label used in error messages. Set via [setLabel].
   String label = '';
 
-  /// Sets the display name for the field being validated
+  /// Sets the field label and returns the validator for chaining.
   V setLabel(String text) {
     label = text;
     return this as V;
   }
 
-  /// Adds a custom validation function to the validator chain
-  V addValidator(String? Function(T? value) validator) {
-    validators.add(validator);
+  /// True if at least one async validator has been registered via
+  /// [addAsyncValidator]. Used by [DupSchema.validateSync] to guard against
+  /// skipped async checks.
+  bool get hasAsyncValidators => _asyncEntries.isNotEmpty;
+
+  /// Registers a sync validator at the given [phase].
+  /// Lower phase numbers run first; within the same phase, registration order
+  /// is preserved.
+  V addPhaseValidator(
+    int phase,
+    ValidationFailure? Function(T?) fn, {
+    bool isPresence = false,
+  }) {
+    _entries.add(
+      _ValidatorEntry(phase, _entries.length, fn, isPresence: isPresence),
+    );
+    _sorted = false;
     return this as V;
   }
 
-  /// Validates that the value matches the target value
-  /// Message resolution order:
-  /// 1. Custom message factory → 2. Global locale → 3. Default message
+  /// Registers a sync validator at phase 3 (custom).
+  /// Return null to pass, [ValidationFailure] to fail.
+  V addValidator(ValidationFailure? Function(T?) fn) =>
+      addPhaseValidator(3, fn);
+
+  /// Registers an async validator. Runs after all sync phases in [validateAsync].
+  V addAsyncValidator(Future<ValidationFailure?> Function(T?) fn) {
+    _asyncEntries.add(fn);
+    return this as V;
+  }
+
+  /// Runs sync phase entries only. When [skipPresence] is true, entries
+  /// registered with isPresence:true (i.e. required()) are skipped.
+  ///
+  /// Use [fromPhase] and [toPhase] to run only a subset of phases (inclusive).
+  /// This allows callers to interleave entry validation between phase bands
+  /// (e.g. run phases 0–1 first, then entry checks, then phases 2+).
+  ///
+  /// Only subclasses within `lib/src/` may call this method directly.
+  /// External subclasses should use [validate] or [validateAsync] instead.
+  @internal
+  ValidationResult runPhaseChain(
+    T? value, {
+    bool skipPresence = false,
+    int fromPhase = 0,
+    int toPhase = 999,
+  }) {
+    if (!_sorted) {
+      _entries.sort((a, b) {
+        final c = a.phase.compareTo(b.phase);
+        return c != 0 ? c : a.sortIndex.compareTo(b.sortIndex);
+      });
+      _sorted = true;
+    }
+    for (final entry in _entries) {
+      if (entry.phase < fromPhase || entry.phase > toPhase) continue;
+      if (skipPresence && entry.isPresence) continue;
+      final failure = entry.fn(value);
+      if (failure != null) return failure;
+    }
+    return const ValidationSuccess();
+  }
+
+  /// Runs async entries only. Returns the first failure or null.
+  Future<ValidationFailure?> runAsyncChain(T? value) async {
+    for (final fn in _asyncEntries) {
+      final failure = await fn(value);
+      if (failure != null) return failure;
+    }
+    return null;
+  }
+
+  /// Phase 0: fails when value is `null` or an empty `String`.
+  /// Without this, null values silently pass all other phases.
+  ///
+  /// Only `null` and empty `String` are treated as "missing" — non-null empty
+  /// collections (e.g. `[]`, `{}`) pass this check. Combine with `isNotEmpty()`
+  /// / `minLength()` when an empty collection should also be rejected.
+  V required({MessageFactory? messageFactory}) {
+    return addPhaseValidator(0, (value) {
+      if (value == null || (value is String && value.isEmpty)) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.required,
+            {
+              'name': label,
+            },
+            '$label is required.');
+      }
+      return null;
+    }, isPresence: true);
+  }
+
+  /// Phase 3: fails when value does not equal [target].
   V equalTo(T target, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && value != target) {
-        return getErrorMessage(messageFactory, 'equal', {
-          'name': label,
-        }, '$label does not match.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.equal,
+            {
+              'name': label,
+            },
+            '$label does not match.');
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value does NOT match the target value
+  /// Phase 3: fails when value equals [target].
   V notEqualTo(T target, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && value == target) {
-        return getErrorMessage(messageFactory, 'notEqual', {
-          'name': label,
-        }, '$label is not allowed.');
+        return getFailure(
+            messageFactory,
+            ValidationCode.notEqual,
+            {
+              'name': label,
+            },
+            '$label is not allowed.');
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value exists in allowedValues list
+  /// Phase 3: fails when value is not in [allowedValues].
   V includedIn(List<T> allowedValues, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && !allowedValues.contains(value)) {
-        return getErrorMessage(
+        return getFailure(
           messageFactory,
-          'oneOf',
+          ValidationCode.oneOf,
           {'name': label, 'options': allowedValues.join(', ')},
           '$label must be one of: ${allowedValues.join(', ')}.',
         );
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value does NOT exist in forbiddenValues list
+  /// Phase 3: fails when value is in [forbiddenValues].
   V excludedFrom(List<T> forbiddenValues, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
       if (value != null && forbiddenValues.contains(value)) {
-        return getErrorMessage(
+        return getFailure(
           messageFactory,
-          'notOneOf',
+          ValidationCode.notOneOf,
           {'name': label, 'options': forbiddenValues.join(', ')},
           '$label must not be one of: ${forbiddenValues.join(', ')}.',
         );
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates using a custom condition function
+  /// Phase 3: fails when [condition] returns false. Null values pass (null-skip).
   V satisfy(bool Function(T?) condition, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(3, (value) {
+      if (value == null) return null;
       if (!condition(value)) {
-        return getErrorMessage(messageFactory, 'condition', {
-          'name': label,
-        }, '$label does not satisfy the condition.');
+        return getFailure(
+          messageFactory,
+          ValidationCode.condition,
+          {'name': label},
+          '$label does not satisfy the condition.',
+        );
       }
       return null;
     });
-    return this as V;
   }
 
-  /// Validates that the value is not null/empty
-  V required({MessageFactory? messageFactory}) {
-    addValidator((value) {
-      if (value == null || (value is String && value.isEmpty)) {
-        return getErrorMessage(messageFactory, 'required', {
-          'name': label,
-        }, '$label is required.');
-      }
-      return null;
-    });
-    return this as V;
+  /// Runs all registered sync validators in phase order.
+  /// Stops at the first [ValidationFailure] and returns it immediately.
+  /// Returns [ValidationSuccess] if all pass.
+  ValidationResult validate(T? value, {bool skipPresence = false}) {
+    return runPhaseChain(value, skipPresence: skipPresence);
   }
 
-  /// Executes all validation rules and returns first error message
-  String? validate(T? value) {
-    for (var validator in validators) {
-      final error = validator(value);
-      if (error != null) return error;
-    }
-    return null;
+  /// Runs sync phases first, then async validators in registration order.
+  /// Short-circuits: if any sync phase fails the async entries are not executed.
+  Future<ValidationResult> validateAsync(
+    T? value, {
+    bool skipPresence = false,
+  }) async {
+    final syncResult = runPhaseChain(value, skipPresence: skipPresence);
+    if (syncResult is ValidationFailure) return syncResult;
+    final asyncFailure = await runAsyncChain(value);
+    return asyncFailure ?? const ValidationSuccess();
   }
 
-  /// Unified error message resolution logic
-  String? getErrorMessage(
+  /// Returns a sync adapter compatible with Flutter's `TextFormField.validator`.
+  /// Returns null on success, the error message string on failure.
+  String? Function(T?) toValidator() {
+    return (value) {
+      final result = validate(value);
+      return result is ValidationFailure ? result.message : null;
+    };
+  }
+
+  /// Returns an async adapter for non-Flutter async contexts.
+  /// NOT compatible with `TextFormField.validator` (which is synchronous).
+  Future<String?> Function(T?) toAsyncValidator() {
+    return (value) async {
+      final result = await validateAsync(value);
+      return result is ValidationFailure ? result.message : null;
+    };
+  }
+
+  /// Resolves the error message using 3-level priority and builds a
+  /// [ValidationFailure].
+  ///
+  /// Priority:
+  /// 1. [customFactory] — messageFactory argument on the specific call
+  /// 2. [ValidatorLocale.current] — global locale map lookup by [code]
+  /// 3. [defaultMessage] — hardcoded English fallback in the validator body
+  ValidationFailure getFailure(
     MessageFactory? customFactory,
-    String messageKey,
-    Map<String, dynamic> params,
+    ValidationCode code,
+    Map<String, dynamic> context,
     String defaultMessage,
   ) {
-    return customFactory?.call(label, params) ??
-        ValidatorLocale.current?.mixed[messageKey]?.call(params) ??
+    final message = customFactory?.call(label, context) ??
+        ValidatorLocale.current?.messages[code]?.call(context) ??
         defaultMessage;
+    return ValidationFailure(code: code, message: message, context: context);
   }
 }

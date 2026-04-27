@@ -1,181 +1,483 @@
-import 'package:dup/src/util/validate_locale.dart';
-import 'package:dup/src/util/validator_base.dart';
+import 'dart:convert';
 
 import '../model/message_factory.dart';
+import '../model/validation_code.dart';
+import 'validator_base.dart';
 
-/// Validator for String values.
+/// Validator for [String] values.
+///
+/// All methods null-skip: they return null (pass) when the value is null.
+/// Add [required] to the chain if null should be rejected.
+///
+/// ```dart
+/// ValidateString()
+///   .setLabel('Email')
+///   .email()
+///   .required()
+///   .validate(value);
+/// ```
 class ValidateString extends BaseValidator<String, ValidateString> {
-  /// Checks if the string has at least [min] characters.
+  /// Phase 2: fails when the trimmed length is less than [min].
   ValidateString min(int min, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(2, (value) {
       if (value != null && value.trim().length < min) {
-        if (messageFactory != null) {
-          return messageFactory(label, {'min': min});
-        }
-        final global = ValidatorLocale.current?.string['min']?.call({
-          'name': label,
-          'min': min,
-        });
-        if (global != null) return global;
-        return '$label must be at least $min characters.';
+        return getFailure(
+          messageFactory,
+          ValidationCode.stringMin,
+          {'name': label, 'min': min},
+          '$label must be at least $min characters.',
+        );
       }
       return null;
     });
-    return this;
   }
 
-  /// Checks if the string has at most [max] characters.
+  /// Phase 2: fails when the trimmed length exceeds [max].
   ValidateString max(int max, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(2, (value) {
       if (value != null && value.trim().length > max) {
-        if (messageFactory != null) {
-          return messageFactory(label, {'max': max});
-        }
-        final global = ValidatorLocale.current?.string['max']?.call({
-          'name': label,
-          'max': max,
-        });
-        if (global != null) return global;
-        return '$label must be at most $max characters.';
+        return getFailure(
+          messageFactory,
+          ValidationCode.stringMax,
+          {'name': label, 'max': max},
+          '$label must be at most $max characters.',
+        );
       }
       return null;
     });
-    return this;
   }
 
-  /// Checks if the string matches the given [regex].
+  /// Phase 1: fails when the trimmed value does not match [regex].
   ValidateString matches(RegExp regex, {MessageFactory? messageFactory}) {
-    addValidator((value) {
+    return addPhaseValidator(1, (value) {
       if (value != null && !regex.hasMatch(value.trim())) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['matches']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return '$label does not match the required format.';
+        return getFailure(
+          messageFactory,
+          ValidationCode.matches,
+          {'name': label},
+          '$label does not match the required format.',
+        );
       }
       return null;
     });
-    return this;
   }
 
-  /// Checks if the string is a valid email address.
+  /// Phase 1: fails when the value is not a valid email address.
+  /// Null and empty string pass (null-skip).
   ValidateString email({MessageFactory? messageFactory}) {
     const emailRegex =
-        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-    addValidator((value) {
-      if (value == null || value.trim().isEmpty) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['emailEmpty']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return 'Please enter $label.';
-      }
+        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@'
+        r'((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|'
+        r'(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
       if (!RegExp(emailRegex).hasMatch(value.trim())) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['emailInvalid']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return '$label is not a valid email address.';
+        return getFailure(
+          messageFactory,
+          ValidationCode.emailInvalid,
+          {'name': label},
+          '$label is not a valid email address.',
+        );
       }
       return null;
     });
-    return this;
   }
 
-  /// Checks if the string is a valid password.
-  ValidateString password({MessageFactory? messageFactory}) {
-    addValidator((value) {
-      if (value == null || value.trim().isEmpty) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['passwordEmpty']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return 'Please enter $label.';
-      }
-      if (value.trim().length < 4) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['passwordMin']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return '$label must be at least 4 characters.';
-      }
-      if (!RegExp("^[\u0000-\u007F]+\$").hasMatch(value.trim())) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['passwordAscii']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return '$label must contain only ASCII characters.';
+  /// Phase 1: fails when the trimmed length is less than [minLength].
+  /// Default minimum length is 4. Null, empty string, and whitespace-only
+  /// values pass (null-skip). Add [notBlank] to also reject whitespace-only.
+  ///
+  /// This validator only enforces minimum length. It does not check complexity
+  /// (uppercase, digits, special characters). Use [addValidator] or [satisfy]
+  /// to add complexity rules on top of this.
+  ValidateString password({int minLength = 4, MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (value.trim().length < minLength) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.passwordMin,
+          {'name': label, 'minLength': minLength},
+          '$label must be at least $minLength characters.',
+        );
       }
       return null;
     });
-    return this;
   }
 
-  /// Checks if the string contains any emoji characters.
+  /// Phase 1: fails when the value contains emoji characters.
   ValidateString emoji({MessageFactory? messageFactory}) {
-    const emojiRegex = r'[\uD800-\uDBFF][\uDC00-\uDFFF]';
-    addValidator((value) {
-      if (value != null &&
-          value.isNotEmpty &&
-          RegExp(emojiRegex).hasMatch(value)) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['emoji']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return '$label cannot contain emoji.';
+    final emojiRegex = RegExp(r'\p{Emoji_Presentation}', unicode: true);
+    return addPhaseValidator(1, (value) {
+      if (value != null && value.isNotEmpty && emojiRegex.hasMatch(value)) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.emoji,
+            {
+              'name': label,
+            },
+            '$label cannot contain emoji.');
       }
       return null;
     });
-    return this;
   }
 
-  /// Checks if the string is a valid mobile phone number.
-  ValidateString mobile({MessageFactory? messageFactory}) {
-    const phoneRegex = r'^\d{2,3}-\d{3,4}-\d{4}$';
-    addValidator((value) {
-      if (value == null || value.toString().isEmpty) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['mobileEmpty']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return 'Please enter $label.';
-      }
-      if (!RegExp(phoneRegex).hasMatch(value.toString())) {
-        if (messageFactory != null) {
-          return messageFactory(label, {});
-        }
-        final global = ValidatorLocale.current?.string['mobileInvalid']?.call({
-          'name': label,
-        });
-        if (global != null) return global;
-        return '$label is not a valid mobile number.';
+  /// Phase 1: fails when the value consists entirely of whitespace.
+  /// Null passes (null-skip). Combine with [required] to also reject null.
+  ValidateString notBlank({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value != null && value.trim().isEmpty) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.notBlank,
+            {
+              'name': label,
+            },
+            '$label cannot be blank.');
       }
       return null;
     });
-    return this;
+  }
+
+  /// Phase 1: fails when the value contains any non-alpha characters (a–z, A–Z).
+  ValidateString alpha({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!RegExp(r'^[a-zA-Z]+$').hasMatch(value.trim())) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.alpha,
+            {
+              'name': label,
+            },
+            '$label must contain only letters.');
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the value contains characters other than a–z, A–Z, 0–9.
+  ValidateString alphanumeric({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.alphanumeric,
+          {'name': label},
+          '$label must contain only letters and numbers.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the value contains characters other than 0–9.
+  ValidateString numeric({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!RegExp(r'^[0-9]+$').hasMatch(value.trim())) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.numeric,
+          {'name': label},
+          '$label must contain only digits.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: validates Korean mobile phone number format.
+  /// Default pattern: `010-1234-5678`. Override with [customRegex].
+  ValidateString koMobile(
+      {RegExp? customRegex, MessageFactory? messageFactory}) {
+    final regex = customRegex ?? RegExp(r'^\d{2,3}-\d{3,4}-\d{4}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.isEmpty) return null;
+      if (!regex.hasMatch(value)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.mobileInvalid,
+          {'name': label},
+          '$label is not a valid mobile number.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: validates Korean landline phone number format.
+  /// Default pattern: `02-1234-5678`. Override with [customRegex].
+  ValidateString koPhone(
+      {RegExp? customRegex, MessageFactory? messageFactory}) {
+    final regex = customRegex ?? RegExp(r'^(0[2-9]{1}\d?)-\d{3,4}-\d{4}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.isEmpty) return null;
+      if (!regex.hasMatch(value)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.phoneInvalid,
+          {'name': label},
+          '$label is not a valid phone number.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: validates Korean business registration number format.
+  /// Default pattern: `123-45-67890`. Override with [customRegex].
+  ValidateString bizno({RegExp? customRegex, MessageFactory? messageFactory}) {
+    final regex = customRegex ?? RegExp(r'^\d{3}-\d{2}-\d{5}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.isEmpty) return null;
+      if (!regex.hasMatch(value)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.biznoInvalid,
+          {'name': label},
+          '$label is not a valid business registration number.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the value is not a valid HTTP/HTTPS URL.
+  ///
+  /// Uses a permissive regex check (`^https?://...`), not full URI parsing.
+  /// Unusual but syntactically valid URLs (e.g. `http://a`) will pass.
+  ValidateString url({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^https?://[^\s/$.?#][^\s]*$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.isEmpty) return null;
+      if (!regex.hasMatch(value)) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.url,
+            {
+              'name': label,
+            },
+            '$label is not a valid URL.');
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the value is not a valid UUID v4 (case-insensitive).
+  ValidateString uuid({MessageFactory? messageFactory}) {
+    final regex = RegExp(
+      r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+      caseSensitive: false,
+    );
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.isEmpty) return null;
+      if (!regex.hasMatch(value)) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.uuid,
+            {
+              'name': label,
+            },
+            '$label is not a valid UUID.');
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the trimmed value does not start with [prefix].
+  ValidateString startsWith(String prefix, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!value.trim().startsWith(prefix)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.startsWith,
+          {'name': label, 'prefix': prefix},
+          '$label must start with "$prefix".',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the trimmed value does not end with [suffix].
+  ValidateString endsWith(String suffix, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!value.trim().endsWith(suffix)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.endsWith,
+          {'name': label, 'suffix': suffix},
+          '$label must end with "$suffix".',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the value does not contain [substring].
+  /// Does NOT trim — trimming would change substring match semantics.
+  ValidateString contains(String substring, {MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.isEmpty) return null;
+      if (!value.contains(substring)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.stringContains,
+          {'name': label, 'substring': substring},
+          '$label must contain "$substring".',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when the trimmed value is not a valid IPv4 or IPv6 address.
+  ValidateString ipAddress({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      final trimmed = value.trim();
+      final isValid = _isValidIpv4(trimmed) || _isValidIpv6(trimmed);
+      if (!isValid) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.ipAddress,
+          {'name': label},
+          '$label is not a valid IP address.',
+        );
+      }
+      return null;
+    });
+  }
+
+  bool _isValidIpv4(String s) {
+    final parts = s.split('.');
+    if (parts.length != 4) return false;
+    final digitsOnly = RegExp(r'^\d+$');
+    return parts.every((p) {
+      if (!digitsOnly.hasMatch(p)) return false;
+      if (p.length > 1 && p.startsWith('0')) return false;
+      final n = int.tryParse(p);
+      return n != null && n >= 0 && n <= 255;
+    });
+  }
+
+  bool _isValidIpv6(String s) {
+    final uri = Uri.tryParse('http://[$s]');
+    return uri != null && uri.host == s;
+  }
+
+  /// Phase 1: fails when value is not a valid hex color (#RGB or #RRGGBB).
+  ValidateString hexColor({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!regex.hasMatch(value.trim())) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.hexColor,
+          {'name': label},
+          '$label is not a valid hex color.',
+        );
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when value is not valid Base64 (RFC 4648 §4 — standard
+  /// alphabet using `+` and `/`). URL-safe Base64 (RFC 4648 §5, using `-` and
+  /// `_`) is not accepted; strip or convert the value before calling this.
+  ValidateString base64({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^[A-Za-z0-9+/]*={0,2}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      final trimmed = value.trim();
+      if (!regex.hasMatch(trimmed) || trimmed.length % 4 != 0) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.base64,
+            {
+              'name': label,
+            },
+            '$label is not valid Base64.');
+      }
+      return null;
+    });
+  }
+
+  /// Phase 1: fails when value is not parseable JSON.
+  /// Passes for any valid JSON value including "null", "42", "true".
+  ValidateString json({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      try {
+        jsonDecode(value.trim());
+        return null;
+      } catch (_) {
+        return getFailure(
+            messageFactory,
+            ValidationCode.json,
+            {
+              'name': label,
+            },
+            '$label is not valid JSON.');
+      }
+    });
+  }
+
+  /// Phase 1: fails when value is not a valid credit card number (Luhn algorithm).
+  /// Strips spaces and dashes before checking.
+  ValidateString creditCard({MessageFactory? messageFactory}) {
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      final digits = value.replaceAll(RegExp(r'[\s\-]'), '');
+      if (!RegExp(r'^\d+$').hasMatch(digits) ||
+          digits.length < 13 ||
+          digits.length > 19 ||
+          !_luhnCheck(digits)) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.creditCard,
+          {'name': label},
+          '$label is not a valid credit card number.',
+        );
+      }
+      return null;
+    });
+  }
+
+  bool _luhnCheck(String digits) {
+    int sum = 0;
+    bool alternate = false;
+    for (int i = digits.length - 1; i >= 0; i--) {
+      int n = int.parse(digits[i]);
+      if (alternate) {
+        n *= 2;
+        if (n > 9) n -= 9;
+      }
+      sum += n;
+      alternate = !alternate;
+    }
+    return sum % 10 == 0;
+  }
+
+  /// Phase 1: fails when value is not a valid Korean 5-digit postal code.
+  ValidateString koPostalCode({MessageFactory? messageFactory}) {
+    final regex = RegExp(r'^\d{5}$');
+    return addPhaseValidator(1, (value) {
+      if (value == null || value.trim().isEmpty) return null;
+      if (!regex.hasMatch(value.trim())) {
+        return getFailure(
+          messageFactory,
+          ValidationCode.koPostalCode,
+          {'name': label},
+          '$label is not a valid Korean postal code.',
+        );
+      }
+      return null;
+    });
   }
 }

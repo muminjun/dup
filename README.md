@@ -1,364 +1,489 @@
 # dup
 
-A powerful, flexible validation library for Dart and Flutter, inspired by
-JavaScript's [yup](https://github.com/jquense/yup)[1].
+A schema-based validation library for Dart, inspired by [zod](https://zod.dev) and [yup](https://github.com/jquense/yup).
+
+Pure Dart — works in Flutter, server, and CLI projects with no platform dependencies.
 
 ## Features
 
-- Schema-based validation for forms and data models
-- Chainable, composable validation rules
-- Customizable error messages and labels
-- Exception-based error handling
-- Easy localization (multi-language support)
-- Supports Korean postpositions and number formatting
-- Easy integration with Flutter
+- **Fluent, chainable API** — build validators with a readable method chain
+- **Phase-ordered execution** — `required` always fires before format and range checks, regardless of chain order
+- **Sealed result types** — `ValidationResult` and `FormValidationResult` enable exhaustive `switch` matching
+- **DupSchema** — group validators into a form schema with cross-field validation
+- **Nested validation** — `ValidateObject` and `ValidateMap` flatten errors to dot / bracket notation
+- **Conditional rules** — `when()` replaces validators based on runtime field values
+- **Schema derivation** — `pick()`, `omit()`, and `partial()` derive new schemas without duplication
+- **Three-level error messages** — per-call override → global locale → English default
+- **Async validator support** — `addAsyncValidator` for DB lookups and API checks
+- **Null-skip semantics** — non-required validators pass silently on `null`
 
----
+## Installation
 
-## Usage
-
-dup enables you to define validation rules for your data using a schema-based approach, making your
-validation logic clean, reusable, and maintainable[2].
-
-### 1. Define a validation schema
+```yaml
+dependencies:
+  dup: ^2.0.0
+```
 
 ```dart
 import 'package:dup/dup.dart';
+```
 
-final BaseValidatorSchema schema = BaseValidatorSchema({
-  'email': ValidateString()
-      .email()
-      .required()
-      .setLabel('Email'),
-  'password': ValidateString()
-      .password()
-      .required()
-      .setLabel('Password'),
-  'age': ValidateNumber()
-      .min(18)
-      .max(99)
-      .setLabel('Age'),
-  'tags': ValidateList()
-      .minLength(1)
-      .maxLength(5)
-      .hasNoDuplicates()
-      .setLabel('Tags'),
-  'categories': ValidateList()
-      .isNotEmpty()
-      .contains('general')
-      .setLabel('Categories'),
+## Quick Start
+
+```dart
+final schema = DupSchema({
+  'email': ValidateString().email().required(),
+  'age':   ValidateNumber().min(18).required(),
 });
-```
 
-- `email` must be a valid email address and is required.
-- `password` must meet your password rule and is required.
-- `age` must be between 18 and 99.
-- `tags` must have 1-5 items with no duplicates.
-- `categories` must not be empty and must contain 'general'.
+final result = await schema.validate({
+  'email': 'user@example.com',
+  'age':   25,
+});
 
----
-
-### 2. Prepare request data
-
-```dart
-
-final request = {
-  'email': 'test@example.com',
-  'password': '1234',
-  'age': 20,
-  'tags': ['flutter', 'dart', 'mobile'],
-  'categories': ['general', 'programming'],
-};
-```
-
----
-
-### 3. Validate
-
-Call `useUiForm.validate()` to validate your data against the schema.  
-If validation fails, a `FormValidationException` will be thrown with a map of error messages.
-
-```dart
-try {
-  await useUiForm.validate(schema, request);
-  // Validation passed!
-} catch (e) {
-  print(e.toString()); // Example: 'Email is not a valid email address.'
+switch (result) {
+  case FormValidationSuccess():
+    print('All good!');
+  case FormValidationFailure():
+    for (final field in result.fields) {
+      print('$field: ${result(field)!.message}');
+    }
 }
 ```
 
----
+## DupSchema
 
-## Validation Types
-
-### String Validation
+### Basic usage
 
 ```dart
-ValidateString()
-    .min(2)
-    .max(50)
-    .email()
-    .password()
-    .matches(RegExp(r'^[a-zA-Z]+$'))
-    .setLabel('Username')
-    .required()
+final schema = DupSchema(
+  {
+    'email':           ValidateString().email().required(),
+    'password':        ValidateString().min(8).required(),
+    'passwordConfirm': ValidateString().required(),
+  },
+  labels: {'passwordConfirm': 'Password confirmation'},
+);
 ```
 
-### Number Validation
+The `labels` map overrides the error message label for a field (defaults to the key name).
+
+### Reading errors
 
 ```dart
-ValidateNumber()
-    .min(0)
-    .max(100)
-    .isInteger()
-    .setLabel('Score')
-    .required()
-```
-
-### List Validation
-
-```dart
-ValidateList()
-    .isNotEmpty()                    // List must not be empty
-    .minLength(2)                    // At least 2 items
-    .maxLength(10)                   // At most 10 items
-    .lengthBetween(2, 10)           // Between 2-10 items
-    .hasLength(5)                    // Exactly 5 items
-    .contains('required_item')       // Must contain specific item
-    .doesNotContain('forbidden')     // Must not contain specific item
-    .hasNoDuplicates()              // No duplicate items allowed
-    .all((item) => item.isNotEmpty) // All items must satisfy condition
-    .any((item) => item.startsWith('prefix')) // At least one item must satisfy condition
-    .eachItem((item) => item.length > 2 ? null : 'Item too short') // Custom validation for each item
-    .setLabel('Items')
-    .required()
-```
-
-**List Validation Methods:**
-
-- **`isNotEmpty()`**: Validates that the list contains at least one item
-- **`isEmpty()`**: Validates that the list is empty
-- **`minLength(int min)`**: Validates minimum number of items
-- **`maxLength(int max)`**: Validates maximum number of items
-- **`lengthBetween(int min, int max)`**: Validates item count within range
-- **`hasLength(int length)`**: Validates exact number of items
-- **`contains(T item)`**: Validates that list contains a specific item
-- **`doesNotContain(T item)`**: Validates that list does not contain a specific item
-- **`hasNoDuplicates()`**: Validates that all items in the list are unique
-- **`all(bool Function(T) predicate)`**: Validates that all items satisfy a condition
-- **`any(bool Function(T) predicate)`**: Validates that at least one item satisfies a condition
-- **`eachItem(String? Function(T) validator)`**: Applies custom validation to each item individually
-
----
-
-## Example: Validating a request object
-
-You can encapsulate validation logic inside your data classes for better structure and reusability.
-
-```dart
-class RequestObject {
-  String? title;
-  String? contents;
-  List? tags;
-
-  RequestObject({this.title, this.contents, this.tags});
-
-  /// Validates the request fields using dup's schema-based validation.
-  Future validate() async {
-    final BaseValidatorSchema schema = BaseValidatorSchema({
-      'title': ValidateString()
-          .min(2)
-          .setLabel('Title')
-          .required(),
-      'contents': ValidateString()
-          .min(2)
-          .setLabel('Contents')
-          .required(),
-      'tags': ValidateList()
-          .minLength(1)
-          .maxLength(10)
-          .eachItem((tag) => tag.trim().isEmpty ? 'Tag cannot be empty' : null)
-          .setLabel('Tags')
-          .required(),
-    });
-    await useUiForm.validate(schema, {
-      'title': title,
-      'contents': contents,
-      'tags': tags,
-    });
-  }
+if (result is FormValidationFailure) {
+  result.hasError('email');       // bool
+  result('email')?.message;      // String? — the error message
+  result('email')?.code;         // ValidationCode enum value
+  result.fields;                  // List<String> — all failing field names
+  result.firstField;              // String? — first failing field name
 }
 ```
 
----
-
-## Custom Validation
-
-dup allows you to easily add your own validation logic, either inline or as reusable extensions[2].
-
-### Inline Custom Validator
+### Validation methods
 
 ```dart
+// Async — always safe; required when async validators are registered
+final result = await schema.validate(data);
 
-final validator = ValidateString()
-    .setLabel('Nickname')
-    .required()
-    .addValidator((value) {
-  if (value != null && value.contains('admin')) {
-    return 'Nickname cannot contain the word "admin".';
+// Sync — throws StateError if async validators are present
+final result = schema.validateSync(data);
+
+// Single field — for on-change feedback in TextFormField
+final fieldResult = await schema.validateField('email', value);
+
+// Single field with when() rules applied
+final fieldResult = await schema.validateField('type', value, data: formData);
+
+// Parallel — runs all field validators concurrently; faster for I/O-bound async validators
+final result = await schema.validateParallel(data);
+```
+
+### Cross-field validation
+
+Runs only when all individual fields pass:
+
+```dart
+schema.crossValidate((data) {
+  if (data['password'] != data['passwordConfirm']) {
+    return {
+      'passwordConfirm': const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'Passwords do not match.',
+        context: {},
+      ),
+    };
   }
   return null;
 });
 ```
 
-### Custom Extension Validator
+### Conditional rules — `when()`
 
-You can define your own extension methods for custom validation rules:
-
-```dart
-extension CustomStringValidator on ValidateString {
-  /// Disallow special characters in the string.
-  ValidateString noSpecialChars({String? message}) {
-    return addValidator((value) {
-      if (value != null && RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) {
-        return message ?? '$label cannot contain special characters.';
-      }
-      return null;
-    });
-  }
-}
-
-// Usage
-final validator = ValidateString()
-    .setLabel('Nickname')
-    .noSpecialChars(message: 'Nickname cannot contain special characters!');
-```
-
-### Custom List Validators
+Replaces validators for specified fields when a condition is met at runtime:
 
 ```dart
-extension CustomListValidator on ValidateList {
-  /// Validates that list contains only unique values based on a key selector
-  ValidateList uniqueBy(K Function(T) keySelector, {String? message}) {
-    return addValidator((value) {
-      if (value != null) {
-        final keys = value.map(keySelector).toList();
-        final uniqueKeys = keys.toSet();
-        if (keys.length != uniqueKeys.length) {
-          return message ?? '$label must contain unique items';
-        }
-      }
-      return null;
-    });
-  }
-}
-
-// Usage
-final validator = ValidateList()
-    .setLabel('Users')
-    .uniqueBy((user) => user.email, message: 'Users must have unique email addresses');
-```
-
----
-
-## Customizing Error Messages
-
-dup lets you easily override the default error messages for any validation rule[2].  
-You can do this in two ways:
-
-### 1. Per-Validator Custom Message
-
-You can provide a custom message for a specific validation rule using the `messageFactory`
-parameter:
-
-```dart
-
-final validator = ValidateString()
-    .setLabel('Username')
-    .min(
-    4, messageFactory: (label, args) => '$label must be at least ${args['min']} characters long.');
-
-final listValidator = ValidateList()
-    .setLabel('Items')
-    .minLength(
-    2, messageFactory: (label, args) => '$label must contain at least ${args['min']} items.');
-```
-
-- The `messageFactory` is a function that receives the field label and arguments (like `min`, `max`,
-  etc.).
-- This custom message will be used only for this validation rule.
-
-### 2. Global Custom Messages
-
-You can globally override error messages for your entire app by registering a custom message
-factory:
-
-```dart
-ValidatorLocale.setLocale(
-  ValidatorLocale(
-    mixed: {
-      'required': (args) => '${args['name']} is required.',
-      // ...other global messages
-    },
-    string: {
-      'min': (args) => '${args['name']} must be at least ${args['min']} characters long.',
-      // ...other string messages
-    },
-    array: {
-      'notEmpty': (args) => '${args['name']} cannot be empty.',
-      'min': (args) => '${args['name']} must have at least ${args['min']} items.',
-      'max': (args) => '${args['name']} cannot have more than ${args['max']} items.',
-      'noDuplicates': (args) => '${args['name']} must not contain duplicate items.',
-      // ...other array messages
-    },
-    // ...number, etc.
-  ),
+final schema = DupSchema({
+  'type':    ValidateString().required(),
+  'company': ValidateString(),
+}).when(
+  field: 'type',
+  condition: (v) => v == 'business',
+  then: {'company': ValidateString().required()},
 );
 ```
 
-- This will apply your custom messages to all validators of the corresponding type and rule.
-- You can still override these global messages per-validator using the `messageFactory` parameter if
-  needed.
+### Schema derivation — `pick()`, `omit()`, `partial()`
+
+```dart
+// Keep only listed fields
+final loginSchema = fullSchema.pick(['email', 'password']);
+
+// Remove listed fields
+final publicSchema = fullSchema.omit(['passwordConfirm']);
+
+// Skip all required checks (useful for PATCH requests)
+final patchSchema = fullSchema.partial();
+```
+
+### Sharing validator instances across schemas
+
+Validator objects are used directly — they are not cloned when passed to a schema or when deriving schemas with `pick`/`omit`/`partial`. Each validator's label is set at `DupSchema` construction time, so sharing the same instance between two schemas with different label overrides will result in the label reflecting whichever schema was constructed last.
+
+```dart
+// Wrong: same instance in two schemas — label will be 'Email Address' for both
+final v = ValidateString().email().required();
+final loginSchema = DupSchema({'email': v});
+final profileSchema = DupSchema({'email': v}, labels: {'email': 'Email Address'});
+
+// Right: separate instances per schema
+final loginSchema = DupSchema({'email': ValidateString().email().required()});
+final profileSchema = DupSchema(
+  {'email': ValidateString().email().required()},
+  labels: {'email': 'Email Address'},
+);
+```
 
 ---
 
-### 3. Localization File Customization
+## Validators
 
-If you use localization (e.g., with `easy_localization`), you can also edit your language JSON files
-to change the default messages for each key.
+### ValidateString
+
+| Method | Phase | Description |
+|---|---|---|
+| `required()` | 0 | Fails for null or empty string |
+| `notBlank()` | 1 | Fails for whitespace-only string |
+| `min(n)` | 2 | At least `n` characters (trimmed) |
+| `max(n)` | 2 | At most `n` characters (trimmed) |
+| `matches(RegExp)` | 1 | Must match the regex |
+| `email()` | 1 | Valid email address |
+| `url()` | 1 | Valid HTTP/HTTPS URL |
+| `uuid()` | 1 | Valid UUID v4 |
+| `password({minLength})` | 1 | ASCII printable chars, default min length 4 |
+| `alpha()` | 1 | Letters only (a–z, A–Z) |
+| `alphanumeric()` | 1 | Letters and digits only |
+| `numeric()` | 1 | Digits only (0–9) |
+| `emoji()` | 1 | Fails when value contains emoji |
+| `startsWith(prefix)` | 1 | Must start with prefix |
+| `endsWith(suffix)` | 1 | Must end with suffix |
+| `contains(substring)` | 1 | Must contain substring |
+| `ipAddress()` | 1 | Valid IPv4 or IPv6 address |
+| `hexColor()` | 1 | Valid hex color (`#RGB` or `#RRGGBB`) |
+| `base64()` | 1 | Valid Base64-encoded string |
+| `json()` | 1 | Valid JSON string |
+| `creditCard()` | 1 | Valid credit card number (Luhn check, 13–19 digits) |
+| `koMobile({customRegex})` | 1 | Mobile number (default: Korean format) |
+| `koPhone({customRegex})` | 1 | Landline number (default: Korean format) |
+| `bizno({customRegex})` | 1 | Business registration number (default: Korean) |
+| `koPostalCode()` | 1 | Korean 5-digit postal code |
+| `equalTo(other)` | 3 | Must equal another value |
+| `satisfy(fn)` | 3 | Custom inline predicate |
+| `addValidator(fn)` | 3 | Custom validator returning `ValidationFailure?` |
+| `addAsyncValidator(fn)` | 4 | Async custom validator |
+
+### ValidateNumber
+
+| Method | Phase | Description |
+|---|---|---|
+| `required()` | 0 | Fails for null |
+| `min(n)` | 2 | Value ≥ n |
+| `max(n)` | 2 | Value ≤ n |
+| `between(min, max)` | 2 | Inclusive range |
+| `isInteger()` | 1 | No fractional part |
+| `isPrecision(digits)` | 1 | At most `digits` decimal places |
+| `isPort()` | 1 | Integer in range 0–65535 |
+| `isPositive()` | 2 | Value > 0 |
+| `isNegative()` | 2 | Value < 0 |
+| `isNonNegative()` | 2 | Value ≥ 0 |
+| `isNonPositive()` | 2 | Value ≤ 0 |
+| `isEven()` | 2 | Even integer |
+| `isOdd()` | 2 | Odd integer |
+| `isMultipleOf(n)` | 2 | Multiple of n |
+
+**Flutter TextFormField integration:**
+
+```dart
+TextFormField(
+  validator: ValidateNumber()
+    .setLabel('Age')
+    .min(18)
+    .max(120)
+    .isInteger()
+    .toValidator(),
+)
+```
+
+`toValidator()` parses string input to `num` before validating, returning a parse error for non-numeric input like `"abc"` or `"17세"`.
+
+### ValidateList\<T\>
+
+| Method | Phase | Description |
+|---|---|---|
+| `required()` | 0 | Fails for null |
+| `isNotEmpty()` | 1 | At least one item |
+| `isEmpty()` | 1 | Must be empty |
+| `minLength(n)` | 2 | At least `n` items |
+| `maxLength(n)` | 2 | At most `n` items |
+| `hasLength(n)` | 2 | Exactly `n` items |
+| `lengthBetween(min, max)` | 2 | Item count in range |
+| `contains(item)` | 2 | Must contain item |
+| `doesNotContain(item)` | 2 | Must not contain item |
+| `containsAll(items)` | 2 | Must contain all items |
+| `hasNoDuplicates()` | 2 | No duplicate items |
+| `all(predicate)` | 3 | Every item satisfies predicate |
+| `any(predicate)` | 3 | At least one item satisfies predicate |
+| `none(predicate)` | 3 | No items satisfy predicate |
+| `eachItem(fn)` | 3 | Per-item validator; reports first failing index |
+
+### ValidateBool
+
+| Method | Phase | Description |
+|---|---|---|
+| `required()` | 0 | Fails for null |
+| `isTrue()` | 1 | Must be `true` |
+| `isFalse()` | 1 | Must be `false` |
+
+```dart
+// "Agree to terms" checkbox
+ValidateBool().setLabel('Terms').isTrue().required();
+```
+
+### ValidateDateTime
+
+| Method | Phase | Description |
+|---|---|---|
+| `required()` | 0 | Fails for null |
+| `isBefore(target)` | 1 | Strictly before target |
+| `isAfter(target)` | 1 | Strictly after target |
+| `isSameDay(target)` | 1 | Same calendar day as target |
+| `isToday()` | 1 | Same calendar day as today |
+| `isWeekday()` | 1 | Monday–Friday |
+| `isWeekend()` | 1 | Saturday or Sunday |
+| `min(date)` | 2 | On or after date |
+| `max(date)` | 2 | On or before date |
+| `between(min, max)` | 2 | Inclusive range |
+| `isInFuture()` | 2 | After `DateTime.now()` |
+| `isInPast()` | 2 | Before `DateTime.now()` |
+| `isWithin(duration)` | 2 | Within duration from now |
+
+### ValidateObject
+
+Validates a nested `Map<String, dynamic>` using an inner `DupSchema`. Errors are flattened with **dot notation**:
+
+```dart
+final schema = DupSchema({
+  'user': ValidateObject(DupSchema({
+    'name':  ValidateString().required(),
+    'email': ValidateString().email().required(),
+  })).required(),
+});
+
+final result = await schema.validate({
+  'user': {'name': 'Alice', 'email': 'bad-email'},
+});
+
+// Error key: 'user.email'
+print(result('user.email')?.message); // user.email is not a valid email address.
+```
+
+### ValidateMap\<V\>
+
+Validates all keys and values of a `Map<String, V>`. Errors are flattened with **bracket notation**:
+
+```dart
+final schema = DupSchema({
+  'scores': ValidateMap<int>()
+    .keyValidator(ValidateString().alphanumeric())
+    .valueValidator(ValidateNumber().between(0, 100).isInteger())
+    .minSize(1)
+    .required(),
+});
+
+final result = await schema.validate({
+  'scores': {'math': 95, 'english': 110},
+});
+
+// Error key: 'scores[english]'
+print(result('scores[english]')?.message); // english must be at most 100.
+```
 
 ---
 
-**Summary:**
+## Phase Ordering
 
-- Use `messageFactory` in your validator for per-field custom messages.
-- Use `ValidatorLocale.setLocale()` for app-wide global custom messages.
-- Edit your localization files for language-specific message customization.
+Validators always run in phase order, regardless of chain order. `required` always fires first; async validators always run last.
+
+| Phase | What runs |
+|---|---|
+| 0 | `required` |
+| 1 | `notBlank`, format checks (`email`, `isInteger`, `isBefore`, …) |
+| 2 | Constraint checks (`min`, `max`, `between`, …) |
+| 3 | Custom (`addValidator`, `satisfy`, `equalTo`, …) |
+| 4 | Async (`addAsyncValidator`) |
+
+```dart
+// These two chains behave identically
+ValidateString().email().required();
+ValidateString().required().email();
+```
 
 ---
 
-## API Overview
+## Error Messages
 
-- `BaseValidator`: Abstract base class for validators
-- `ValidateString`: String validation (min, max, email, password, etc.)
-- `ValidateNumber`: Number validation (min, max, isInteger, etc.)
-- `ValidateList`: List/Array validation (length, contents, uniqueness, etc.)
-- `BaseValidatorSchema`: Schema for form validation
-- `UiFormService`: Service for validating schemas and handling errors
-- `FormValidationException`: Exception thrown on validation failure
+Messages are resolved in this order:
+
+1. **`messageFactory`** — argument on the specific method call
+2. **`ValidatorLocale.current`** — global locale map keyed by `ValidationCode`
+3. **Hardcoded default** — English fallback
+
+### Per-call override
+
+```dart
+ValidateString()
+  .setLabel('Email')
+  .email(messageFactory: (label, _) => 'Please enter a valid $label address.');
+```
+
+### Global locale
+
+```dart
+ValidatorLocale.setLocale(ValidatorLocale({
+  ValidationCode.required:     (p) => '${p['name']}은(는) 필수 입력입니다.',
+  ValidationCode.emailInvalid: (p) => '${p['name']} 형식이 올바르지 않습니다.',
+  ValidationCode.stringMin:    (p) => '${p['name']}은(는) 최소 ${p['min']}자 이상이어야 합니다.',
+  ValidationCode.numberMin:    (p) => '${p['name']}은(는) ${p['min']} 이상이어야 합니다.',
+}));
+```
+
+Reset in tests to avoid state leakage:
+
+```dart
+tearDown(() => ValidatorLocale.resetLocale());
+```
 
 ---
 
-## Links
+## Async Validators
 
-- [API Reference](https://pub.dev/documentation/dup/latest/)
-- [GitHub Repository](https://github.com/muminjun/dup)
+```dart
+final usernameValidator = ValidateString()
+  .setLabel('Username')
+  .min(3)
+  .max(20)
+  .alphanumeric()
+  .required()
+  ..addAsyncValidator((value) async {
+    final taken = await userRepository.exists(value!);
+    if (taken) {
+      return const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'Username is already taken.',
+        context: {},
+      );
+    }
+    return null;
+  });
+
+final result = await usernameValidator.validateAsync('alice');
+```
+
+Use `schema.hasAsyncValidators` to decide between `validate()` and `validateSync()`.
+
+---
+
+## Custom Validators
+
+### Inline predicate
+
+```dart
+ValidateString()
+  .setLabel('Code')
+  .satisfy(
+    (v) => v != null && v.startsWith('APP-'),
+    messageFactory: (label, _) => '$label must start with APP-.',
+  );
+```
+
+### Full validator function
+
+```dart
+ValidateNumber()
+  .setLabel('Score')
+  .addValidator((value) {
+    if (value != null && value % 7 != 0) {
+      return const ValidationFailure(
+        code: ValidationCode.custom,
+        message: 'Score must be a multiple of 7.',
+        context: {},
+      );
+    }
+    return null;
+  });
+```
+
+---
+
+## ValidationResult
+
+Every single-field validator returns a sealed `ValidationResult`:
+
+```dart
+final result = ValidateString().email().validate(input);
+
+switch (result) {
+  case ValidationSuccess():
+    // passed
+  case ValidationFailure(:final code, :final message, :final context):
+    // code    — ValidationCode enum value
+    // message — resolved error string
+    // context — parameters used to build the message (e.g. {'name': 'Email', 'min': 8})
+}
+```
+
+---
+
+## Migrating from v1
+
+See [MIGRATING.md](MIGRATING.md) for the full before/after guide.
+
+### Breaking changes at a glance
+
+| Area | v1 | v2 |
+|---|---|---|
+| Schema class | `BaseValidatorSchema` | `DupSchema` |
+| Validation call | `useUiForm.validate(schema, data)` | `schema.validate(data)` |
+| Validation result | throws `FormValidationException` | returns `FormValidationResult` |
+| Custom validator return | `String?` | `ValidationFailure?` |
+| Locale constructor | named params + plain string keys | `Map<ValidationCode, fn>` |
+| `ValidateNumber.moreThan(n)` | removed | use `min(n)` |
+| `ValidateNumber.lessThan(n)` | removed | use `max(n)` |
+| `ValidateString.mobile()` | renamed | `koMobile()` |
+| `ValidateString.phone()` | renamed | `koPhone()` |
 
 ---
 
 ## License
 
 MIT
-
-[1] https://github.com/jquense/yup
-[2] programming.data_validation

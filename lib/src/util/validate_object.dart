@@ -1,0 +1,154 @@
+import 'package:meta/meta.dart';
+
+import '../internal/nested_validator.dart';
+import '../model/form_validation_result.dart';
+import '../model/validation_code.dart';
+import '../model/validation_result.dart';
+import 'dup_schema.dart';
+import 'validator_base.dart';
+
+/// Wraps a [DupSchema] as a single-field validator, enabling nested object
+/// validation within a parent [DupSchema].
+///
+/// When used inside a [DupSchema], failing sub-fields are flattened into the
+/// parent [FormValidationFailure] with dot notation:
+/// `result('address.street')?.message`
+///
+/// When called directly via [validate]/[validateAsync], inner failures are
+/// summarised as a single [ValidationCode.nestedFailed] failure.
+class ValidateObject extends BaseValidator<Map<String, dynamic>, ValidateObject>
+    implements NestedValidator {
+  final DupSchema _innerSchema;
+
+  ValidateObject(this._innerSchema);
+
+  @override
+  bool get hasAsyncValidators =>
+      super.hasAsyncValidators || _innerSchema.hasAsyncValidators;
+
+  @override
+  ValidationResult validate(
+    Map<String, dynamic>? value, {
+    bool skipPresence = false,
+  }) {
+    if (_innerSchema.hasAsyncValidators) {
+      throw StateError(
+        'ValidateObject.validate() called on an object whose inner schema '
+        'has async validators. Use validateAsync() instead.',
+      );
+    }
+    final chainResult = runPhaseChain(value, skipPresence: skipPresence);
+    if (chainResult is ValidationFailure) return chainResult;
+    if (value == null) return const ValidationSuccess();
+    final innerResult = _innerSchema.validateSync(
+      value,
+      skipPresence: skipPresence,
+    );
+    if (innerResult is FormValidationFailure) {
+      return _innerSummary(innerResult);
+    }
+    return const ValidationSuccess();
+  }
+
+  @override
+  Future<ValidationResult> validateAsync(
+    Map<String, dynamic>? value, {
+    bool skipPresence = false,
+  }) async {
+    final chainResult = runPhaseChain(value, skipPresence: skipPresence);
+    if (chainResult is ValidationFailure) return chainResult;
+    final asyncFailure = await runAsyncChain(value);
+    if (asyncFailure != null) return asyncFailure;
+    if (value == null) return const ValidationSuccess();
+    final innerResult = await _innerSchema.validate(
+      value,
+      skipPresence: skipPresence,
+    );
+    if (innerResult is FormValidationFailure) {
+      return _innerSummary(innerResult);
+    }
+    return const ValidationSuccess();
+  }
+
+  @override
+  @internal
+  Future<NestedValidationResult?> validateNested(
+    dynamic value, {
+    bool skipPresence = false,
+  }) async {
+    if (value != null && value is! Map<String, dynamic>) {
+      return NestedNormalFailure(ValidationFailure(
+        code: ValidationCode.nestedFailed,
+        message: '$label must be an object.',
+        context: {'name': label},
+      ));
+    }
+    final typedValue = value as Map<String, dynamic>?;
+    final chainResult = runPhaseChain(
+      typedValue,
+      skipPresence: skipPresence,
+    );
+    if (chainResult is ValidationFailure) {
+      return NestedNormalFailure(chainResult);
+    }
+    final asyncFailure = await runAsyncChain(typedValue);
+    if (asyncFailure != null) return NestedNormalFailure(asyncFailure);
+    if (typedValue == null) return null;
+    final innerResult = await _innerSchema.validate(
+      typedValue,
+      skipPresence: skipPresence,
+    );
+    if (innerResult is FormValidationFailure) {
+      return NestedInnerFailure(innerResult.errors);
+    }
+    return null;
+  }
+
+  @override
+  @internal
+  NestedValidationResult? validateNestedSync(
+    dynamic value, {
+    bool skipPresence = false,
+  }) {
+    if (_innerSchema.hasAsyncValidators) {
+      throw StateError(
+        'ValidateObject.validateNestedSync() called on an object whose inner '
+        'schema has async validators. Use validateNested() instead.',
+      );
+    }
+    if (value != null && value is! Map<String, dynamic>) {
+      return NestedNormalFailure(ValidationFailure(
+        code: ValidationCode.nestedFailed,
+        message: '$label must be an object.',
+        context: {'name': label},
+      ));
+    }
+    final typedValue = value as Map<String, dynamic>?;
+    final chainResult = runPhaseChain(
+      typedValue,
+      skipPresence: skipPresence,
+    );
+    if (chainResult is ValidationFailure) {
+      return NestedNormalFailure(chainResult);
+    }
+    if (typedValue == null) return null;
+    final innerResult = _innerSchema.validateSync(
+      typedValue,
+      skipPresence: skipPresence,
+    );
+    if (innerResult is FormValidationFailure) {
+      return NestedInnerFailure(innerResult.errors);
+    }
+    return null;
+  }
+
+  ValidationFailure _innerSummary(FormValidationFailure innerResult) {
+    final firstField = innerResult.firstField ?? '(unknown)';
+    return ValidationFailure(
+      code: ValidationCode.nestedFailed,
+      message: 'Nested validation failed: $firstField — '
+          '${innerResult(firstField)?.message ?? ''}',
+      context: {'name': label, 'firstField': firstField},
+    );
+  }
+}
