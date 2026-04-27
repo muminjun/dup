@@ -142,7 +142,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 이용약관 동의
+  // Real user input pattern — terms of service agreement
   // ---------------------------------------------------------------------------
   group('real user input — terms of service agreement', () {
     final termsValidator = ValidateBool().setLabel('이용약관').required().isTrue();

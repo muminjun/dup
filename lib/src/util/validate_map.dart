@@ -53,6 +53,9 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
 
   /// Phase 1: applies [validator] to every map key.
   ///
+  /// When a key fails validation, the value for that entry is not checked —
+  /// only one error per entry (either a key error or a value error) is recorded.
+  ///
   /// **Concurrency warning:** the validator's label is temporarily mutated to
   /// the current entry key during validation and then restored. Do not share
   /// the same [ValidateMap] instance across concurrent [validateAsync] calls
@@ -180,8 +183,12 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       if (_keyValidator != null) {
         final savedLabel = _keyValidator!.label;
         _keyValidator!.setLabel(entry.key);
-        final kr = await _keyValidator!.validateAsync(entry.key);
-        _keyValidator!.setLabel(savedLabel);
+        final ValidationResult kr;
+        try {
+          kr = await _keyValidator!.validateAsync(entry.key);
+        } finally {
+          _keyValidator!.setLabel(savedLabel);
+        }
         if (kr is ValidationFailure) {
           errors['[${entry.key}]'] = kr;
           continue;
@@ -190,11 +197,15 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       if (_valueValidator != null) {
         final savedLabel = _valueValidator!.label;
         _valueValidator!.setLabel(entry.key);
-        final vr = await _valueValidator!.validateAsync(
-          entry.value,
-          skipPresence: skipPresence,
-        );
-        _valueValidator!.setLabel(savedLabel);
+        final ValidationResult vr;
+        try {
+          vr = await _valueValidator!.validateAsync(
+            entry.value,
+            skipPresence: skipPresence,
+          );
+        } finally {
+          _valueValidator!.setLabel(savedLabel);
+        }
         if (vr is ValidationFailure) {
           errors['[${entry.key}]'] = vr;
         }
@@ -212,8 +223,12 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       if (_keyValidator != null) {
         final savedLabel = _keyValidator!.label;
         _keyValidator!.setLabel(entry.key);
-        final kr = _keyValidator!.validate(entry.key);
-        _keyValidator!.setLabel(savedLabel);
+        final ValidationResult kr;
+        try {
+          kr = _keyValidator!.validate(entry.key);
+        } finally {
+          _keyValidator!.setLabel(savedLabel);
+        }
         if (kr is ValidationFailure) {
           errors['[${entry.key}]'] = kr;
           continue;
@@ -222,11 +237,15 @@ class ValidateMap<V> extends BaseValidator<Map<String, V>, ValidateMap<V>>
       if (_valueValidator != null) {
         final savedLabel = _valueValidator!.label;
         _valueValidator!.setLabel(entry.key);
-        final vr = _valueValidator!.validate(
-          entry.value,
-          skipPresence: skipPresence,
-        );
-        _valueValidator!.setLabel(savedLabel);
+        final ValidationResult vr;
+        try {
+          vr = _valueValidator!.validate(
+            entry.value,
+            skipPresence: skipPresence,
+          );
+        } finally {
+          _valueValidator!.setLabel(savedLabel);
+        }
         if (vr is ValidationFailure) {
           errors['[${entry.key}]'] = vr;
         }

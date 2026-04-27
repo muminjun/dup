@@ -62,34 +62,33 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // isEmpty()
+  // mustBeEmpty()
   // ---------------------------------------------------------------------------
-  group('isEmpty()', () {
+  group('mustBeEmpty()', () {
     test('passes for empty list', () {
       expect(
-        ValidateList<int>().isEmpty().validate([]),
+        ValidateList<int>().mustBeEmpty().validate([]),
         isA<ValidationSuccess>(),
       );
     });
 
     test('fails for non-empty list', () {
-      final result = ValidateList<int>().setLabel('List').isEmpty().validate([
-        1,
-      ]);
+      final result =
+          ValidateList<int>().setLabel('List').mustBeEmpty().validate([1]);
       expect(result, isA<ValidationFailure>());
       expect((result as ValidationFailure).code, ValidationCode.listEmpty);
     });
 
     test('fails for list with multiple items', () {
       expect(
-        ValidateList<int>().isEmpty().validate([1, 2, 3]),
+        ValidateList<int>().mustBeEmpty().validate([1, 2, 3]),
         isA<ValidationFailure>(),
       );
     });
 
     test('passes for null (null-skip)', () {
       expect(
-        ValidateList<int>().isEmpty().validate(null),
+        ValidateList<int>().mustBeEmpty().validate(null),
         isA<ValidationSuccess>(),
       );
     });
@@ -98,7 +97,7 @@ void main() {
       final result =
           ValidateList<int>()
                   .setLabel('List')
-                  .isEmpty(messageFactory: (label, _) => '$label 비어야 함')
+                  .mustBeEmpty(messageFactory: (label, _) => '$label 비어야 함')
                   .validate([1])
               as ValidationFailure;
       expect(result.message, 'List 비어야 함');
@@ -111,7 +110,7 @@ void main() {
         }),
       );
       final result =
-          ValidateList<int>().setLabel('목록').isEmpty().validate([1])
+          ValidateList<int>().setLabel('목록').mustBeEmpty().validate([1])
               as ValidationFailure;
       expect(result.message, '목록 비어야 함');
     });
@@ -945,7 +944,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 태그 선택 (블로그/게시글)
+  // Real user input pattern — tag selection (blog/post)
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 태그 선택', () {
     final tagValidator =
@@ -990,7 +989,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 관심사 선택 (최소 1개, 최대 3개)
+  // Real user input pattern — interest selection (min 1, max 3)
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 관심사 선택 (체크박스)', () {
     final interestValidator = ValidateList<String>()
@@ -1022,7 +1021,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 장바구니 상품 목록
+  // Real user input pattern — shopping cart item list
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 장바구니', () {
     final cartValidator = ValidateList<int>()
@@ -1060,7 +1059,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 필수 동의 항목 (eachItem 활용)
+  // Real user input pattern — required consent items (eachItem)
   // ---------------------------------------------------------------------------
   group('실제 유저 입력 — 필수 동의 목록 (eachItem)', () {
     final termsValidator = ValidateList<bool>()

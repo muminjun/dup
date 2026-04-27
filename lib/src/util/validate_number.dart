@@ -149,10 +149,14 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
 
   /// Phase 2: fails when value is not a multiple of [factor].
   ///
+  /// [factor] must not be zero — passing zero throws [AssertionError] in debug
+  /// mode and undefined behaviour in release mode (integer division by zero).
+  ///
   /// **Note:** floating-point arithmetic may produce unexpected results for
   /// non-integer factors (e.g. `0.3 % 0.1` ≈ `0.1` in IEEE 754, not `0.0`).
   /// Prefer integer factors for reliable results.
   ValidateNumber isMultipleOf(num factor, {MessageFactory? messageFactory}) {
+    assert(factor != 0, 'isMultipleOf: factor must not be zero.');
     return addPhaseValidator(2, (value) {
       if (value != null && value % factor != 0) {
         return getFailure(
@@ -196,6 +200,13 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
   ///
   /// Handles scientific notation (e.g. `1e-10` has 10 decimal places,
   /// `1.5e2 = 150` has 0).
+  ///
+  /// **Integer-as-double ambiguity:** Dart represents integer literals stored
+  /// as `double` with a trailing `.0` (e.g. `100.0.toString()` → `"100.0"`),
+  /// so `isPrecision(0)` will fail for values like `100.0` or `1e2` even though
+  /// they are mathematically whole numbers. To validate database decimals or
+  /// user-entered strings without this ambiguity, parse through [toValidator]
+  /// or cast to [int] before validation when the value is known to be integral.
   ValidateNumber isPrecision(int digits, {MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null) return null;
@@ -238,7 +249,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
       if (value != value.truncate() || value < 0 || value > 65535) {
         return getFailure(
           messageFactory,
-          ValidationCode.isPort,
+          ValidationCode.portNumber,
           {'name': label},
           '$label must be a valid port number (0–65535).',
         );

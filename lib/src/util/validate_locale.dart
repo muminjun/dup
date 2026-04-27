@@ -110,7 +110,7 @@ class ValidatorLocale {
     ValidationCode.any:
         (p) => 'At least one item in ${p['name']} must satisfy the condition.',
     ValidationCode.none:
-        (p) => 'No items in ${p['name']} must satisfy the condition.',
+        (p) => '${p['name']} must not contain any items matching the condition.',
     ValidationCode.noDuplicates:
         (p) => '${p['name']} must not contain duplicate items.',
     ValidationCode.eachItem:
@@ -147,18 +147,19 @@ class ValidatorLocale {
     // v2 number validators
     ValidationCode.numberPrecision:
         (p) => '${p['name']} must have at most ${p['digits']} decimal places.',
-    ValidationCode.isPort: (p) => '${p['name']} is not a valid port number.',
+    ValidationCode.portNumber: (p) => '${p['name']} is not a valid port number.',
     // v2 date validators
     ValidationCode.isWeekday: (p) => '${p['name']} must be a weekday.',
     ValidationCode.isWeekend: (p) => '${p['name']} must be a weekend day.',
     ValidationCode.isToday: (p) => '${p['name']} must be today.',
     ValidationCode.isSameDay:
-        (p) => '${p['name']} must be the same day as ${p['target']}.',
+        (p) => '${p['name']} must be the same day as ${p['targetFormatted']}.',
     ValidationCode.isWithin:
         (p) => '${p['name']} must be within ${p['duration']}.',
     // v2 list validators
     ValidationCode.listContainsAll:
-        (p) => '${p['name']} must contain all required items.',
+        (p) =>
+            '${p['name']} must contain all required items. Missing: ${(p['missing'] as List?)?.join(', ') ?? ''}.',
     // v2 map validators
     ValidationCode.mapMinSize:
         (p) => '${p['name']} must have at least ${p['min']} entries.',

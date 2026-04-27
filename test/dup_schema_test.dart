@@ -99,6 +99,65 @@ void main() {
         isA<ValidationSuccess>(),
       );
     });
+
+    test('applies when() then-validator when data triggers condition', () async {
+      final schema = DupSchema({
+        'role': ValidateString(),
+        'adminCode': ValidateString(),
+      }).when(
+        field: 'role',
+        condition: (v) => v == 'admin',
+        then: {'adminCode': ValidateString().required().min(6)},
+      );
+      // condition is true — then-validator (minLength 6) should apply
+      final result = await schema.validateField(
+        'adminCode',
+        'abc',
+        data: {'role': 'admin'},
+      );
+      expect(result, isA<ValidationFailure>());
+    });
+
+    test('uses base validator when data does not trigger when() condition',
+        () async {
+      final schema = DupSchema({
+        'role': ValidateString(),
+        'adminCode': ValidateString(),
+      }).when(
+        field: 'role',
+        condition: (v) => v == 'admin',
+        then: {'adminCode': ValidateString().required().min(6)},
+      );
+      // condition is false — base validator (no rules) should apply
+      final result = await schema.validateField(
+        'adminCode',
+        'abc',
+        data: {'role': 'user'},
+      );
+      expect(result, isA<ValidationSuccess>());
+    });
+
+    test('skipPresence suppresses required check', () async {
+      final schema = DupSchema({'name': ValidateString().required()});
+      expect(
+        await schema.validateField('name', null, skipPresence: true),
+        isA<ValidationSuccess>(),
+      );
+      expect(
+        await schema.validateField('name', null),
+        isA<ValidationFailure>(),
+      );
+    });
+
+    test('returns first sub-field failure for ValidateMap field', () async {
+      final schema = DupSchema({
+        'scores': ValidateMap<int>().keyValidator(
+          ValidateString().matches(RegExp(r'^[a-z]+$')),
+        ),
+      });
+      final result = await schema.validateField('scores', {'INVALID_KEY': 1});
+      expect(result, isA<ValidationFailure>());
+    });
   });
 
   group('DupSchema.crossValidate()', () {

@@ -737,6 +737,10 @@ void main() {
         isA<ValidationFailure>(),
       );
     });
+
+    test('factor = 0 throws AssertionError', () {
+      expect(() => ValidateNumber().isMultipleOf(0), throwsA(isA<AssertionError>()));
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -806,7 +810,7 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
-  // 실제 유저 입력 패턴 — 나이(age) 필드
+  // Real user input pattern — age field
   // ---------------------------------------------------------------------------
   group('real user input — age field', () {
     final ageValidator =
@@ -1131,7 +1135,7 @@ void main() {
     test('fails float (e.g. 80.5)', () {
       final r = ValidateNumber().isPort().validate(80.5);
       expect(r, isA<ValidationFailure>());
-      expect((r as ValidationFailure).code, ValidationCode.isPort);
+      expect((r as ValidationFailure).code, ValidationCode.portNumber);
     });
     test('null passes', () {
       expect(

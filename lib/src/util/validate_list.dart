@@ -25,7 +25,8 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
   /// Combine with [required] to also reject null.
   ValidateList<T> isNotEmpty({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
-      if (value != null && value.isEmpty) {
+      if (value == null) return null;
+      if (value.isEmpty) {
         return getFailure(messageFactory, ValidationCode.listNotEmpty, {
           'name': label,
         }, '$label cannot be empty.');
@@ -35,9 +36,10 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
   }
 
   /// Phase 1: fails when the list contains any items (only an empty list passes).
-  ValidateList<T> isEmpty({MessageFactory? messageFactory}) {
+  ValidateList<T> mustBeEmpty({MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
-      if (value != null && value.isNotEmpty) {
+      if (value == null) return null;
+      if (value.isNotEmpty) {
         return getFailure(messageFactory, ValidationCode.listEmpty, {
           'name': label,
         }, '$label must be empty.');
@@ -65,7 +67,8 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
   /// Phase 2: fails when the item count exceeds [max].
   ValidateList<T> maxLength(int max, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
-      if (value != null && value.length > max) {
+      if (value == null) return null;
+      if (value.length > max) {
         return getFailure(
           messageFactory,
           ValidationCode.listMax,
@@ -113,10 +116,12 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     });
   }
 
-  /// Phase 2: fails when [item] is not present in the list. Null fails.
+  /// Phase 2: fails when [item] is not present in the list. Null passes (null-skip).
+  /// Combine with [required] to also reject null.
   ValidateList<T> contains(T item, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
-      if (value != null && !value.contains(item)) {
+      if (value == null) return null;
+      if (!value.contains(item)) {
         return getFailure(messageFactory, ValidationCode.contains, {
           'name': label,
           'item': item,
@@ -129,7 +134,8 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
   /// Phase 2: fails when [item] is present in the list.
   ValidateList<T> doesNotContain(T item, {MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
-      if (value != null && value.contains(item)) {
+      if (value == null) return null;
+      if (value.contains(item)) {
         return getFailure(
           messageFactory,
           ValidationCode.doesNotContain,
@@ -147,7 +153,8 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     MessageFactory? messageFactory,
   }) {
     return addPhaseValidator(2, (value) {
-      if (value != null && !value.every(predicate)) {
+      if (value == null) return null;
+      if (!value.every(predicate)) {
         return getFailure(
           messageFactory,
           ValidationCode.all,
@@ -190,7 +197,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
           messageFactory,
           ValidationCode.none,
           {'name': label},
-          'No items in $label must satisfy the condition.',
+          '$label must not contain any items matching the condition.',
         );
       }
       return null;
@@ -200,7 +207,8 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
   /// Phase 2: fails when the list contains duplicate items.
   ValidateList<T> hasNoDuplicates({MessageFactory? messageFactory}) {
     return addPhaseValidator(2, (value) {
-      if (value != null && value.toSet().length != value.length) {
+      if (value == null) return null;
+      if (value.toSet().length != value.length) {
         return getFailure(
           messageFactory,
           ValidationCode.noDuplicates,

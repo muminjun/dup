@@ -59,6 +59,12 @@ class _WhenRule {
 /// shared instance affects all schemas that reference it. Do not share a single
 /// validator instance across concurrent [validate] / [validateAsync] calls on
 /// different schemas.
+///
+/// **Label mutation at construction:** the constructor calls [setLabel] on each
+/// validator immediately. If the same validator instance is passed to two schemas
+/// with different [labels] overrides, the label will reflect whichever schema was
+/// constructed last. Use a fresh validator instance per schema when different
+/// labels are needed for the same field.
 class DupSchema {
   /// Field name → validator map. Each validator has its label set in the constructor.
   final Map<String, BaseValidator> _schema;
@@ -111,6 +117,11 @@ class DupSchema {
   /// Registers a conditional validation rule. [condition] receives the raw input
   /// value of [field]; when true, [then] validators replace base validators for
   /// those fields. Evaluated before any validation runs.
+  ///
+  /// Warning: [then] validator instances must not be shared across multiple
+  /// [when] rules or reused as base schema validators. Labels are mutated on
+  /// these instances at validation time, which is non-deterministic if the same
+  /// instance appears in multiple rules.
   DupSchema when({
     required String field,
     required bool Function(dynamic) condition,
@@ -301,14 +312,35 @@ class DupSchema {
   ///
   /// Provide [data] (the full form data map) to apply [when] conditional rules.
   /// Without [data], only the base schema validator for the field is used.
+  ///
+  /// Set [skipPresence] to `true` to suppress `required` checks — useful for
+  /// live on-change validation before the user has finished filling the form.
+  ///
+  /// **Nested fields:** when [field] maps to a [ValidateObject] or [ValidateMap],
+  /// this method dispatches through [NestedValidator.validateNested] and returns
+  /// the first sub-field failure (with its flattened key as the message context),
+  /// matching the behaviour of [validate].
   Future<ValidationResult> validateField(
     String field,
     dynamic value, {
     Map<String, dynamic>? data,
+    bool skipPresence = false,
   }) async {
+    final effectiveSkip = _isPartial || skipPresence;
     final effective = data != null ? _buildEffective(data) : _schema;
     final validator = effective[field];
     if (validator == null) return const ValidationSuccess();
-    return validator.validateAsync(value, skipPresence: _isPartial);
+    if (validator is NestedValidator) {
+      final nested = await (validator as NestedValidator).validateNested(
+        value,
+        skipPresence: effectiveSkip,
+      );
+      if (nested == null) return const ValidationSuccess();
+      if (nested is NestedNormalFailure) return nested.failure;
+      if (nested is NestedInnerFailure) {
+        return nested.errors.values.first;
+      }
+    }
+    return validator.validateAsync(value, skipPresence: effectiveSkip);
   }
 }

@@ -162,10 +162,13 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
       if (value.year != target.year ||
           value.month != target.month ||
           value.day != target.day) {
+        final formatted =
+            '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
         return getFailure(messageFactory, ValidationCode.isSameDay, {
           'name': label,
           'target': target,
-        }, '$label must be on ${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}.');
+          'targetFormatted': formatted,
+        }, '$label must be on $formatted.');
       }
       return null;
     });
