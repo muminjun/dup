@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../model/message_factory.dart';
 import '../model/validation_code.dart';
 import '../model/validation_result.dart';
@@ -86,6 +88,7 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Use [fromPhase] and [toPhase] to run only a subset of phases (inclusive).
   /// This allows callers to interleave entry validation between phase bands
   /// (e.g. run phases 0–1 first, then entry checks, then phases 2+).
+  @internal
   ValidationResult runPhaseChain(
     T? value, {
     bool skipPresence = false,

@@ -5,6 +5,8 @@ homepage: https://github.com/muminjun/dup
 repository: https://github.com/muminjun/dup
 
 environment:
+  # ^3.0.0 covers all sealed-class / switch-expression requirements; no Dart 3.7+ APIs are used,
+  # so we intentionally keep the constraint broad to maximise consumer compatibility.
   sdk: ^3.0.0
 
 dependencies:

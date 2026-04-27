@@ -110,6 +110,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
 
   /// Phase 2: fails when value is outside the inclusive range [[min], [max]].
   ValidateNumber between(num min, num max, {MessageFactory? messageFactory}) {
+    assert(min <= max, 'between: min ($min) must be <= max ($max)');
     return addPhaseValidator(2, (value) {
       if (value != null && (value < min || value > max)) {
         return getFailure(

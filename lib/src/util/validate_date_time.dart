@@ -83,6 +83,7 @@ class ValidateDateTime extends BaseValidator<DateTime, ValidateDateTime> {
     DateTime max, {
     MessageFactory? messageFactory,
   }) {
+    assert(!min.isAfter(max), 'between: min must not be after max');
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (value.isBefore(min) || value.isAfter(max)) {

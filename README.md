@@ -152,7 +152,7 @@ final patchSchema = fullSchema.partial();
 | Method | Phase | Description |
 |---|---|---|
 | `required()` | 0 | Fails for null or empty string |
-| `notBlank()` | 0 | Fails for whitespace-only string |
+| `notBlank()` | 1 | Fails for whitespace-only string |
 | `min(n)` | 2 | At least `n` characters (trimmed) |
 | `max(n)` | 2 | At most `n` characters (trimmed) |
 | `matches(RegExp)` | 1 | Must match the regex |
@@ -172,8 +172,8 @@ final patchSchema = fullSchema.partial();
 | `base64()` | 1 | Valid Base64-encoded string |
 | `json()` | 1 | Valid JSON string |
 | `creditCard()` | 1 | Valid credit card number (Luhn check, 13–19 digits) |
-| `mobile({customRegex})` | 1 | Mobile number (default: Korean format) |
-| `phone({customRegex})` | 1 | Landline number (default: Korean format) |
+| `koMobile({customRegex})` | 1 | Mobile number (default: Korean format) |
+| `koPhone({customRegex})` | 1 | Landline number (default: Korean format) |
 | `bizno({customRegex})` | 1 | Business registration number (default: Korean) |
 | `koPostalCode()` | 1 | Korean 5-digit postal code |
 | `equalTo(other)` | 3 | Must equal another value |
@@ -315,8 +315,8 @@ Validators always run in phase order, regardless of chain order. `required` alwa
 
 | Phase | What runs |
 |---|---|
-| 0 | `required`, `notBlank` |
-| 1 | Format checks (`email`, `isInteger`, `isBefore`, …) |
+| 0 | `required` |
+| 1 | `notBlank`, format checks (`email`, `isInteger`, `isBefore`, …) |
 | 2 | Constraint checks (`min`, `max`, `between`, …) |
 | 3 | Custom (`addValidator`, `satisfy`, `equalTo`, …) |
 | 4 | Async (`addAsyncValidator`) |
