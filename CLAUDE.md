@@ -36,7 +36,9 @@ BaseValidator<T, V>           lib/src/util/validator_base.dart
   ├── ValidateNumber          lib/src/util/validate_number.dart
   ├── ValidateList<T>         lib/src/util/validate_list.dart
   ├── ValidateBool            lib/src/util/validate_bool.dart
-  └── ValidateDateTime        lib/src/util/validate_date_time.dart
+  ├── ValidateDateTime        lib/src/util/validate_date_time.dart
+  ├── ValidateObject          lib/src/util/validate_object.dart
+  └── ValidateMap<V>          lib/src/util/validate_map.dart
 ```
 
 `BaseValidator<T, V>` uses F-bounded polymorphism (`V extends BaseValidator<T, V>`) so subclass methods return the concrete subclass type, enabling fluent chaining.

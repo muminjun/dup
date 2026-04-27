@@ -217,6 +217,7 @@ class DupSchema {
   /// at validation time. All other validators (format, constraint, custom) remain
   /// active. Validator instances are shared — no cloning occurs.
   DupSchema partial() {
+    // All fields are kept, so when-rules need no filtering (unlike _derive).
     return DupSchema(_schema, labels: _labels)
       .._isPartial = true
       .._whenRules.addAll(_whenRules)

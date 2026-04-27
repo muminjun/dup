@@ -86,6 +86,7 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
     int max, {
     MessageFactory? messageFactory,
   }) {
+    assert(min <= max, 'lengthBetween: min ($min) must be <= max ($max)');
     return addPhaseValidator(2, (value) {
       if (value == null) return null;
       if (value.length < min || value.length > max) {
@@ -247,7 +248,12 @@ class ValidateList<T> extends BaseValidator<List<T>, ValidateList<T>> {
           return ValidationFailure(
             code: ValidationCode.eachItem,
             message: msg,
-            context: {'name': label, 'index': i, 'innerFailure': failure},
+            context: {
+              'name': label,
+              'index': i,
+              'innerFailure': failure,
+              'innerMessage': failure.message,
+            },
           );
         }
       }

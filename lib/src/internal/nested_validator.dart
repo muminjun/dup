@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 import '../model/validation_result.dart';
 
 /// Sealed result type returned by [NestedValidator.validateNested].
@@ -22,6 +24,7 @@ class NestedInnerFailure extends NestedValidationResult {
 /// Internal interface implemented by ValidateObject and ValidateMap.
 /// DupSchema calls validateNested/validateNestedSync instead of the public
 /// validateAsync/validate for these validators, enabling dot/bracket flattening.
+@internal
 abstract interface class NestedValidator {
   Future<NestedValidationResult?> validateNested(
     dynamic value, {

@@ -88,6 +88,9 @@ abstract class BaseValidator<T, V extends BaseValidator<T, V>> {
   /// Use [fromPhase] and [toPhase] to run only a subset of phases (inclusive).
   /// This allows callers to interleave entry validation between phase bands
   /// (e.g. run phases 0–1 first, then entry checks, then phases 2+).
+  ///
+  /// Only subclasses within `lib/src/` may call this method directly.
+  /// External subclasses should use [validate] or [validateAsync] instead.
   @internal
   ValidationResult runPhaseChain(
     T? value, {

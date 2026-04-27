@@ -78,7 +78,7 @@ enum ValidationCode {
   koPostalCode, // koPostalCode() — not a valid Korean postal code
   // Number — new in v2
   numberPrecision, // isPrecision() — too many decimal places
-  portNumber, // isPort() — not a valid port number
+  port, // isPort() — not a valid port number
   // DateTime — new in v2
   isWeekday, // isWeekday() — not a weekday
   isWeekend, // isWeekend() — not a weekend

@@ -250,7 +250,7 @@ class ValidateNumber extends BaseValidator<num, ValidateNumber> {
       if (value != value.truncate() || value < 0 || value > 65535) {
         return getFailure(
           messageFactory,
-          ValidationCode.portNumber,
+          ValidationCode.port,
           {'name': label},
           '$label must be a valid port number (0–65535).',
         );

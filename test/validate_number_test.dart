@@ -1135,7 +1135,7 @@ void main() {
     test('fails float (e.g. 80.5)', () {
       final r = ValidateNumber().isPort().validate(80.5);
       expect(r, isA<ValidationFailure>());
-      expect((r as ValidationFailure).code, ValidationCode.portNumber);
+      expect((r as ValidationFailure).code, ValidationCode.port);
     });
     test('null passes', () {
       expect(

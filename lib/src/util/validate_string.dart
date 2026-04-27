@@ -84,7 +84,8 @@ class ValidateString extends BaseValidator<String, ValidateString> {
   }
 
   /// Phase 1: fails when the trimmed length is less than [minLength].
-  /// Default minimum length is 4. Null and empty string pass (null-skip).
+  /// Default minimum length is 4. Null, empty string, and whitespace-only
+  /// values pass (null-skip). Add [notBlank] to also reject whitespace-only.
   ValidateString password({int minLength = 4, MessageFactory? messageFactory}) {
     return addPhaseValidator(1, (value) {
       if (value == null || value.trim().isEmpty) return null;

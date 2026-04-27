@@ -147,7 +147,7 @@ class ValidatorLocale {
     // v2 number validators
     ValidationCode.numberPrecision:
         (p) => '${p['name']} must have at most ${p['digits']} decimal places.',
-    ValidationCode.portNumber: (p) => '${p['name']} is not a valid port number.',
+    ValidationCode.port: (p) => '${p['name']} is not a valid port number.',
     // v2 date validators
     ValidationCode.isWeekday: (p) => '${p['name']} must be a weekday.',
     ValidationCode.isWeekend: (p) => '${p['name']} must be a weekend day.',
